@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TI Apps — Android Audio Apps by Todor Ilinov</title>
+<meta name="description" content="TI Apps builds Android audio applications: TV DSP Center (10-band equalizer & DSP for phones and Android TV) and World Radio (live internet radio from around the world).">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0E16;
+    --card:#111726;
+    --card-edge:#1C2436;
+    --blue:#1E7BE0;
+    --cyan:#19A0EA;
+    --orange:#F5821A;
+    --amber:#FFAA33;
+    --text:#E9EDF5;
+    --muted:#8A93A8;
+    --mono:'IBM Plex Mono',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Archivo',sans-serif;
+    font-variation-settings:'wdth' 100;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit}
+  .wrap{max-width:1060px;margin:0 auto;padding:0 24px}
+
+  /* ── Header ── */
+  header{
+    padding:28px 0;
+    border-bottom:1px solid var(--card-edge);
+  }
+  .header-row{display:flex;align-items:center;justify-content:space-between}
+  .logo{
+    font-weight:900;
+    font-variation-settings:'wdth' 125;
+    font-size:1.35rem;
+    letter-spacing:.02em;
+    text-decoration:none;
+  }
+  .logo .ti{color:var(--cyan)}
+  .logo .apps{color:var(--orange)}
+  nav a{
+    text-decoration:none;color:var(--muted);
+    font-size:.92rem;margin-left:28px;
+    transition:color .2s;
+  }
+  nav a:hover,nav a:focus-visible{color:var(--text)}
+  nav a:focus-visible{outline:2px solid var(--cyan);outline-offset:4px;border-radius:2px}
+
+  /* ── Hero ── */
+  .hero{padding:96px 0 72px;position:relative;overflow:hidden}
+  .hero h1{
+    font-weight:900;
+    font-variation-settings:'wdth' 122;
+    font-size:clamp(2.6rem,7vw,4.6rem);
+    line-height:1.04;
+    letter-spacing:-.01em;
+    max-width:15ch;
+  }
+  .hero h1 .grad{
+    background:linear-gradient(90deg,var(--cyan) 0%,var(--blue) 38%,var(--orange) 100%);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;color:transparent;
+  }
+  .hero p{
+    margin-top:22px;color:var(--muted);
+    font-size:1.12rem;max-width:52ch;
+  }
+  .hero .eyebrow{
+    font-family:var(--mono);font-size:.8rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--cyan);margin-bottom:18px;
+  }
+
+  /* ── Signature: hero visual ── */
+  .hero-visual{
+    margin-top:56px;
+    border-radius:20px;
+    overflow:hidden;
+    border:1px solid var(--card-edge);
+    box-shadow:0 24px 60px -24px rgba(25,160,234,.25);
+  }
+  .hero-visual img{
+    display:block;width:100%;height:auto;
+  }
+
+  /* ── Apps ── */
+  section{padding:72px 0}
+  .sec-label{
+    font-family:var(--mono);font-size:.8rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:34px;
+    display:flex;align-items:center;gap:14px;
+  }
+  .sec-label::after{content:'';flex:1;height:1px;background:var(--card-edge)}
+  .apps-grid{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+  @media(max-width:760px){.apps-grid{grid-template-columns:1fr}}
+  .app-card{
+    background:var(--card);
+    border:1px solid var(--card-edge);
+    border-radius:18px;
+    padding:34px 30px 30px;
+    display:flex;flex-direction:column;
+    transition:border-color .25s, transform .25s;
+  }
+  .app-card:hover{border-color:#2A3550;transform:translateY(-3px)}
+  .app-head{display:flex;align-items:center;gap:18px;margin-bottom:20px}
+  .app-icon{
+    width:64px;height:64px;border-radius:15px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .app-icon svg{width:100%;height:100%;border-radius:15px}
+  .app-card h2{font-size:1.3rem;font-weight:800;font-variation-settings:'wdth' 110}
+  .app-card .cat{font-family:var(--mono);font-size:.74rem;color:var(--muted);letter-spacing:.08em;margin-top:3px}
+  .app-card p{color:var(--muted);font-size:.98rem;flex:1}
+  .app-card ul{
+    list-style:none;margin:18px 0 26px;flex:1;
+  }
+  .app-card ul li{
+    color:var(--muted);font-size:.92rem;padding:5px 0 5px 22px;position:relative;
+  }
+  .app-card ul li::before{
+    content:'';position:absolute;left:0;top:12px;
+    width:10px;height:3px;border-radius:2px;
+  }
+  .card-dsp ul li::before{background:linear-gradient(90deg,var(--cyan),var(--orange))}
+  .card-radio ul li::before{background:var(--cyan)}
+  .play-btn{
+    display:inline-flex;align-items:center;gap:10px;
+    background:var(--text);color:#0B0F18;
+    text-decoration:none;font-weight:700;font-size:.95rem;
+    padding:13px 22px;border-radius:12px;
+    transition:opacity .2s;align-self:flex-start;
+  }
+  .play-btn:hover{opacity:.85}
+  .play-btn:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+  .play-btn svg{width:18px;height:18px}
+
+  /* ── About ── */
+  .about-card{
+    background:linear-gradient(135deg,rgba(30,123,224,.08),rgba(245,130,26,.07));
+    border:1px solid var(--card-edge);
+    border-radius:18px;padding:40px 36px;
+  }
+  .about-card p{color:var(--muted);max-width:64ch}
+  .about-card strong{color:var(--text)}
+
+  /* ── Footer ── */
+  footer{
+    border-top:1px solid var(--card-edge);
+    padding:36px 0 44px;margin-top:24px;
+    color:var(--muted);font-size:.88rem;
+  }
+  .foot-row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
+  footer a{color:var(--muted);text-decoration:none;margin-right:22px}
+  footer a:hover{color:var(--text)}
+  .foot-mono{font-family:var(--mono);font-size:.78rem}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap header-row">
+    <a class="logo" href="#"><span class="ti">TI</span>&hairsp;<span class="apps">APPS</span></a>
+    <nav>
+      <a href="#apps">Apps</a>
+      <a href="#about">About</a>
+      <a href="privacy.html">Privacy</a>
+    </nav>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Android · Music &amp; Audio</div>
+    <h1>Sound, tuned <span class="grad">from MIN to MAX.</span></h1>
+    <p>Independent Android apps focused on one thing: making audio sound better — on your phone, and on your TV.</p>
+    <div class="hero-visual">
+      <img src="img/hero_banner.jpg" alt="World Radio — microphone, headphones and a glowing audio spectrum around the globe" loading="eager">
+    </div>
+  </div>
+</div>
+
+<section id="apps">
+  <div class="wrap">
+    <div class="sec-label">Apps on Google Play</div>
+    <div class="apps-grid">
+
+      <div class="app-card card-dsp">
+        <div class="app-head">
+          <div class="app-icon">
+            <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="TV DSP Center icon">
+              <defs>
+                <linearGradient id="dspbg" x1="0" y1="1" x2="1" y2="0">
+                  <stop offset="0" stop-color="#1E5FD4"/><stop offset=".55" stop-color="#1794E4"/><stop offset="1" stop-color="#F5821A"/>
+                </linearGradient>
+                <linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#F0F4FA"/><stop offset=".5" stop-color="#9AA4B4"/><stop offset=".52" stop-color="#6A7484"/><stop offset="1" stop-color="#D6DEE8"/>
+                </linearGradient>
+              </defs>
+              <rect width="64" height="64" rx="14" fill="url(#dspbg)"/>
+              <text x="32" y="42" font-family="Archivo, sans-serif" font-weight="900" font-size="27" text-anchor="middle" fill="url(#chrome)">EQ</text>
+            </svg>
+          </div>
+          <div>
+            <h2>TV DSP Center</h2>
+            <div class="cat">EQUALIZER &amp; DSP</div>
+          </div>
+        </div>
+        <ul>
+          <li>10-band equalizer with bass boost, loudness &amp; surround</li>
+          <li>Built for phones and Android TV — full D-pad support</li>
+          <li>Sound profiles: Movie, Music, Voice, Night</li>
+        </ul>
+        <a class="play-btn" href="https://play.google.com/store/apps/details?id=com.tvdsp.center" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.6 2.3 13.7 12 3.6 21.7c-.4-.2-.6-.6-.6-1.1V3.4c0-.5.2-.9.6-1.1zM14.9 13.2l2.7 2.7-11 6 8.3-8.7zM20.9 10.6c.7.4.7 1.5 0 1.9l-2.2 1.2-3-3 3-3 2.2 1.9zM6.6 2.1l11 6-2.7 2.7-8.3-8.7z"/></svg>
+          Get it on Google Play
+        </a>
+      </div>
+
+      <div class="app-card card-radio">
+        <div class="app-head">
+          <div class="app-icon">
+            <img src="img/worldradio_icon.jpg" alt="World Radio app icon" width="64" height="64" style="width:100%;height:100%;border-radius:15px;display:block">
+          </div>
+          <div>
+            <h2>World Radio</h2>
+            <div class="cat">LIVE INTERNET RADIO</div>
+          </div>
+        </div>
+        <ul>
+          <li>Thousands of live stations from around the world</li>
+          <li>Alarm clock, sleep timer &amp; car mode</li>
+          <li>5 visualizer styles · 15 languages · completely free</li>
+        </ul>
+        <a class="play-btn" href="https://play.google.com/store/apps/details?id=com.worldradio.app" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.6 2.3 13.7 12 3.6 21.7c-.4-.2-.6-.6-.6-1.1V3.4c0-.5.2-.9.6-1.1zM14.9 13.2l2.7 2.7-11 6 8.3-8.7zM20.9 10.6c.7.4.7 1.5 0 1.9l-2.2 1.2-3-3 3-3 2.2 1.9zM6.6 2.1l11 6-2.7 2.7-8.3-8.7z"/></svg>
+          Get it on Google Play
+        </a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section id="about">
+  <div class="wrap">
+    <div class="sec-label">About</div>
+    <div class="about-card">
+      <p><strong>TI Apps</strong> is the app studio of <strong>Todor Ilinov</strong>, an independent Android developer. Every app is designed, built and supported by one person — which means real answers when you need help.</p>
+      <p style="margin-top:14px">Questions, feedback or feature ideas? Reach out any time: <a href="mailto:tvdspcenter@gmail.com" style="color:var(--cyan)">tvdspcenter@gmail.com</a></p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot-row">
+    <div>
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="mailto:tvdspcenter@gmail.com">Support</a>
+    </div>
+    <div class="foot-mono">© 2026 Todor Ilinov · TI Apps</div>
+  </div>
+</footer>
+
+</body>
+</html>
