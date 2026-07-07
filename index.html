@@ -171,6 +171,18 @@
   }
   .about-card p{color:var(--muted);max-width:64ch}
   .about-card strong{color:var(--text)}
+  .contact-btn{
+    display:inline-flex;align-items:center;gap:10px;margin-top:26px;
+    background:linear-gradient(90deg,var(--cyan),var(--blue));
+    color:#fff;text-decoration:none;font-weight:700;font-size:.95rem;
+    padding:13px 24px;border-radius:12px;
+    transition:opacity .2s, transform .1s, box-shadow .2s;
+    box-shadow:0 10px 26px -12px rgba(25,160,234,.6);
+  }
+  .contact-btn:hover{opacity:.94;box-shadow:0 14px 32px -12px rgba(25,160,234,.7)}
+  .contact-btn:active{transform:translateY(1px)}
+  .contact-btn:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+  .contact-btn svg{width:18px;height:18px}
 
   /* ── Footer ── */
   footer{
@@ -192,6 +204,7 @@
     <nav>
       <a href="#apps">Apps</a>
       <a href="#about">About</a>
+      <a href="contact.html">Contact</a>
       <a href="privacy.html">Privacy</a>
     </nav>
   </div>
@@ -287,7 +300,11 @@
     <div class="sec-label">About</div>
     <div class="about-card">
       <p><strong>TI Apps</strong> is the app studio of <strong>Todor Ilinov</strong>, an independent Android developer. Every app is designed, built and supported by one person — which means real answers when you need help.</p>
-      <p style="margin-top:14px">Questions, feedback or feature ideas? Reach out any time: <a href="mailto:tvdspcenter@gmail.com" style="color:var(--cyan)">tvdspcenter@gmail.com</a></p>
+      <p style="margin-top:14px">Questions, feedback or feature ideas? Reach out any time — I read every message.</p>
+      <a class="contact-btn" href="contact.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v12H7l-3 3V4Z"/></svg>
+        Contact us
+      </a>
     </div>
   </div>
 </section>
@@ -296,6 +313,7 @@
   <div class="wrap foot-row">
     <div>
       <a href="privacy.html">Privacy Policy</a>
+      <a href="contact.html">Contact</a>
       <a href="mailto:tvdspcenter@gmail.com">Support</a>
     </div>
     <div class="foot-mono">© 2026 Todor Ilinov · TI Apps</div>
