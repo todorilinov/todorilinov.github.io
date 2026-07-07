@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact — TI Apps | Todor Ilinov</title>
+<meta name="description" content="Get in touch with TI Apps — questions, feedback and feature ideas for TV DSP Center and World Radio. Send a message directly from the site.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0E16;
+    --card:#111726;
+    --card-edge:#1C2436;
+    --blue:#1E7BE0;
+    --cyan:#19A0EA;
+    --orange:#F5821A;
+    --amber:#FFAA33;
+    --text:#E9EDF5;
+    --muted:#8A93A8;
+    --mono:'IBM Plex Mono',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Archivo',sans-serif;
+    font-variation-settings:'wdth' 100;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    display:flex;flex-direction:column;
+  }
+  a{color:inherit}
+  .wrap{max-width:1060px;margin:0 auto;padding:0 24px;width:100%}
+
+  header{
+    padding:24px 0;
+    border-bottom:1px solid var(--card-edge);
+  }
+  .header-row{display:flex;align-items:center;justify-content:space-between}
+  .logo{
+    font-weight:900;
+    font-variation-settings:'wdth' 125;
+    font-size:1.35rem;
+    letter-spacing:.02em;
+    text-decoration:none;
+  }
+  .logo .ti{color:var(--cyan)}
+  .logo .apps{color:var(--orange)}
+  nav a{
+    text-decoration:none;color:var(--muted);
+    font-size:.92rem;margin-left:28px;
+    transition:color .2s;
+  }
+  nav a:hover,nav a:focus-visible{color:var(--text)}
+  nav a:focus-visible{outline:2px solid var(--cyan);outline-offset:4px;border-radius:2px}
+
+  /* ── Centered contact area ── */
+  main{
+    flex:1;display:flex;align-items:center;justify-content:center;
+    padding:56px 0;position:relative;overflow:hidden;
+  }
+  main::before{
+    content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(60% 55% at 20% 15%, rgba(25,160,234,.10), transparent 60%),
+      radial-gradient(55% 55% at 85% 90%, rgba(245,130,26,.09), transparent 60%);
+  }
+  .card{
+    position:relative;z-index:1;
+    width:100%;max-width:560px;
+    background:var(--card);
+    border:1px solid var(--card-edge);
+    border-radius:22px;
+    padding:48px 44px 40px;
+    box-shadow:0 30px 80px -30px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.02) inset;
+  }
+  @media(max-width:560px){.card{padding:36px 26px 32px;border-radius:18px}}
+
+  .card-head{text-align:center;margin-bottom:34px}
+  .card-head .eyebrow{
+    font-family:var(--mono);font-size:.74rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--cyan);margin-bottom:14px;
+  }
+  .card-head h1{
+    font-weight:900;font-variation-settings:'wdth' 118;
+    font-size:clamp(1.9rem,5vw,2.4rem);line-height:1.1;
+    letter-spacing:-.01em;margin-bottom:12px;
+  }
+  .card-head h1 .grad{
+    background:linear-gradient(90deg,var(--cyan) 0%,var(--blue) 45%,var(--orange) 100%);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;color:transparent;
+  }
+  .card-head p{color:var(--muted);font-size:.98rem;max-width:42ch;margin:0 auto}
+
+  .field{margin-bottom:20px}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:480px){.field-row{grid-template-columns:1fr;gap:0}}
+  .field label{
+    display:block;font-family:var(--mono);font-size:.7rem;
+    letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;
+  }
+  .field input,.field textarea{
+    width:100%;background:#0C111C;
+    border:1px solid var(--card-edge);border-radius:11px;
+    padding:13px 15px;color:var(--text);
+    font-family:'Archivo',sans-serif;font-size:.98rem;
+    transition:border-color .2s, box-shadow .2s;
+  }
+  .field input::placeholder,.field textarea::placeholder{color:#5A6478}
+  .field input:focus,.field textarea:focus{
+    outline:none;border-color:var(--cyan);
+    box-shadow:0 0 0 3px rgba(25,160,234,.18);
+  }
+  .field textarea{resize:vertical;min-height:130px}
+  .submit-btn{
+    width:100%;border:none;cursor:pointer;
+    background:linear-gradient(90deg,var(--cyan),var(--blue));
+    color:#fff;font-family:'Archivo',sans-serif;
+    font-weight:800;font-size:1rem;letter-spacing:.03em;
+    padding:15px;border-radius:12px;margin-top:6px;
+    transition:opacity .2s, transform .1s, box-shadow .2s;
+    box-shadow:0 10px 26px -10px rgba(25,160,234,.6);
+  }
+  .submit-btn:hover{opacity:.94;box-shadow:0 14px 32px -10px rgba(25,160,234,.7)}
+  .submit-btn:active{transform:translateY(1px)}
+  .submit-btn:disabled{opacity:.6;cursor:not-allowed;box-shadow:none}
+
+  .form-foot{
+    margin-top:22px;padding-top:20px;border-top:1px solid var(--card-edge);
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    font-size:.84rem;color:var(--muted);text-align:center;flex-wrap:wrap;
+  }
+  .form-foot svg{width:15px;height:15px;color:var(--cyan);flex-shrink:0}
+  .form-foot a{color:var(--cyan);text-decoration:none}
+  .form-foot a:hover{text-decoration:underline}
+
+  .form-status{
+    margin-top:18px;padding:13px 16px;border-radius:11px;
+    font-size:.92rem;display:none;
+  }
+  .form-status.ok{display:block;background:rgba(34,227,154,.12);border:1px solid rgba(34,227,154,.35);color:#7DE9BE}
+  .form-status.err{display:block;background:rgba(245,90,90,.12);border:1px solid rgba(245,90,90,.35);color:#F1A5A5}
+
+  footer{
+    border-top:1px solid var(--card-edge);
+    padding:28px 0 32px;
+    color:var(--muted);font-size:.86rem;
+  }
+  .foot-row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
+  footer a{color:var(--muted);text-decoration:none;margin-right:22px}
+  footer a:hover{color:var(--text)}
+  .foot-mono{font-family:var(--mono);font-size:.78rem}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap header-row">
+    <a class="logo" href="index.html"><span class="ti">TI</span>&hairsp;<span class="apps">APPS</span></a>
+    <nav>
+      <a href="index.html#apps">Apps</a>
+      <a href="index.html#about">About</a>
+      <a href="contact.html">Contact</a>
+      <a href="privacy.html">Privacy</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="card">
+      <div class="card-head">
+        <div class="eyebrow">Get in touch</div>
+        <h1>Talk to <span class="grad">the developer.</span></h1>
+        <p>Questions, bug reports or feature ideas — they all land straight in my inbox. I usually reply within 1–2 business days.</p>
+      </div>
+
+      <form id="contactForm">
+        <input type="hidden" name="access_key" value="6267a966-dd45-4fde-94b5-96fac4ab4a48">
+        <input type="hidden" name="subject" value="New message from TI Apps website">
+        <input type="hidden" name="from_name" value="TI Apps Contact Form">
+        <!-- Honeypot spam trap (must stay empty) -->
+        <input type="checkbox" name="botcheck" style="display:none" tabindex="-1" autocomplete="off">
+
+        <div class="field-row">
+          <div class="field">
+            <label for="name">Your name</label>
+            <input id="name" type="text" name="name" placeholder="Enter your name" required>
+          </div>
+          <div class="field">
+            <label for="email">Your email</label>
+            <input id="email" type="email" name="email" placeholder="you@example.com" required>
+          </div>
+        </div>
+        <div class="field">
+          <label for="message">Message</label>
+          <textarea id="message" name="message" placeholder="How can I help?" required></textarea>
+        </div>
+        <button type="submit" class="submit-btn" id="submitBtn">Send message</button>
+
+        <div class="form-status" id="formStatus"></div>
+
+        <div class="form-foot">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+          <span>Sent securely — or email <a href="mailto:tvdspcenter@gmail.com">tvdspcenter@gmail.com</a></span>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap foot-row">
+    <div>
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="contact.html">Contact</a>
+      <a href="mailto:tvdspcenter@gmail.com">Support</a>
+    </div>
+    <div class="foot-mono">© 2026 Todor Ilinov · TI Apps</div>
+  </div>
+</footer>
+
+<script>
+  const form = document.getElementById('contactForm');
+  const statusEl = document.getElementById('formStatus');
+  const btn = document.getElementById('submitBtn');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    statusEl.className = 'form-status';
+    statusEl.textContent = '';
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+
+    const formData = new FormData(form);
+    const json = JSON.stringify(Object.fromEntries(formData));
+
+    try {
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: json
+      });
+      const data = await res.json();
+      if (data.success) {
+        statusEl.className = 'form-status ok';
+        statusEl.textContent = 'Thanks! Your message has been sent — I\'ll get back to you soon.';
+        form.reset();
+      } else {
+        statusEl.className = 'form-status err';
+        statusEl.textContent = data.message || 'Something went wrong. Please email tvdspcenter@gmail.com instead.';
+      }
+    } catch (err) {
+      statusEl.className = 'form-status err';
+      statusEl.textContent = 'Network error. Please email tvdspcenter@gmail.com instead.';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Send message';
+    }
+  });
+</script>
+
+</body>
+</html>
