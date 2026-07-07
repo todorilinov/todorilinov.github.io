@@ -61,7 +61,7 @@
   /* ── Centered contact area ── */
   main{
     flex:1;display:flex;align-items:center;justify-content:center;
-    padding:56px 0;position:relative;overflow:hidden;
+    padding:56px 24px;position:relative;overflow:hidden;
   }
   main::before{
     content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
@@ -71,7 +71,7 @@
   }
   .card{
     position:relative;z-index:1;
-    width:100%;max-width:560px;
+    width:100%;max-width:560px;margin:0 auto;
     background:var(--card);
     border:1px solid var(--card-edge);
     border-radius:22px;
@@ -172,45 +172,43 @@
 </header>
 
 <main>
-  <div class="wrap">
-    <div class="card">
-      <div class="card-head">
-        <div class="eyebrow">Get in touch</div>
-        <h1>Talk to <span class="grad">the developer.</span></h1>
-        <p>Questions, bug reports or feature ideas — they all land straight in my inbox. I usually reply within 1–2 business days.</p>
-      </div>
+  <div class="card">
+    <div class="card-head">
+      <div class="eyebrow">Get in touch</div>
+      <h1>Talk to <span class="grad">the developer.</span></h1>
+      <p>Questions, bug reports or feature ideas — they all land straight in my inbox. I usually reply within 1–2 business days.</p>
+    </div>
 
-      <form id="contactForm">
-        <input type="hidden" name="access_key" value="6267a966-dd45-4fde-94b5-96fac4ab4a48">
-        <input type="hidden" name="subject" value="New message from TI Apps website">
-        <input type="hidden" name="from_name" value="TI Apps Contact Form">
-        <!-- Honeypot spam trap (must stay empty) -->
-        <input type="checkbox" name="botcheck" style="display:none" tabindex="-1" autocomplete="off">
+    <form id="contactForm">
+      <input type="hidden" name="access_key" value="6267a966-dd45-4fde-94b5-96fac4ab4a48">
+      <input type="hidden" name="subject" value="New message from TI Apps website">
+      <input type="hidden" name="from_name" value="TI Apps Contact Form">
+      <!-- Honeypot spam trap (must stay empty) -->
+      <input type="checkbox" name="botcheck" style="display:none" tabindex="-1" autocomplete="off">
 
-        <div class="field-row">
-          <div class="field">
-            <label for="name">Your name</label>
-            <input id="name" type="text" name="name" placeholder="Enter your name" required>
-          </div>
-          <div class="field">
-            <label for="email">Your email</label>
-            <input id="email" type="email" name="email" placeholder="you@example.com" required>
-          </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="name">Your name</label>
+          <input id="name" type="text" name="name" placeholder="Enter your name" required>
         </div>
         <div class="field">
-          <label for="message">Message</label>
-          <textarea id="message" name="message" placeholder="How can I help?" required></textarea>
+          <label for="email">Your email</label>
+          <input id="email" type="email" name="email" placeholder="you@example.com" required>
         </div>
-        <button type="submit" class="submit-btn" id="submitBtn">Send message</button>
+      </div>
+      <div class="field">
+        <label for="message">Message</label>
+        <textarea id="message" name="message" placeholder="How can I help?" required></textarea>
+      </div>
+      <button type="submit" class="submit-btn" id="submitBtn">Send message</button>
 
-        <div class="form-status" id="formStatus"></div>
+      <div class="form-status" id="formStatus"></div>
 
-        <div class="form-foot">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
-          <span>Sent securely — or email <a href="mailto:tvdspcenter@gmail.com">tvdspcenter@gmail.com</a></span>
-        </div>
-      </form>
-    </div>
+      <div class="form-foot">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        <span>Sent securely — or email <a href="mailto:tvdspcenter@gmail.com">tvdspcenter@gmail.com</a></span>
+      </div>
+    </form>
   </div>
 </main>
 
