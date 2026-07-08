@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://todorilinov.github.io/sitemap.xml
+Sitemap: https://tiapps.dev/sitemap.xml
