@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>TV DSP Center — Trial Dashboard</title>
+<style>
+  :root{
+    --bg:#0d1117; --card:#14181d; --line:#2a3038;
+    --txt:#e6edf3; --dim:#9aa4af; --faint:#7a828b;
+    --accent:#00CCFF; --ok:#00FF99; --warn:#ffb020; --bad:#ff5c5c;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+       font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:1100px;margin:0 auto;padding:24px 18px 60px}
+  h1{font-size:20px;margin:0 0 4px;font-weight:600}
+  .sub{color:var(--dim);font-size:13px;margin-bottom:22px}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px}
+
+  /* login */
+  #login{padding:40px 28px;text-align:center;max-width:400px;margin:60px auto}
+  #login p{color:var(--dim);margin:0 0 22px}
+  button{font:inherit;cursor:pointer;border:none;border-radius:8px}
+  .primary{background:var(--accent);color:#002733;padding:12px 22px;font-weight:600}
+  .primary:hover{filter:brightness(1.08)}
+  .ghost{background:transparent;color:var(--dim);border:1px solid var(--line);padding:8px 14px}
+  .ghost:hover{color:var(--txt);border-color:var(--faint)}
+
+  /* stats */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+  .stat{padding:16px 18px}
+  .stat .n{font-size:26px;font-weight:600;line-height:1.1}
+  .stat .l{color:var(--dim);font-size:12px;margin-top:4px}
+
+  /* controls */
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+  input[type=search]{background:var(--card);border:1px solid var(--line);color:var(--txt);
+       padding:9px 12px;border-radius:8px;min-width:210px;font:inherit}
+  input[type=search]:focus{outline:none;border-color:var(--accent)}
+  select{background:var(--card);border:1px solid var(--line);color:var(--txt);
+       padding:9px 10px;border-radius:8px;font:inherit}
+  .spacer{flex:1}
+
+  /* table */
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--line);font-size:13px}
+  th{color:var(--dim);font-weight:500;cursor:pointer;user-select:none;white-space:nowrap}
+  th:hover{color:var(--txt)}
+  th .arw{opacity:.45;font-size:10px}
+  td.uid{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:var(--faint)}
+  tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:rgba(255,255,255,.02)}
+
+  .pill{display:inline-block;padding:3px 9px;border-radius:11px;font-size:11.5px;font-weight:600}
+  .p-act{background:rgba(0,255,153,.13);color:var(--ok)}
+  .p-exp{background:rgba(255,92,92,.13);color:var(--bad)}
+  .p-end{background:rgba(255,176,32,.15);color:var(--warn)}
+
+  .empty{padding:40px;text-align:center;color:var(--faint)}
+  .err{background:rgba(255,92,92,.1);border:1px solid rgba(255,92,92,.35);
+       color:#ffb3b3;padding:13px 16px;border-radius:9px;margin-bottom:16px;font-size:13px}
+  .foot{margin-top:14px;color:var(--faint);font-size:12px;display:flex;
+        justify-content:space-between;flex-wrap:wrap;gap:8px}
+  @media(max-width:620px){ .hide-s{display:none} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ══ LOGIN ══ -->
+  <div id="login" class="card" style="display:none">
+    <h1>Trial Dashboard</h1>
+    <p>Sign in with your admin Google account.</p>
+    <button class="primary" onclick="signIn()">Sign in with Google</button>
+    <div id="loginErr"></div>
+  </div>
+
+  <!-- ══ APP ══ -->
+  <div id="app" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+      <div>
+        <h1>TV DSP Center — Trials</h1>
+        <div class="sub" id="who"></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="ghost" onclick="load()">Refresh</button>
+        <button class="ghost" onclick="exportCsv()">Export CSV</button>
+        <button class="ghost" onclick="signOut()">Sign out</button>
+      </div>
+    </div>
+
+    <div id="err"></div>
+
+    <div class="stats">
+      <div class="card stat"><div class="n" id="sTotal">–</div><div class="l">Total trials</div></div>
+      <div class="card stat"><div class="n" id="sActive" style="color:var(--ok)">–</div><div class="l">Active</div></div>
+      <div class="card stat"><div class="n" id="sSoon" style="color:var(--warn)">–</div><div class="l">Ending ≤2 days</div></div>
+      <div class="card stat"><div class="n" id="sExp" style="color:var(--bad)">–</div><div class="l">Expired</div></div>
+      <div class="card stat"><div class="n" id="s7">–</div><div class="l">Started last 7d</div></div>
+    </div>
+
+    <div class="controls">
+      <input type="search" id="q" placeholder="Search UID…" oninput="render()">
+      <select id="fStatus" onchange="render()">
+        <option value="all">All statuses</option>
+        <option value="active">Active only</option>
+        <option value="soon">Ending soon (≤2d)</option>
+        <option value="expired">Expired only</option>
+      </select>
+      <select id="fRange" onchange="render()">
+        <option value="0">Any start date</option>
+        <option value="1">Started today</option>
+        <option value="7">Started last 7 days</option>
+        <option value="30">Started last 30 days</option>
+      </select>
+      <div class="spacer"></div>
+      <span id="count" style="color:var(--dim);font-size:12.5px"></span>
+    </div>
+
+    <div class="card" style="overflow-x:auto">
+      <table>
+        <thead><tr>
+          <th onclick="sortBy('uid')">Account UID <span class="arw" id="a-uid"></span></th>
+          <th onclick="sortBy('start')">Trial started <span class="arw" id="a-start"></span></th>
+          <th onclick="sortBy('end')" class="hide-s">Ends <span class="arw" id="a-end"></span></th>
+          <th onclick="sortBy('days')">Days left <span class="arw" id="a-days"></span></th>
+          <th onclick="sortBy('status')">Status <span class="arw" id="a-status"></span></th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div class="empty" id="empty" style="display:none">No trials match your filters.</div>
+    </div>
+
+    <div class="foot">
+      <span id="updated"></span>
+      <span>Times shown in your local timezone.</span>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut,
+         onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+/* ── CONFIG ─────────────────────────────────────────────────────────
+   Safe to expose: these identify the project, they don't grant access.
+   Access is controlled entirely by the Realtime Database rules, which
+   only allow the ADMIN_UID below to read the whole /trials node.      */
+const firebaseConfig = {
+  apiKey: "AIzaSyAkmf7AKxuIHaIr8TDqttwlElR7xldiF50",
+  authDomain: "tv-dsp-center.firebaseapp.com",
+  databaseURL: "https://tv-dsp-center-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "tv-dsp-center",
+  storageBucket: "tv-dsp-center.firebasestorage.app",
+  messagingSenderId: "845731119367",
+  appId: "1:845731119367:android:d1ca244d953238ef2745a2"
+};
+const ADMIN_UID   = "dQYQkefbgjRxaZdQpClWqhA8Ipm2";
+const TRIAL_DAYS  = 7;
+const DAY_MS      = 86400000;
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getDatabase(app);
+
+let data = [];                                  // normalised rows
+let sort = { key: "start", dir: -1 };           // newest first
+
+/* ── AUTH ── */
+window.signIn = async () => {
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch (e) { document.getElementById("loginErr").innerHTML =
+    `<div class="err" style="margin-top:16px">Sign-in failed: ${esc(e.code || e.message)}</div>`; }
+};
+window.signOut = () => fbSignOut(auth);
+
+onAuthStateChanged(auth, user => {
+  const login = document.getElementById("login"), appEl = document.getElementById("app");
+  if (!user) { login.style.display = "block"; appEl.style.display = "none"; return; }
+  if (user.uid !== ADMIN_UID) {
+    login.style.display = "block"; appEl.style.display = "none";
+    document.getElementById("loginErr").innerHTML =
+      `<div class="err" style="margin-top:16px">This account is not authorised.<br>
+       <span style="font-size:11.5px;opacity:.75">${esc(user.email || "")}</span></div>`;
+    fbSignOut(auth); return;
+  }
+  login.style.display = "none"; appEl.style.display = "block";
+  document.getElementById("who").textContent = `Signed in as ${user.email}`;
+  load();
+});
+
+/* ── DATA ── */
+window.load = async () => {
+  const errEl = document.getElementById("err");
+  errEl.innerHTML = "";
+  try {
+    const snap = await get(ref(db, "trials"));
+    const raw  = snap.val() || {};
+    const now  = Date.now();
+    data = Object.entries(raw).map(([uid, v]) => {
+      const start = Number(v && v.trialStart) || 0;
+      const end   = start + TRIAL_DAYS * DAY_MS;
+      const left  = Math.max(0, Math.ceil((end - now) / DAY_MS));
+      const status = start === 0 ? "expired"
+                   : now >= end  ? "expired"
+                   : left <= 2   ? "soon" : "active";
+      return { uid, start, end, days: left, status };
+    });
+    stats(now); render();
+    document.getElementById("updated").textContent =
+      "Last refreshed " + new Date().toLocaleString();
+  } catch (e) {
+    errEl.innerHTML = `<div class="err"><b>Could not read data.</b><br>${esc(e.message)}
+      <br><span style="font-size:11.5px;opacity:.8">Check that the Realtime Database rules grant
+      read access on <code>/trials</code> to this UID.</span></div>`;
+  }
+};
+
+function stats(now){
+  const t = data.length;
+  const a = data.filter(d => d.status === "active").length;
+  const s = data.filter(d => d.status === "soon").length;
+  const x = data.filter(d => d.status === "expired").length;
+  const w = data.filter(d => d.start > now - 7*DAY_MS).length;
+  set("sTotal",t); set("sActive",a); set("sSoon",s); set("sExp",x); set("s7",w);
+}
+const set = (id,v) => document.getElementById(id).textContent = v;
+
+/* ── SORT / FILTER / RENDER ── */
+window.sortBy = k => { sort = { key:k, dir: sort.key===k ? -sort.dir : 1 }; render(); };
+
+window.render = () => {
+  const q     = document.getElementById("q").value.trim().toLowerCase();
+  const fS    = document.getElementById("fStatus").value;
+  const fR    = Number(document.getElementById("fRange").value);
+  const now   = Date.now();
+
+  let rows = data.filter(d => {
+    if (q && !d.uid.toLowerCase().includes(q)) return false;
+    if (fS !== "all" && d.status !== fS) return false;
+    if (fR && d.start < now - fR*DAY_MS)  return false;
+    return true;
+  });
+
+  rows.sort((x,y) => {
+    const a = x[sort.key], b = y[sort.key];
+    return (typeof a === "string" ? a.localeCompare(b) : a - b) * sort.dir;
+  });
+
+  ["uid","start","end","days","status"].forEach(k =>
+    document.getElementById("a-"+k).textContent =
+      sort.key === k ? (sort.dir === 1 ? "▲" : "▼") : "");
+
+  const label = { active:["Active","p-act"], soon:["Ending soon","p-end"], expired:["Expired","p-exp"] };
+  document.getElementById("rows").innerHTML = rows.map(d => {
+    const [txt, cls] = label[d.status];
+    return `<tr>
+      <td class="uid" title="${esc(d.uid)}">${esc(d.uid.slice(0,20))}…</td>
+      <td>${d.start ? esc(fmt(d.start)) : "—"}</td>
+      <td class="hide-s">${d.start ? esc(fmt(d.end)) : "—"}</td>
+      <td>${d.status === "expired" ? "0" : d.days}</td>
+      <td><span class="pill ${cls}">${txt}</span></td>
+    </tr>`;
+  }).join("");
+
+  document.getElementById("empty").style.display = rows.length ? "none" : "block";
+  document.getElementById("count").textContent =
+    `${rows.length} of ${data.length} shown`;
+};
+
+const fmt = ms => new Date(ms).toLocaleString([], {
+  year:"numeric", month:"short", day:"2-digit", hour:"2-digit", minute:"2-digit" });
+
+const esc = s => String(s).replace(/[&<>"']/g, c =>
+  ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+
+/* ── EXPORT ── */
+window.exportCsv = () => {
+  const head = "uid,trial_started,trial_ends,days_left,status\n";
+  const body = data.map(d =>
+    [d.uid, d.start ? new Date(d.start).toISOString() : "",
+     d.start ? new Date(d.end).toISOString() : "", d.days, d.status].join(",")
+  ).join("\n");
+  const url = URL.createObjectURL(new Blob([head+body], {type:"text/csv"}));
+  const a = document.createElement("a");
+  a.href = url; a.download = `tvdsp-trials-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+};
+
+document.getElementById("login").style.display = "block";
+</script>
+</body>
+</html>
