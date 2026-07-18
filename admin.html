@@ -35,6 +35,19 @@
   .stat .n{font-size:26px;font-weight:600;line-height:1.1}
   .stat .l{color:var(--dim);font-size:12px;margin-top:4px}
 
+  /* charts */
+  .charts{display:grid;grid-template-columns:1.6fr 1fr;gap:12px;margin-bottom:18px}
+  .chart-box{padding:16px 18px 12px}
+  .chart-box.wide{grid-column:1 / -1}
+  .chart-h{display:flex;justify-content:space-between;align-items:center;
+           margin-bottom:12px;color:var(--dim);font-size:12.5px;font-weight:500}
+  .chart-h select{padding:5px 8px;font-size:12px}
+  canvas{width:100%;display:block}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+  .legend span{font-size:12px;color:var(--dim);display:flex;align-items:center;gap:6px}
+  .legend i{width:9px;height:9px;border-radius:2px;display:inline-block}
+  @media(max-width:760px){ .charts{grid-template-columns:1fr} }
+
   /* controls */
   .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
   input[type=search]{background:var(--card);border:1px solid var(--line);color:var(--txt);
@@ -100,6 +113,32 @@
       <div class="card stat"><div class="n" id="sSoon" style="color:var(--warn)">–</div><div class="l">Ending ≤2 days</div></div>
       <div class="card stat"><div class="n" id="sExp" style="color:var(--bad)">–</div><div class="l">Expired</div></div>
       <div class="card stat"><div class="n" id="s7">–</div><div class="l">Started last 7d</div></div>
+    </div>
+
+    <!-- ══ CHARTS ══ -->
+    <div class="charts">
+      <div class="card chart-box">
+        <div class="chart-h">
+          <span>New trials per day</span>
+          <select id="chartRange" onchange="drawAll()">
+            <option value="14">Last 14 days</option>
+            <option value="30" selected>Last 30 days</option>
+            <option value="90">Last 90 days</option>
+          </select>
+        </div>
+        <canvas id="cBar" height="150"></canvas>
+      </div>
+
+      <div class="card chart-box">
+        <div class="chart-h"><span>Status breakdown</span></div>
+        <canvas id="cDonut" height="150"></canvas>
+        <div class="legend" id="donutLegend"></div>
+      </div>
+
+      <div class="card chart-box wide">
+        <div class="chart-h"><span>Trials by days remaining</span></div>
+        <canvas id="cDays" height="140"></canvas>
+      </div>
     </div>
 
     <div class="controls">
@@ -211,7 +250,7 @@ window.load = async () => {
                    : left <= 2   ? "soon" : "active";
       return { uid, start, end, days: left, status };
     });
-    stats(now); render();
+    stats(now); render(); drawAll();
     document.getElementById("updated").textContent =
       "Last refreshed " + new Date().toLocaleString();
   } catch (e) {
@@ -278,6 +317,167 @@ const fmt = ms => new Date(ms).toLocaleString([], {
 
 const esc = s => String(s).replace(/[&<>"']/g, c =>
   ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+
+/* ── CHARTS (plain canvas, no libraries) ───────────────────────────── */
+const CSS = k => getComputedStyle(document.documentElement).getPropertyValue(k).trim();
+
+/** Prepare a canvas for crisp HiDPI drawing; returns ctx + logical size. */
+function prep(id){
+  const cv  = document.getElementById(id);
+  const dpr = window.devicePixelRatio || 1;
+  const w   = cv.clientWidth || cv.parentElement.clientWidth - 36;
+  const h   = Number(cv.getAttribute("height"));
+  cv.width  = Math.round(w * dpr);
+  cv.height = Math.round(h * dpr);
+  cv.style.height = h + "px";
+  const ctx = cv.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  return { ctx, w, h };
+}
+
+function noData(ctx, w, h){
+  ctx.fillStyle = CSS("--faint");
+  ctx.font = "12px -apple-system,Segoe UI,Roboto,sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("No data yet", w/2, h/2);
+}
+
+/** Bar chart: new trials per day over the selected window. */
+function drawBar(){
+  const { ctx, w, h } = prep("cBar");
+  const days = Number(document.getElementById("chartRange").value);
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  // bucket starts by day
+  const buckets = new Array(days).fill(0);
+  data.forEach(d => {
+    if (!d.start) return;
+    const t = new Date(d.start); t.setHours(0,0,0,0);
+    const idx = days - 1 - Math.round((today - t) / DAY_MS);
+    if (idx >= 0 && idx < days) buckets[idx]++;
+  });
+
+  const max = Math.max(1, ...buckets);
+  if (!data.length) return noData(ctx, w, h);
+
+  const padL = 26, padB = 18, padT = 8;
+  const gw = w - padL - 6, gh = h - padB - padT;
+
+  // horizontal gridlines + y labels
+  ctx.strokeStyle = CSS("--line"); ctx.lineWidth = 1;
+  ctx.fillStyle = CSS("--faint");
+  ctx.font = "10px -apple-system,Segoe UI,Roboto,sans-serif";
+  ctx.textAlign = "right"; ctx.textBaseline = "middle";
+  const steps = Math.min(4, max);
+  for (let i = 0; i <= steps; i++){
+    const v = Math.round(max * i / steps);
+    const y = padT + gh - (gh * i / steps);
+    ctx.beginPath(); ctx.moveTo(padL, y + .5); ctx.lineTo(w - 6, y + .5); ctx.stroke();
+    ctx.fillText(v, padL - 6, y);
+  }
+
+  // bars
+  const bw = gw / days;
+  buckets.forEach((v, i) => {
+    if (!v) return;
+    const bh = (v / max) * gh;
+    const x  = padL + i * bw, y = padT + gh - bh;
+    ctx.fillStyle = CSS("--accent");
+    const iw = Math.max(1, bw - 2);
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x + 1, y, iw, bh, [2,2,0,0]);
+    else ctx.rect(x + 1, y, iw, bh);
+    ctx.fill();
+  });
+
+  // x labels: first / middle / last
+  ctx.fillStyle = CSS("--faint"); ctx.textBaseline = "top";
+  const lab = n => { const d = new Date(today - (days-1-n)*DAY_MS);
+    return d.toLocaleDateString([], {day:"2-digit", month:"short"}); };
+  [[0,"left"], [Math.floor(days/2),"center"], [days-1,"right"]].forEach(([i,al]) => {
+    ctx.textAlign = al;
+    const x = padL + i*bw + bw/2;
+    ctx.fillText(lab(i), Math.min(Math.max(x, padL), w-6), padT + gh + 6);
+  });
+}
+
+/** Donut: active / ending soon / expired. */
+function drawDonut(){
+  const { ctx, w, h } = prep("cDonut");
+  const segs = [
+    { k:"active",  n:data.filter(d=>d.status==="active").length,  c:CSS("--ok"),     t:"Active" },
+    { k:"soon",    n:data.filter(d=>d.status==="soon").length,    c:CSS("--warn"),   t:"Ending soon" },
+    { k:"expired", n:data.filter(d=>d.status==="expired").length, c:CSS("--bad"),    t:"Expired" }
+  ];
+  const total = segs.reduce((s,x)=>s+x.n, 0);
+  document.getElementById("donutLegend").innerHTML = segs.map(s =>
+    `<span><i style="background:${s.c}"></i>${s.t} — ${s.n}</span>`).join("");
+
+  if (!total) return noData(ctx, w, h);
+
+  const cx = w/2, cy = h/2, R = Math.min(w,h)/2 - 6, r = R * .62;
+  let a0 = -Math.PI/2;
+  segs.forEach(s => {
+    if (!s.n) return;
+    const a1 = a0 + (s.n/total) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, a0, a1);
+    ctx.arc(cx, cy, r, a1, a0, true);
+    ctx.closePath();
+    ctx.fillStyle = s.c; ctx.fill();
+    a0 = a1;
+  });
+
+  ctx.fillStyle = CSS("--txt");
+  ctx.font = "600 20px -apple-system,Segoe UI,Roboto,sans-serif";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(total, cx, cy - 4);
+  ctx.fillStyle = CSS("--faint");
+  ctx.font = "10px -apple-system,Segoe UI,Roboto,sans-serif";
+  ctx.fillText("trials", cx, cy + 12);
+}
+
+/** Horizontal-ish bars: how many trials have N days remaining (0..7). */
+function drawDays(){
+  const { ctx, w, h } = prep("cDays");
+  const buckets = new Array(TRIAL_DAYS + 1).fill(0);
+  data.forEach(d => { const n = d.status === "expired" ? 0 : d.days;
+                      if (n >= 0 && n <= TRIAL_DAYS) buckets[n]++; });
+  const max = Math.max(1, ...buckets);
+  if (!data.length) return noData(ctx, w, h);
+
+  const padL = 26, padB = 20, padT = 8;
+  const gw = w - padL - 6, gh = h - padB - padT;
+
+  ctx.strokeStyle = CSS("--line"); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(padL, padT + gh + .5); ctx.lineTo(w - 6, padT + gh + .5); ctx.stroke();
+
+  const bw = gw / buckets.length;
+  ctx.textAlign = "center";
+  buckets.forEach((v, i) => {
+    const x = padL + i*bw;
+    if (v){
+      const bh = (v/max) * gh, y = padT + gh - bh;
+      ctx.fillStyle = i === 0 ? CSS("--bad") : i <= 2 ? CSS("--warn") : CSS("--ok");
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(x + bw*.18, y, bw*.64, bh, [3,3,0,0]);
+      else ctx.rect(x + bw*.18, y, bw*.64, bh);
+      ctx.fill();
+      ctx.fillStyle = CSS("--txt");
+      ctx.font = "600 10px -apple-system,Segoe UI,Roboto,sans-serif";
+      ctx.textBaseline = "bottom";
+      ctx.fillText(v, x + bw/2, y - 3);
+    }
+    ctx.fillStyle = CSS("--faint");
+    ctx.font = "10px -apple-system,Segoe UI,Roboto,sans-serif";
+    ctx.textBaseline = "top";
+    ctx.fillText(i === 0 ? "exp" : i, x + bw/2, padT + gh + 6);
+  });
+}
+
+window.drawAll = () => { try { drawBar(); drawDonut(); drawDays(); } catch(e){ console.warn(e); } };
+let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(drawAll, 150); });
 
 /* ── EXPORT ── */
 window.exportCsv = () => {
