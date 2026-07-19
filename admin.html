@@ -322,14 +322,33 @@ const esc = s => String(s).replace(/[&<>"']/g, c =>
 const CSS = k => getComputedStyle(document.documentElement).getPropertyValue(k).trim();
 
 /** Prepare a canvas for crisp HiDPI drawing; returns ctx + logical size. */
+/**
+ * Prepare a canvas for crisp HiDPI drawing; returns ctx + logical size.
+ *
+ * NOTE: the logical height is cached in a data attribute on first use.
+ * Reading it back from cv.height would compound on every redraw, because
+ * we set cv.height = h * dpr — so each Refresh would scale the chart up
+ * again (2x, 4x, 8x...). The CSS width is likewise pinned to the measured
+ * layout width rather than re-measuring the already-resized canvas.
+ */
 function prep(id){
   const cv  = document.getElementById(id);
   const dpr = window.devicePixelRatio || 1;
-  const w   = cv.clientWidth || cv.parentElement.clientWidth - 36;
-  const h   = Number(cv.getAttribute("height"));
+
+  // Cache the intended logical height once; never re-read the scaled value.
+  if (!cv.dataset.h) cv.dataset.h = cv.getAttribute("height") || "150";
+  const h = Number(cv.dataset.h);
+
+  // Measure the CSS box, not the backing-store size. offsetWidth reflects
+  // the element's laid-out width (driven by CSS width:100%), which stays
+  // stable across redraws.
+  const w = Math.max(1, cv.offsetWidth || cv.parentElement.clientWidth - 36);
+
   cv.width  = Math.round(w * dpr);
   cv.height = Math.round(h * dpr);
+  cv.style.width  = "100%";
   cv.style.height = h + "px";
+
   const ctx = cv.getContext("2d");
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, h);
