@@ -479,8 +479,9 @@ function drawDays(){
   const max = Math.max(1, ...buckets);
   if (!data.length) return noData(ctx, w, h);
 
-  const padL = 26, padB = 20, padT = 8;
+  const padL = 26, padB = 20, padT = 16;
   const gw = w - padL - 6, gh = h - padB - padT;
+  const barMax = gh - 4;   // leave headroom so value labels never clip
 
   ctx.strokeStyle = CSS("--line"); ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(padL, padT + gh + .5); ctx.lineTo(w - 6, padT + gh + .5); ctx.stroke();
@@ -494,7 +495,7 @@ function drawDays(){
       label: i === 0 ? "Expired" : `${i} day${i===1?"":"s"} left`,
       value: v, unit: v === 1 ? "trial" : "trials" });
     if (v){
-      const bh = (v/max) * gh, y = padT + gh - bh;
+      const bh = (v/max) * barMax, y = padT + gh - bh;
       ctx.fillStyle = i === 0 ? CSS("--bad") : i <= 2 ? CSS("--warn") : CSS("--ok");
       ctx.beginPath();
       if (ctx.roundRect) ctx.roundRect(x + bw*.18, y, bw*.64, bh, [3,3,0,0]);
