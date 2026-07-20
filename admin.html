@@ -43,6 +43,11 @@
            margin-bottom:12px;color:var(--dim);font-size:12.5px;font-weight:500}
   .chart-h select{padding:5px 8px;font-size:12px}
   canvas{width:100%;display:block}
+  #chartTip{position:fixed;z-index:999;pointer-events:none;display:none;
+    background:#11161f;border:1px solid var(--line);border-radius:6px;
+    padding:6px 9px;font-size:12px;line-height:1.35;color:var(--txt);
+    box-shadow:0 6px 18px rgba(0,0,0,.45);white-space:nowrap}
+  #chartTip b{color:var(--accent)}
   .legend{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:10px}
   .legend span{font-size:12px;color:var(--dim);display:flex;align-items:center;gap:6px}
   .legend i{width:9px;height:9px;border-radius:2px;display:inline-block}
@@ -401,10 +406,15 @@ function drawBar(){
 
   // bars
   const bw = gw / days;
+  HITS.cBar = [];
   buckets.forEach((v, i) => {
-    if (!v) return;
     const bh = (v / max) * gh;
     const x  = padL + i * bw, y = padT + gh - bh;
+    const dt = new Date(today - (days-1-i)*DAY_MS);
+    HITS.cBar.push({ x, y: padT, w: bw, h: gh,
+      label: dt.toLocaleDateString([], {day:"2-digit", month:"short", year:"numeric"}),
+      value: v, unit: v === 1 ? "trial" : "trials" });
+    if (!v) return;
     ctx.fillStyle = CSS("--accent");
     const iw = Math.max(1, bw - 2);
     ctx.beginPath();
@@ -476,9 +486,13 @@ function drawDays(){
   ctx.beginPath(); ctx.moveTo(padL, padT + gh + .5); ctx.lineTo(w - 6, padT + gh + .5); ctx.stroke();
 
   const bw = gw / buckets.length;
+  HITS.cDays = [];
   ctx.textAlign = "center";
   buckets.forEach((v, i) => {
     const x = padL + i*bw;
+    HITS.cDays.push({ x, y: padT, w: bw, h: gh,
+      label: i === 0 ? "Expired" : `${i} day${i===1?"":"s"} left`,
+      value: v, unit: v === 1 ? "trial" : "trials" });
     if (v){
       const bh = (v/max) * gh, y = padT + gh - bh;
       ctx.fillStyle = i === 0 ? CSS("--bad") : i <= 2 ? CSS("--warn") : CSS("--ok");
@@ -498,6 +512,31 @@ function drawDays(){
   });
 }
 
+/* ── CANVAS TOOLTIPS ── */
+const HITS = { cBar: [], cDays: [] };
+
+function bindTip(id){
+  const cv  = document.getElementById(id);
+  const tip = document.getElementById("chartTip");
+  cv.addEventListener("mousemove", e => {
+    const r = cv.getBoundingClientRect();
+    const mx = e.clientX - r.left, my = e.clientY - r.top;
+    const hit = (HITS[id] || []).find(b =>
+      mx >= b.x && mx <= b.x + b.w && my >= b.y && my <= b.y + b.h);
+    if (!hit){ tip.style.display = "none"; return; }
+    tip.innerHTML = `${esc(hit.label)}<br><b>${hit.value}</b> ${hit.unit}`;
+    tip.style.display = "block";
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+    let left = e.clientX + 12, top = e.clientY - th - 10;
+    if (left + tw > window.innerWidth - 8) left = e.clientX - tw - 12;
+    if (top < 8) top = e.clientY + 16;
+    tip.style.left = left + "px";
+    tip.style.top  = top + "px";
+  });
+  cv.addEventListener("mouseleave", () => { tip.style.display = "none"; });
+}
+bindTip("cBar"); bindTip("cDays");
+
 window.drawAll = () => { try { drawBar(); drawDonut(); drawDays(); } catch(e){ console.warn(e); } };
 let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(drawAll, 150); });
 
@@ -516,5 +555,6 @@ window.exportCsv = () => {
 
 document.getElementById("login").style.display = "block";
 </script>
+<div id="chartTip"></div>
 </body>
 </html>
