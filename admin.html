@@ -282,7 +282,10 @@ window.render = () => {
   let rows = data.filter(d => {
     if (q && !d.uid.toLowerCase().includes(q)) return false;
     if (fS !== "all" && d.status !== fS) return false;
-    if (fR && d.start < now - fR*DAY_MS)  return false;
+    if (fR === 1) {
+      const t0 = new Date(); t0.setHours(0,0,0,0);
+      if (d.start < t0.getTime()) return false;
+    } else if (fR && d.start < now - fR*DAY_MS) return false;
     return true;
   });
 
