@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TV DSP Center — FAQ | TI Apps</title>
+<meta name="description" content="Frequently asked questions about TV DSP Center — the Android TV equalizer and DSP app. Passthrough audio, per-app EQ, device compatibility, Pro upgrade and more.">
+<link rel="canonical" href="https://tiapps.dev/tvdsp-faq.html">
+
+<!-- FAQ structured data for Google rich results -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Why does the equalizer have little or no effect on my phone?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Some devices, particularly certain phones with custom audio systems (such as certain Asus, Xiaomi and Realme models), restrict apps from controlling system-wide audio effects. On those devices the equalizer may have reduced or no effect. The app will tell you clearly if this is the case on your device. Using headphones, enabling Bass Boost and Loudness, and disabling any built-in sound enhancement in your phone's own settings usually helps."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does it work with HDMI ARC passthrough to a soundbar?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "When your TV uses HDMI ARC passthrough, it sends the raw compressed bitstream (Dolby/DTS) straight to the soundbar without decoding it. Android audio effects can only process decoded PCM audio, so the equalizer cannot affect passthrough audio. This is a system-level limitation, not specific to this app. Setting your TV's digital audio output to PCM instead of Auto/Bitstream lets the equalizer work, at the cost of surround (audio becomes stereo)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I set a different equalizer per app?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Unfortunately no. Android audio effects attach to an app's audio session, and for security reasons Android does not let one app access or control the audio sessions of other apps. The app hooks into the global output mix so it processes all audio together, which is also why settings cannot be split per app on standard (non-rooted) Android."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is there an APK or Downloader code for devices without the Play Store?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "TV DSP Center is only available through the Google Play Store. There is no standalone APK or Downloader code, because the free trial and Pro features rely on Google Play licensing and would not activate on a sideloaded version. If your device can add the Google Play Store, the app works fully there."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "I bought Pro but it doesn't show on my other device.",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Pro is tied to your Google account. Make sure the other device is signed in with the same Google account you used to buy Pro. Open the Google Play Store on that device for a moment, then reopen the app — it re-checks your purchase automatically on launch and unlocks Pro."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is there a night mode or limiter for sudden loud volume?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. The Pro features include an Anti-Clipping Limiter that tames sudden volume spikes, plus a Loudness Enhancer. Together they help even out loud jumps, similar to a night listening mode, which is useful when falling asleep or watching late at night."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does the free trial work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Start a 7-day free trial with one tap by choosing a Google account. No payment or card is required, and there is one free trial per Google account. The trial unlocks all 10 EQ bands, 6 presets, Smart DSP and profile saving. After the trial, the free version keeps Bass Boost, Loudness, Virtual Surround and a 3-band equalizer. Pro is a one-time purchase with no subscription."
+      }
+    }
+  ]
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0E16;
+    --card:#111726;
+    --card-edge:#1C2436;
+    --blue:#1E7BE0;
+    --cyan:#19A0EA;
+    --orange:#F5821A;
+    --amber:#FFAA33;
+    --text:#E9EDF5;
+    --muted:#8A93A8;
+    --mono:'IBM Plex Mono',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:'Archivo',system-ui,sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:820px;margin:0 auto;padding:32px 20px 80px}
+  .top{display:flex;align-items:center;gap:14px;margin:8px 0 36px}
+  .back{
+    display:inline-flex;align-items:center;gap:8px;
+    color:var(--cyan);text-decoration:none;font-weight:700;font-size:.92rem;
+    border:1px solid var(--card-edge);border-radius:10px;padding:9px 16px;
+    transition:border-color .2s,color .2s;
+  }
+  .back:hover{border-color:var(--cyan)}
+  .back svg{width:16px;height:16px}
+  .eyebrow{font-family:var(--mono);font-size:.74rem;color:var(--muted);letter-spacing:.14em;text-transform:uppercase}
+  h1{font-size:2rem;font-weight:900;font-variation-settings:'wdth' 115;margin:6px 0 10px}
+  .sub{color:var(--muted);font-size:1.02rem;margin-bottom:36px}
+  details{
+    background:var(--card);border:1px solid var(--card-edge);
+    border-radius:14px;margin-bottom:14px;overflow:hidden;
+    transition:border-color .2s;
+  }
+  details[open]{border-color:#2A3550}
+  summary{
+    cursor:pointer;list-style:none;padding:20px 22px;
+    font-weight:700;font-size:1.06rem;
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+  }
+  summary::-webkit-details-marker{display:none}
+  summary::after{
+    content:"+";font-family:var(--mono);font-size:1.5rem;color:var(--cyan);
+    flex-shrink:0;transition:transform .2s;line-height:1;
+  }
+  details[open] summary::after{content:"\2212"}
+  .answer{padding:0 22px 22px;color:var(--muted);font-size:1rem}
+  .answer strong{color:var(--text);font-weight:600}
+  .note{
+    margin-top:40px;padding:22px;border-radius:14px;
+    background:rgba(25,160,234,.06);border:1px solid rgba(25,160,234,.2);
+    color:var(--muted);font-size:.98rem;text-align:center;
+  }
+  .note a{color:var(--cyan);text-decoration:none;font-weight:700}
+  .note a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <a class="back" href="index.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Back
+      </a>
+    </div>
+
+    <div class="eyebrow">TV DSP Center</div>
+    <h1>Frequently Asked Questions</h1>
+    <p class="sub">Answers to the most common questions about the equalizer, device compatibility, and Pro features.</p>
+
+    <details>
+      <summary>Why does the equalizer have little or no effect on my phone?</summary>
+      <div class="answer">Some devices — particularly certain phones with custom audio systems (such as some Asus, Xiaomi and Realme models) — <strong>restrict apps from controlling system-wide audio effects</strong>. On those devices the equalizer may have reduced or no effect. The app will tell you clearly if this is the case on your device. Using headphones, enabling Bass Boost and Loudness together, and disabling any built-in sound enhancement in your phone's own settings usually helps a lot.</div>
+    </details>
+
+    <details>
+      <summary>Does it work with HDMI ARC passthrough to a soundbar?</summary>
+      <div class="answer">When your TV uses HDMI ARC passthrough, it sends the <strong>raw compressed bitstream</strong> (Dolby/DTS) straight to the soundbar without decoding it. Android audio effects can only process decoded <strong>PCM</strong> audio, so no equalizer can affect passthrough audio — it's a system-level limitation, not specific to this app. The workaround: set your TV's digital audio output from Auto/Bitstream to <strong>PCM</strong>. The TV then decodes locally and the equalizer works, though you trade 5.1 surround for stereo.</div>
+    </details>
+
+    <details>
+      <summary>Can I set a different equalizer per app?</summary>
+      <div class="answer">Unfortunately not. Android audio effects attach to each app's <strong>audio session</strong>, and for security reasons Android doesn't let one app access or control the audio sessions of other apps (Netflix, YouTube, etc.). The app hooks into the global output mix so it processes all audio together — which is also exactly why the settings can't be split per app on standard (non-rooted) Android.</div>
+    </details>
+
+    <details>
+      <summary>Is there an APK or Downloader code for devices without the Play Store?</summary>
+      <div class="answer">TV DSP Center is available <strong>only through the Google Play Store</strong>. There's no standalone APK or Downloader code, because the free trial and Pro features rely on Google Play licensing and wouldn't activate on a sideloaded version. If your device can add the Google Play Store, the app works fully there.</div>
+    </details>
+
+    <details>
+      <summary>I bought Pro but it doesn't show on my other device.</summary>
+      <div class="answer">Pro is tied to your <strong>Google account</strong>. Make sure the other device is signed in with the same Google account you used to buy Pro. Open the Google Play Store on that device for a moment, then reopen the app — it re-checks your purchase automatically on launch and unlocks Pro. No need to buy again.</div>
+    </details>
+
+    <details>
+      <summary>Is there a night mode or limiter for sudden loud volume?</summary>
+      <div class="answer">Yes. The Pro features include an <strong>Anti-Clipping Limiter</strong> that tames sudden volume spikes, plus a <strong>Loudness Enhancer</strong>. Together they help even out loud jumps — similar to a night listening mode — which is handy when falling asleep or watching late at night.</div>
+    </details>
+
+    <details>
+      <summary>How does the free trial work?</summary>
+      <div class="answer">Start a <strong>7-day free trial</strong> with one tap by choosing a Google account — no payment or card required, one trial per Google account. It unlocks all 10 EQ bands, 6 presets, Smart DSP and profile saving. After the trial, the free version keeps Bass Boost, Loudness, Virtual Surround and a 3-band equalizer. Pro is a <strong>one-time purchase, no subscription</strong>.</div>
+    </details>
+
+    <div class="note">
+      Still have a question? <a href="contact.html">Contact us</a> — and please reach out before leaving a review if something isn't working, so we can help.
+    </div>
+  </div>
+</body>
+</html>
