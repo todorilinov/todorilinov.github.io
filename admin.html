@@ -250,10 +250,10 @@ window.load = async () => {
       const start = Number(v && v.trialStart) || 0;
       const end   = start + TRIAL_DAYS * DAY_MS;
       const left  = Math.max(0, Math.ceil((end - now) / DAY_MS));
-      const status = start === 0 ? "expired"
-                   : now >= end  ? "expired"
-                   : left <= 2   ? "soon" : "active";
-      return { uid, start, end, days: left, status };
+      const expired = start === 0 || now >= end;
+      const status  = expired ? "expired" : "active";
+      const soon    = !expired && left <= 2;   // ending soon is a sub-state of active
+      return { uid, start, end, days: left, status, soon };
     });
     stats(now); render(); drawAll();
     document.getElementById("updated").textContent =
@@ -267,8 +267,8 @@ window.load = async () => {
 
 function stats(now){
   const t = data.length;
-  const a = data.filter(d => d.status === "active").length;
-  const s = data.filter(d => d.status === "soon").length;
+  const a = data.filter(d => d.status === "active").length;   // all active (incl. ending soon)
+  const s = data.filter(d => d.soon).length;                  // subset of active, ≤2 days left
   const x = data.filter(d => d.status === "expired").length;
   const w = data.filter(d => d.start > now - 7*DAY_MS).length;
   set("sTotal",t); set("sActive",a); set("sSoon",s); set("sExp",x); set("s7",w);
@@ -286,7 +286,8 @@ window.render = () => {
 
   let rows = data.filter(d => {
     if (q && !d.uid.toLowerCase().includes(q)) return false;
-    if (fS !== "all" && d.status !== fS) return false;
+    if (fS === "soon") { if (!d.soon) return false; }
+    else if (fS !== "all" && d.status !== fS) return false;
     if (fR === 1) {
       const t0 = new Date(); t0.setHours(0,0,0,0);
       if (d.start < t0.getTime()) return false;
@@ -305,7 +306,8 @@ window.render = () => {
 
   const label = { active:["Active","p-act"], soon:["Ending soon","p-end"], expired:["Expired","p-exp"] };
   document.getElementById("rows").innerHTML = rows.map(d => {
-    const [txt, cls] = label[d.status];
+    const key = d.status === "active" && d.soon ? "soon" : d.status;
+    const [txt, cls] = label[key];
     return `<tr>
       <td class="uid" title="${esc(d.uid)}">${esc(d.uid.slice(0,20))}…</td>
       <td>${d.start ? esc(fmt(d.start)) : "—"}</td>
@@ -438,9 +440,9 @@ function drawBar(){
 function drawDonut(){
   const { ctx, w, h } = prep("cDonut");
   const segs = [
-    { k:"active",  n:data.filter(d=>d.status==="active").length,  c:CSS("--ok"),     t:"Active" },
-    { k:"soon",    n:data.filter(d=>d.status==="soon").length,    c:CSS("--warn"),   t:"Ending soon" },
-    { k:"expired", n:data.filter(d=>d.status==="expired").length, c:CSS("--bad"),    t:"Expired" }
+    { k:"active",  n:data.filter(d=>d.status==="active" && !d.soon).length, c:CSS("--ok"),   t:"Active" },
+    { k:"soon",    n:data.filter(d=>d.soon).length,                         c:CSS("--warn"), t:"Ending soon" },
+    { k:"expired", n:data.filter(d=>d.status==="expired").length,           c:CSS("--bad"),  t:"Expired" }
   ];
   const total = segs.reduce((s,x)=>s+x.n, 0);
   document.getElementById("donutLegend").innerHTML = segs.map(s =>
@@ -546,7 +548,8 @@ window.exportCsv = () => {
   const head = "uid,trial_started,trial_ends,days_left,status\n";
   const body = data.map(d =>
     [d.uid, d.start ? new Date(d.start).toISOString() : "",
-     d.start ? new Date(d.end).toISOString() : "", d.days, d.status].join(",")
+     d.start ? new Date(d.end).toISOString() : "", d.days,
+     d.status === "active" && d.soon ? "soon" : d.status].join(",")
   ).join("\n");
   const url = URL.createObjectURL(new Blob([head+body], {type:"text/csv"}));
   const a = document.createElement("a");
