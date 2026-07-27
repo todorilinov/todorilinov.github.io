@@ -449,7 +449,7 @@ function drawDonut(){
   const total = segs.reduce((s,x)=>s+x.n, 0);
   document.getElementById("donutLegend").innerHTML =
     segs.map(s => `<span><i style="background:${s.c}"></i>${s.t} — ${s.n}</span>`).join("") +
-    `<span><i style="background:${CSS("--warn")}"></i>Ending soon (≤2d) — ${soonN} <span style="opacity:.65">of Active</span></span>`;
+    `<span><i style="background:${CSS("--ok")};opacity:.55"></i>Ending soon (≤2d) — ${soonN} <span style="opacity:.65">of Active</span></span>`;
 
   if (!total) return noData(ctx, w, h);
 
@@ -501,11 +501,14 @@ function drawDays(){
       value: v, unit: v === 1 ? "trial" : "trials" });
     if (v){
       const bh = (v/max) * barMax, y = padT + gh - bh;
-      ctx.fillStyle = i === 0 ? CSS("--bad") : i <= 2 ? CSS("--warn") : CSS("--ok");
+      const soon = i >= 1 && i <= 2;   // ending soon is a paler tint of active, not a separate status
+      ctx.fillStyle = i === 0 ? CSS("--bad") : CSS("--ok");
+      ctx.globalAlpha = soon ? .55 : 1;
       ctx.beginPath();
       if (ctx.roundRect) ctx.roundRect(x + bw*.18, y, bw*.64, bh, [3,3,0,0]);
       else ctx.rect(x + bw*.18, y, bw*.64, bh);
       ctx.fill();
+      ctx.globalAlpha = 1;
       ctx.fillStyle = CSS("--txt");
       ctx.font = "600 10px -apple-system,Segoe UI,Roboto,sans-serif";
       ctx.textBaseline = "bottom";
