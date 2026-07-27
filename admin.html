@@ -436,17 +436,20 @@ function drawBar(){
   });
 }
 
-/** Donut: active / ending soon / expired. */
+/** Donut: active (incl. ending-soon subset) / expired. */
 function drawDonut(){
   const { ctx, w, h } = prep("cDonut");
+  // "soon" is a sub-state of "active" (see stats()), not a third bucket —
+  // it must not be sliced out of the active arc or the two would double-count.
   const segs = [
-    { k:"active",  n:data.filter(d=>d.status==="active" && !d.soon).length, c:CSS("--ok"),   t:"Active" },
-    { k:"soon",    n:data.filter(d=>d.soon).length,                         c:CSS("--warn"), t:"Ending soon" },
-    { k:"expired", n:data.filter(d=>d.status==="expired").length,           c:CSS("--bad"),  t:"Expired" }
+    { k:"active",  n:data.filter(d=>d.status==="active").length,  c:CSS("--ok"),  t:"Active" },
+    { k:"expired", n:data.filter(d=>d.status==="expired").length, c:CSS("--bad"), t:"Expired" }
   ];
+  const soonN = data.filter(d=>d.soon).length;
   const total = segs.reduce((s,x)=>s+x.n, 0);
-  document.getElementById("donutLegend").innerHTML = segs.map(s =>
-    `<span><i style="background:${s.c}"></i>${s.t} — ${s.n}</span>`).join("");
+  document.getElementById("donutLegend").innerHTML =
+    segs.map(s => `<span><i style="background:${s.c}"></i>${s.t} — ${s.n}</span>`).join("") +
+    `<span><i style="background:${CSS("--warn")}"></i>Ending soon (≤2d) — ${soonN} <span style="opacity:.65">of Active</span></span>`;
 
   if (!total) return noData(ctx, w, h);
 
