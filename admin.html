@@ -453,14 +453,16 @@ function drawDonut(){
     `<span><i style="background:${CSS("--bad")}"></i>Expired — ${expiredN}</span>` +
     `<span><i style="background:${CSS("--ok")};opacity:.55"></i>Ending soon (≤2d) — ${activeSoon} <span style="opacity:.65">of Active</span></span>`;
 
-  if (!total) return noData(ctx, w, h);
+  HITS.cDonut = [];
+  if (!total) { HITS.cDonutGeom = null; return noData(ctx, w, h); }
 
   const cx = w/2, cy = h/2, R = Math.min(w,h)/2 - 6, r = R * .62;
+  HITS.cDonutGeom = { cx, cy, r, R };
   let a0 = -Math.PI/2;
   const segs = [
-    { n:activeNotSoon, c:CSS("--ok"),  alpha:1   },
-    { n:activeSoon,    c:CSS("--ok"),  alpha:.55 },
-    { n:expiredN,      c:CSS("--bad"), alpha:1   }
+    { n:activeNotSoon, c:CSS("--ok"),  alpha:1,   label:"Active",            unit:"trials" },
+    { n:activeSoon,    c:CSS("--ok"),  alpha:.55, label:"Ending soon (≤2d)", unit:"trials" },
+    { n:expiredN,      c:CSS("--bad"), alpha:1,   label:"Expired",           unit:"trials" }
   ];
   segs.forEach(s => {
     if (!s.n) return;
@@ -473,6 +475,7 @@ function drawDonut(){
     ctx.globalAlpha = s.alpha;
     ctx.fill();
     ctx.globalAlpha = 1;
+    HITS.cDonut.push({ a0, a1, label: s.label, value: s.n, unit: s.unit });
     a0 = a1;
   });
 
@@ -532,16 +535,30 @@ function drawDays(){
 }
 
 /* ── CANVAS TOOLTIPS ── */
-const HITS = { cBar: [], cDays: [] };
+const HITS = { cBar: [], cDays: [], cDonut: [], cDonutGeom: null };
 
-function bindTip(id){
+const rectHit  = id => (mx, my) => (HITS[id] || []).find(b =>
+  mx >= b.x && mx <= b.x + b.w && my >= b.y && my <= b.y + b.h);
+
+/** Polar hit-test for the donut: which arc slice is the pointer over. */
+function donutHit(mx, my){
+  const g = HITS.cDonutGeom;
+  if (!g) return null;
+  const dx = mx - g.cx, dy = my - g.cy;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  if (dist < g.r || dist > g.R) return null;
+  let ang = Math.atan2(dy, dx);
+  if (ang < -Math.PI/2) ang += Math.PI * 2;   // match the -90°-start sweep used when drawing
+  return HITS.cDonut.find(s => ang >= s.a0 && ang < s.a1) || null;
+}
+
+function bindTip(id, hitTest){
   const cv  = document.getElementById(id);
   const tip = document.getElementById("chartTip");
   cv.addEventListener("mousemove", e => {
     const r = cv.getBoundingClientRect();
     const mx = e.clientX - r.left, my = e.clientY - r.top;
-    const hit = (HITS[id] || []).find(b =>
-      mx >= b.x && mx <= b.x + b.w && my >= b.y && my <= b.y + b.h);
+    const hit = hitTest(mx, my);
     if (!hit){ tip.style.display = "none"; return; }
     tip.innerHTML = `${esc(hit.label)}<br><b>${hit.value}</b> ${hit.unit}`;
     tip.style.display = "block";
@@ -554,7 +571,7 @@ function bindTip(id){
   });
   cv.addEventListener("mouseleave", () => { tip.style.display = "none"; });
 }
-bindTip("cBar"); bindTip("cDays");
+bindTip("cBar", rectHit("cBar")); bindTip("cDays", rectHit("cDays")); bindTip("cDonut", donutHit);
 
 window.drawAll = () => { try { drawBar(); drawDonut(); drawDays(); } catch(e){ console.warn(e); } };
 let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(drawAll, 150); });
