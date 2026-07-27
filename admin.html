@@ -436,25 +436,32 @@ function drawBar(){
   });
 }
 
-/** Donut: active (incl. ending-soon subset) / expired. */
+/** Donut: active (incl. ending-soon subset, drawn as a paler tail) / expired. */
 function drawDonut(){
   const { ctx, w, h } = prep("cDonut");
   // "soon" is a sub-state of "active" (see stats()), not a third bucket —
-  // it must not be sliced out of the active arc or the two would double-count.
-  const segs = [
-    { k:"active",  n:data.filter(d=>d.status==="active").length,  c:CSS("--ok"),  t:"Active" },
-    { k:"expired", n:data.filter(d=>d.status==="expired").length, c:CSS("--bad"), t:"Expired" }
-  ];
-  const soonN = data.filter(d=>d.soon).length;
-  const total = segs.reduce((s,x)=>s+x.n, 0);
+  // it's drawn as a lighter shade *within* the active arc, not sliced out of it,
+  // so the ring total still matches the "Active" count.
+  const activeSoon    = data.filter(d=>d.soon).length;
+  const activeNotSoon = data.filter(d=>d.status==="active" && !d.soon).length;
+  const expiredN      = data.filter(d=>d.status==="expired").length;
+  const activeTotal   = activeSoon + activeNotSoon;
+  const total         = activeTotal + expiredN;
+
   document.getElementById("donutLegend").innerHTML =
-    segs.map(s => `<span><i style="background:${s.c}"></i>${s.t} — ${s.n}</span>`).join("") +
-    `<span><i style="background:${CSS("--ok")};opacity:.55"></i>Ending soon (≤2d) — ${soonN} <span style="opacity:.65">of Active</span></span>`;
+    `<span><i style="background:${CSS("--ok")}"></i>Active — ${activeTotal}</span>` +
+    `<span><i style="background:${CSS("--bad")}"></i>Expired — ${expiredN}</span>` +
+    `<span><i style="background:${CSS("--ok")};opacity:.55"></i>Ending soon (≤2d) — ${activeSoon} <span style="opacity:.65">of Active</span></span>`;
 
   if (!total) return noData(ctx, w, h);
 
   const cx = w/2, cy = h/2, R = Math.min(w,h)/2 - 6, r = R * .62;
   let a0 = -Math.PI/2;
+  const segs = [
+    { n:activeNotSoon, c:CSS("--ok"),  alpha:1   },
+    { n:activeSoon,    c:CSS("--ok"),  alpha:.55 },
+    { n:expiredN,      c:CSS("--bad"), alpha:1   }
+  ];
   segs.forEach(s => {
     if (!s.n) return;
     const a1 = a0 + (s.n/total) * Math.PI * 2;
@@ -462,7 +469,10 @@ function drawDonut(){
     ctx.arc(cx, cy, R, a0, a1);
     ctx.arc(cx, cy, r, a1, a0, true);
     ctx.closePath();
-    ctx.fillStyle = s.c; ctx.fill();
+    ctx.fillStyle = s.c;
+    ctx.globalAlpha = s.alpha;
+    ctx.fill();
+    ctx.globalAlpha = 1;
     a0 = a1;
   });
 
