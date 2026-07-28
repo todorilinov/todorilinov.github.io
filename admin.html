@@ -491,12 +491,17 @@ function drawDonut(){
   ctx.fillText("trials", cx, cy + 12);
 }
 
-/** Horizontal-ish bars: how many trials have N days remaining (0..7). */
+/** Horizontal-ish bars: how many trials have N days remaining (1..7).
+ *  Expired is excluded — it has no ceiling and would keep shrinking these
+ *  bars relative to itself as it grows; it's already shown in the stat
+ *  tile and the donut. */
 function drawDays(){
   const { ctx, w, h } = prep("cDays");
-  const buckets = new Array(TRIAL_DAYS + 1).fill(0);
-  data.forEach(d => { const n = d.status === "expired" ? 0 : d.days;
-                      if (n >= 0 && n <= TRIAL_DAYS) buckets[n]++; });
+  const buckets = new Array(TRIAL_DAYS).fill(0);
+  data.forEach(d => {
+    if (d.status === "expired") return;
+    if (d.days >= 1 && d.days <= TRIAL_DAYS) buckets[d.days - 1]++;
+  });
   const max = Math.max(1, ...buckets);
   if (!data.length) return noData(ctx, w, h);
 
@@ -511,14 +516,15 @@ function drawDays(){
   HITS.cDays = [];
   ctx.textAlign = "center";
   buckets.forEach((v, i) => {
+    const day = i + 1;
     const x = padL + i*bw;
     HITS.cDays.push({ x, y: padT, w: bw, h: gh,
-      label: i === 0 ? "Expired" : `${i} day${i===1?"":"s"} left`,
+      label: `${day} day${day===1?"":"s"} left`,
       value: v, unit: v === 1 ? "trial" : "trials" });
     if (v){
       const bh = (v/max) * barMax, y = padT + gh - bh;
-      const soon = i >= 1 && i <= 2;   // ending soon is a paler tint of active, not a separate status
-      ctx.fillStyle = i === 0 ? CSS("--bad") : CSS("--ok");
+      const soon = day <= 2;   // ending soon is a paler tint of active, not a separate status
+      ctx.fillStyle = CSS("--ok");
       ctx.globalAlpha = soon ? .55 : 1;
       ctx.beginPath();
       if (ctx.roundRect) ctx.roundRect(x + bw*.18, y, bw*.64, bh, [3,3,0,0]);
@@ -533,7 +539,7 @@ function drawDays(){
     ctx.fillStyle = CSS("--faint");
     ctx.font = "10px -apple-system,Segoe UI,Roboto,sans-serif";
     ctx.textBaseline = "top";
-    ctx.fillText(i === 0 ? "exp" : i, x + bw/2, padT + gh + 6);
+    ctx.fillText(day, x + bw/2, padT + gh + 6);
   });
 }
 
