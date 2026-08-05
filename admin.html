@@ -135,7 +135,7 @@
       </div>
 
       <div class="card chart-box">
-        <div class="chart-h"><span>Status breakdown</span></div>
+        <div class="chart-h"><span>Active breakdown</span></div>
         <canvas id="cDonut" height="150"></canvas>
         <div class="legend" id="donutLegend"></div>
       </div>
@@ -436,21 +436,22 @@ function drawBar(){
   });
 }
 
-/** Donut: active (incl. ending-soon subset, drawn as a paler tail) / expired. */
+/** Donut: active trials only, with the ending-soon subset as a paler tail.
+ *  Expired is deliberately left out — it only grows, and once it dominates the
+ *  ring the active split becomes unreadable; the count still lives in its own
+ *  stat tile. */
 function drawDonut(){
   const { ctx, w, h } = prep("cDonut");
-  // "soon" is a sub-state of "active" (see stats()), not a third bucket —
+  // "soon" is a sub-state of "active" (see stats()), not a separate bucket —
   // it's drawn as a lighter shade *within* the active arc, not sliced out of it,
   // so the ring total still matches the "Active" count.
   const activeSoon    = data.filter(d=>d.soon).length;
   const activeNotSoon = data.filter(d=>d.status==="active" && !d.soon).length;
-  const expiredN      = data.filter(d=>d.status==="expired").length;
   const activeTotal   = activeSoon + activeNotSoon;
-  const total         = activeTotal + expiredN;
+  const total         = activeTotal;
 
   document.getElementById("donutLegend").innerHTML =
     `<span><i style="background:${CSS("--ok")}"></i>Active — ${activeTotal}</span>` +
-    `<span><i style="background:${CSS("--bad")}"></i>Expired — ${expiredN}</span>` +
     `<span><i style="background:${CSS("--ok")};opacity:.55"></i>Ending soon (≤2d) — ${activeSoon} <span style="opacity:.65">of Active</span></span>`;
 
   HITS.cDonut = [];
@@ -464,8 +465,7 @@ function drawDonut(){
   // total (incl. ending-soon), matching the "Active — 123" legend row.
   const segs = [
     { n:activeNotSoon, tip:activeTotal, c:CSS("--ok"),  alpha:1,   label:"Active",            unit:"trials" },
-    { n:activeSoon,    tip:activeSoon,  c:CSS("--ok"),  alpha:.55, label:"Ending soon (≤2d)", unit:"trials" },
-    { n:expiredN,      tip:expiredN,    c:CSS("--bad"), alpha:1,   label:"Expired",           unit:"trials" }
+    { n:activeSoon,    tip:activeSoon,  c:CSS("--ok"),  alpha:.55, label:"Ending soon (≤2d)", unit:"trials" }
   ];
   segs.forEach(s => {
     if (!s.n) return;
@@ -488,7 +488,7 @@ function drawDonut(){
   ctx.fillText(total, cx, cy - 4);
   ctx.fillStyle = CSS("--faint");
   ctx.font = "10px -apple-system,Segoe UI,Roboto,sans-serif";
-  ctx.fillText("trials", cx, cy + 12);
+  ctx.fillText("active", cx, cy + 12);
 }
 
 /** Horizontal-ish bars: how many trials have N days remaining (1..7).
