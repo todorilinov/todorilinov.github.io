@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Privacy Policy — TI Apps</title>
-<meta name="description" content="Privacy policy for TI Apps applications: TV DSP Center and World Radio.">
+<meta name="description" content="Privacy policy for TI Apps applications: TV DSP Center, World Radio and Fake Location.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -53,17 +53,18 @@
 <main>
 <div class="wrap">
   <h1>Privacy Policy</h1>
-  <div class="updated">Last updated: July 5, 2026</div>
+  <div class="updated">Last updated: August 7, 2026</div>
 
   <p>This Privacy Policy describes how Todor Ilinov ("TI Apps", "we", "I") handles information in the mobile applications published under this developer account.</p>
 
   <div class="apps-covered">
     <p>TV DSP Center — Equalizer (com.tvdsp.center)</p>
     <p>World Radio (com.worldradio.app)</p>
+    <p>Fake Location (com.fakelocation.app)</p>
   </div>
 
   <h2>Information we do not collect</h2>
-  <p>Our apps do <strong>not</strong> require you to create an account. We do not collect your name, email address, contacts, photos, precise location, or any other personally identifying information. Audio processed by TV DSP Center never leaves your device.</p>
+  <p>Our apps do <strong>not</strong> require you to create an account. We do not collect your name, email address, contacts, photos or any other personally identifying information, and none of our apps send your personal data to us. Audio processed by TV DSP Center never leaves your device. Fake Location reads your device's location, but only on the device itself — see the section on Fake Location below.</p>
 
   <h2>Information collected automatically</h2>
   <p>The apps use the following third-party services, which may collect limited technical data:</p>
@@ -86,6 +87,28 @@
     <li><strong>Internet</strong> — required for radio streaming, ads and analytics.</li>
     <li><strong>Foreground service / notifications</strong> (World Radio) — required for background playback and the alarm feature.</li>
   </ul>
+
+  <h2>Fake Location</h2>
+  <p>Fake Location lets you set a simulated GPS position on your own device for testing and privacy purposes.</p>
+
+  <p><strong>Location data.</strong> The app reads your device's location so it can centre the map where you are and so the "Current GPS" button can pick up your real position. This location is used on the device only. It is never sent to us and never stored anywhere outside your phone.</p>
+
+  <p><strong>Places you save.</strong> Names, addresses and coordinates you save are stored in a database inside the app's private storage on your device. They are not backed up to our servers and we have no access to them. You can delete any entry in the app, export them to a JSON file of your choosing, or remove them all by uninstalling the app.</p>
+
+  <p><strong>Simulated location.</strong> While a simulated location is running, the app reports the coordinates you chose to Android as a mock position, so other apps on your device may read that position instead of your real one. This works only while you have selected Fake Location under Developer options, and only until you stop it. Nothing about this is transmitted to us.</p>
+
+  <p><strong>Additional services used by this app:</strong></p>
+  <ul>
+    <li><strong>Google Maps SDK for Android</strong> — draws the map. Google receives the map area you are viewing in order to serve map tiles.</li>
+    <li><strong>Google Play services location</strong> — supplies the device position to the app.</li>
+    <li><strong>Android Geocoder</strong> — converts an address you type into coordinates, and coordinates into an address label. On devices with Google services these lookups are handled by Google.</li>
+  </ul>
+
+  <p><strong>Permissions:</strong> location (precise and approximate) to show where you are on the map; mock location to report the simulated position, which Android allows only after you select the app under Developer options; foreground service and notifications to keep the simulated location running and show an ongoing notification while it is active.</p>
+
+  <h2>Advertising consent in Europe</h2>
+  <p>If you are in the European Economic Area, the United Kingdom or Switzerland, our apps ask for your consent before showing personalised advertising, using Google's User Messaging Platform. You can choose to consent, to refuse, or to manage individual purposes.</p>
+  <p>You can change or withdraw that choice at any time from the privacy settings inside each app — the shield icon in Fake Location and World Radio, and the "Privacy settings" button in TV DSP Center. If you refuse, you will still see advertising, but it will not be personalised.</p>
 
   <h2>Children</h2>
   <p>Our apps are not directed at children under 13 and we do not knowingly collect data from children.</p>
