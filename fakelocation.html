@@ -12,11 +12,11 @@
 <meta property="og:url" content="https://tiapps.dev/fakelocation.html">
 <meta property="og:title" content="Fake Location — Mock GPS for Android">
 <meta property="og:description" content="Pick a spot on the map, hit start, and your apps see that position instead of your real one. Saved places, JSON import & export, no root.">
-<meta property="og:image" content="https://tiapps.dev/img/fakelocation_icon.jpg">
+<meta property="og:image" content="https://tiapps.dev/img/fakelocation_banner.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Fake Location — Mock GPS for Android">
 <meta name="twitter:description" content="Set a simulated GPS position on your own device. Saved places, JSON import & export, no root required.">
-<meta name="twitter:image" content="https://tiapps.dev/img/fakelocation_icon.jpg">
+<meta name="twitter:image" content="https://tiapps.dev/img/fakelocation_banner.jpg">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -86,11 +86,15 @@
     font-family:var(--mono);font-size:.8rem;letter-spacing:.14em;
     text-transform:uppercase;color:var(--violet);margin-bottom:18px;
   }
-  .page-hero .app-badge{
-    width:88px;height:88px;border-radius:20px;margin:0 auto 26px;
-    display:block;border:1px solid var(--card-edge);
-    box-shadow:0 16px 40px -16px rgba(124,92,255,.45);
+  /* The store cover carries the app name and tagline itself, so it stands in
+     for the small square icon the other app pages use. */
+  .hero-cover{
+    max-width:760px;margin:0 auto 34px;
+    border-radius:20px;overflow:hidden;
+    border:1px solid var(--card-edge);
+    box-shadow:0 24px 60px -24px rgba(124,92,255,.45);
   }
+  .hero-cover img{display:block;width:100%;height:auto}
   .page-hero h1{
     font-weight:900;
     font-variation-settings:'wdth' 122;
@@ -302,7 +306,9 @@
 <div class="page-hero">
   <div class="wrap">
     <div class="eyebrow">Android · Location Tools</div>
-    <img class="app-badge" src="img/fakelocation_icon.jpg" alt="Fake Location app icon">
+    <div class="hero-cover">
+      <img src="img/fakelocation_banner.jpg" alt="Fake Location — change your location, your way: a glowing map pin over a neon city grid with London, New York, Tokyo and Sydney coordinate cards" loading="eager">
+    </div>
     <h1>Your phone is here. <span class="grad">Or anywhere you like.</span></h1>
     <p>Fake Location sets a simulated GPS position on your own device. Pick a spot on the map, press start, and the apps on your phone read that position instead of your real one — no root, no complicated setup.</p>
     <div class="hero-cta">
