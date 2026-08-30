@@ -12,11 +12,11 @@
 <meta property="og:url" content="https://tiapps.dev/worldradio.html">
 <meta property="og:title" content="World Radio — Free Live Internet Radio for Android">
 <meta property="og:description" content="Thousands of live radio stations worldwide, a real equalizer, 11 visualizers, radio alarm clock, sleep timer and car mode — completely free.">
-<meta property="og:image" content="https://tiapps.dev/img/hero_banner.jpg">
+<meta property="og:image" content="https://tiapps.dev/img/worldradio_banner.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="World Radio — Free Live Internet Radio for Android">
 <meta name="twitter:description" content="Thousands of live stations worldwide, equalizer, alarm, sleep timer & car mode — free.">
-<meta name="twitter:image" content="https://tiapps.dev/img/hero_banner.jpg">
+<meta name="twitter:image" content="https://tiapps.dev/img/worldradio_banner.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -73,11 +73,13 @@
     font-family:var(--mono);font-size:.8rem;letter-spacing:.14em;
     text-transform:uppercase;color:var(--cyan);margin-bottom:18px;
   }
-  .page-hero .app-badge{
-    width:88px;height:88px;border-radius:20px;margin:0 auto 26px;
-    display:block;border:1px solid var(--card-edge);
-    box-shadow:0 16px 40px -16px rgba(25,160,234,.35);
+  .hero-cover{
+    max-width:760px;margin:0 auto 34px;
+    border-radius:20px;overflow:hidden;
+    border:1px solid var(--card-edge);
+    box-shadow:0 24px 60px -24px rgba(124,92,255,.45);
   }
+  .hero-cover img{display:block;width:100%;height:auto}
   .page-hero h1{
     font-weight:900;
     font-variation-settings:'wdth' 122;
@@ -256,7 +258,9 @@
 <div class="page-hero">
   <div class="wrap">
     <div class="eyebrow">Android · Live Internet Radio</div>
-    <img class="app-badge" src="img/worldradio_icon.jpg" alt="World Radio app icon">
+    <div class="hero-cover">
+      <img src="img/worldradio_banner.jpg" alt="World Radio — live radio, worldwide: a glowing microphone with headphones over a neon world map, with New York, London, Tokyo and Sydney station cards" loading="eager">
+    </div>
     <h1>The whole world, <span class="grad">one tap away.</span></h1>
     <p>World Radio streams live stations from every corner of the planet — with a real equalizer, animated visualizers, a radio alarm clock, sleep timer and car mode. Completely free.</p>
     <div class="hero-cta">
