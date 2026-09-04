@@ -34,6 +34,9 @@
   .stat{padding:16px 18px}
   .stat .n{font-size:26px;font-weight:600;line-height:1.1}
   .stat .l{color:var(--dim);font-size:12px;margin-top:4px}
+  /* today's signups — the one number worth spotting at a glance */
+  .stat.hi{border-color:rgba(0,204,255,.5);box-shadow:0 0 0 3px rgba(0,204,255,.08)}
+  .stat.hi .l{color:var(--accent);opacity:.85}
 
   /* charts */
   .charts{display:grid;grid-template-columns:1.6fr 1fr;gap:12px;margin-bottom:18px}
@@ -117,6 +120,7 @@
       <div class="card stat"><div class="n" id="sActive" style="color:var(--ok)">–</div><div class="l">Active</div></div>
       <div class="card stat"><div class="n" id="sSoon" style="color:var(--warn)">–</div><div class="l">Ending ≤2 days</div></div>
       <div class="card stat"><div class="n" id="sExp" style="color:var(--bad)">–</div><div class="l">Expired</div></div>
+      <div class="card stat hi"><div class="n" id="sToday" style="color:var(--accent)">–</div><div class="l">Started today</div></div>
       <div class="card stat"><div class="n" id="s7">–</div><div class="l">Started last 7d</div></div>
     </div>
 
@@ -271,7 +275,10 @@ function stats(now){
   const s = data.filter(d => d.soon).length;                  // subset of active, ≤2 days left
   const x = data.filter(d => d.status === "expired").length;
   const w = data.filter(d => d.start > now - 7*DAY_MS).length;
-  set("sTotal",t); set("sActive",a); set("sSoon",s); set("sExp",x); set("s7",w);
+  const midnight = new Date(now); midnight.setHours(0,0,0,0);   // local day, not rolling 24h
+  const td = data.filter(d => d.start >= midnight.getTime()).length;
+  set("sTotal",t); set("sActive",a); set("sSoon",s); set("sExp",x);
+  set("sToday",td); set("s7",w);
 }
 const set = (id,v) => document.getElementById(id).textContent = v;
 
