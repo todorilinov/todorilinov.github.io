@@ -72,6 +72,9 @@
   th:hover{color:var(--txt)}
   th .arw{opacity:.45;font-size:10px}
   td.uid{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:var(--faint)}
+  td.acct{font-size:12.5px;color:var(--txt);word-break:break-all}
+  td.acct .sub-uid{display:block;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+                   font-size:10.5px;color:var(--faint);margin-top:2px}
   tr:last-child td{border-bottom:none}
   tbody tr:hover{background:rgba(255,255,255,.02)}
 
@@ -151,7 +154,7 @@
     </div>
 
     <div class="controls">
-      <input type="search" id="q" placeholder="Search UID…" oninput="render()">
+      <input type="search" id="q" placeholder="Search email or UID…" oninput="render()">
       <select id="fStatus" onchange="render()">
         <option value="all">All statuses</option>
         <option value="active">Active only</option>
@@ -171,7 +174,7 @@
     <div class="card" style="overflow-x:auto">
       <table>
         <thead><tr>
-          <th onclick="sortBy('uid')">Account UID <span class="arw" id="a-uid"></span></th>
+          <th onclick="sortBy('who')">Account <span class="arw" id="a-who"></span></th>
           <th onclick="sortBy('start')">Trial started <span class="arw" id="a-start"></span></th>
           <th onclick="sortBy('end')" class="hide-s">Ends <span class="arw" id="a-end"></span></th>
           <th onclick="sortBy('days')">Days left <span class="arw" id="a-days"></span></th>
@@ -257,7 +260,9 @@ window.load = async () => {
       const expired = start === 0 || now >= end;
       const status  = expired ? "expired" : "active";
       const soon    = !expired && left <= 2;   // ending soon is a sub-state of active
-      return { uid, start, end, days: left, status, soon };
+      // the app may store the address next to trialStart; fall back to the UID
+      const email = String((v && (v.email || v.userEmail || v.mail)) || "").trim();
+      return { uid, email, who: email || uid, start, end, days: left, status, soon };
     });
     stats(now); render(); drawAll();
     document.getElementById("updated").textContent =
@@ -292,7 +297,7 @@ window.render = () => {
   const now   = Date.now();
 
   let rows = data.filter(d => {
-    if (q && !d.uid.toLowerCase().includes(q)) return false;
+    if (q && !d.who.toLowerCase().includes(q) && !d.uid.toLowerCase().includes(q)) return false;
     if (fS === "soon") { if (!d.soon) return false; }
     else if (fS !== "all" && d.status !== fS) return false;
     if (fR === 1) {
@@ -307,7 +312,7 @@ window.render = () => {
     return (typeof a === "string" ? a.localeCompare(b) : a - b) * sort.dir;
   });
 
-  ["uid","start","end","days","status"].forEach(k =>
+  ["who","start","end","days","status"].forEach(k =>
     document.getElementById("a-"+k).textContent =
       sort.key === k ? (sort.dir === 1 ? "▲" : "▼") : "");
 
@@ -316,7 +321,9 @@ window.render = () => {
     const key = d.status === "active" && d.soon ? "soon" : d.status;
     const [txt, cls] = label[key];
     return `<tr>
-      <td class="uid" title="${esc(d.uid)}">${esc(d.uid.slice(0,20))}…</td>
+      ${d.email
+        ? `<td class="acct" title="${esc(d.uid)}">${esc(d.email)}<span class="sub-uid">${esc(d.uid.slice(0,16))}…</span></td>`
+        : `<td class="uid" title="${esc(d.uid)}">${esc(d.uid.slice(0,20))}…</td>`}
       <td>${d.start ? esc(fmt(d.start)) : "—"}</td>
       <td class="hide-s">${d.start ? esc(fmt(d.end)) : "—"}</td>
       <td>${d.status === "expired" ? "0" : d.days}</td>
@@ -594,9 +601,9 @@ let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTime
 
 /* ── EXPORT ── */
 window.exportCsv = () => {
-  const head = "uid,trial_started,trial_ends,days_left,status\n";
+  const head = "email,uid,trial_started,trial_ends,days_left,status\n";
   const body = data.map(d =>
-    [d.uid, d.start ? new Date(d.start).toISOString() : "",
+    [d.email, d.uid, d.start ? new Date(d.start).toISOString() : "",
      d.start ? new Date(d.end).toISOString() : "", d.days,
      d.status === "active" && d.soon ? "soon" : d.status].join(",")
   ).join("\n");
