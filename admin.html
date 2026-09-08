@@ -79,6 +79,22 @@
   tbody tr:hover{background:rgba(255,255,255,.02)}
 
   .pill{display:inline-block;padding:3px 9px;border-radius:11px;font-size:11.5px;font-weight:600}
+
+  /* Country column and card stay hidden until at least one record carries a
+     country, so the page looks exactly as before while the field is unused. */
+  .col-cc,#ccBox{display:none}
+  body.has-cc .col-cc{display:table-cell}
+  body.has-cc #ccBox{display:block}
+  td.cc{white-space:nowrap;font-size:12.5px}
+  td.cc .code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+              color:var(--faint);margin-left:6px}
+  .ccrow{display:grid;grid-template-columns:120px 1fr 34px;align-items:center;
+         gap:10px;margin:7px 0}
+  .ccrow .nm{font-size:12.5px;color:var(--dim);overflow:hidden;
+             text-overflow:ellipsis;white-space:nowrap}
+  .ccrow .tr{background:var(--line);border-radius:3px;height:9px;overflow:hidden}
+  .ccrow .fl{background:var(--ok);height:100%;border-radius:3px}
+  .ccrow .vl{font-size:12px;color:var(--dim);text-align:right}
   .p-act{background:rgba(0,255,153,.13);color:var(--ok)}
   .p-exp{background:rgba(255,92,92,.13);color:var(--bad)}
   .p-end{background:rgba(255,176,32,.15);color:var(--warn)}
@@ -151,6 +167,12 @@
         <div class="chart-h"><span>Trials by days remaining</span></div>
         <canvas id="cDays" height="140"></canvas>
       </div>
+
+      <div class="card chart-box wide" id="ccBox">
+        <div class="chart-h"><span>Trials by country</span>
+          <span id="ccNote" style="font-size:11.5px;color:var(--faint)"></span></div>
+        <div id="ccList"></div>
+      </div>
     </div>
 
     <div class="controls">
@@ -177,6 +199,7 @@
           <th onclick="sortBy('who')">Account <span class="arw" id="a-who"></span></th>
           <th onclick="sortBy('start')">Trial started <span class="arw" id="a-start"></span></th>
           <th onclick="sortBy('end')" class="hide-s">Ends <span class="arw" id="a-end"></span></th>
+          <th onclick="sortBy('country')" class="col-cc">Country <span class="arw" id="a-country"></span></th>
           <th onclick="sortBy('days')">Days left <span class="arw" id="a-days"></span></th>
           <th onclick="sortBy('status')">Status <span class="arw" id="a-status"></span></th>
         </tr></thead>
@@ -262,8 +285,17 @@ window.load = async () => {
       const soon    = !expired && left <= 2;   // ending soon is a sub-state of active
       // the app may store the address next to trialStart; fall back to the UID
       const email = String((v && (v.email || v.userEmail || v.mail)) || "").trim();
-      return { uid, email, who: email || uid, start, end, days: left, status, soon };
+      // Country of activation, written by the app. `country` is the resolved
+      // one; `locale` is the device setting kept as a fallback. Absent on every
+      // record written before the field existed - those render as an em dash.
+      const cc      = iso2(v && (v.country || v.locale));
+      const country = cc ? regionName(cc) : "";
+      return { uid, email, who: email || uid, start, end, days: left, status, soon,
+               cc, country };
     });
+    // Reveal the country column and card only once something actually carries
+    // a country; until the app writes the field the page is unchanged.
+    document.body.classList.toggle("has-cc", data.some(d => d.cc));
     stats(now); render(); drawAll();
     document.getElementById("updated").textContent =
       "Last refreshed " + new Date().toLocaleString();
@@ -272,6 +304,24 @@ window.load = async () => {
       <br><span style="font-size:11.5px;opacity:.8">Check that the Realtime Database rules grant
       read access on <code>/trials</code> to this UID.</span></div>`;
   }
+};
+
+/* -- COUNTRY HELPERS -------------------------------------------------
+   Values arrive from the client, so nothing is trusted: only a bare two-letter
+   code is accepted and anything else is treated as absent.                   */
+const iso2 = v => {
+  const s = String(v == null ? "" : v).trim().toUpperCase();
+  return /^[A-Z]{2}$/.test(s) ? s : "";
+};
+
+/* Intl.DisplayNames turns "BG" into "Bulgaria" without shipping a lookup
+   table. Missing in old browsers, and it throws on codes it does not know -
+   both cases fall back to the raw code. */
+let _rn = null;
+try { _rn = new Intl.DisplayNames(["en"], { type:"region" }); } catch { _rn = null; }
+const regionName = cc => {
+  if (!_rn) return cc;
+  try { return _rn.of(cc) || cc; } catch { return cc; }
 };
 
 function stats(now){
@@ -297,7 +347,8 @@ window.render = () => {
   const now   = Date.now();
 
   let rows = data.filter(d => {
-    if (q && !d.who.toLowerCase().includes(q) && !d.uid.toLowerCase().includes(q)) return false;
+    if (q && !d.who.toLowerCase().includes(q) && !d.uid.toLowerCase().includes(q)
+          && !d.country.toLowerCase().includes(q) && d.cc.toLowerCase() !== q) return false;
     if (fS === "soon") { if (!d.soon) return false; }
     else if (fS !== "all" && d.status !== fS) return false;
     if (fR === 1) {
@@ -312,7 +363,7 @@ window.render = () => {
     return (typeof a === "string" ? a.localeCompare(b) : a - b) * sort.dir;
   });
 
-  ["who","start","end","days","status"].forEach(k =>
+  ["who","start","end","days","status","country"].forEach(k =>
     document.getElementById("a-"+k).textContent =
       sort.key === k ? (sort.dir === 1 ? "▲" : "▼") : "");
 
@@ -326,15 +377,53 @@ window.render = () => {
         : `<td class="uid" title="${esc(d.uid)}">${esc(d.uid.slice(0,20))}…</td>`}
       <td>${d.start ? esc(fmt(d.start)) : "—"}</td>
       <td class="hide-s">${d.start ? esc(fmt(d.end)) : "—"}</td>
+      <td class="cc col-cc">${d.cc
+        ? `${esc(d.country)}<span class="code">${esc(d.cc)}</span>`
+        : "—"}</td>
       <td>${d.status === "expired" ? "0" : d.days}</td>
       <td><span class="pill ${cls}">${txt}</span></td>
     </tr>`;
   }).join("");
 
+  drawCountries(rows);
   document.getElementById("empty").style.display = rows.length ? "none" : "block";
   document.getElementById("count").textContent =
     `${rows.length} of ${data.length} shown`;
 };
+
+/**
+ * Country breakdown for the rows currently shown, biggest first. Plain DOM
+ * rather than canvas: the number of countries is open-ended and each one needs
+ * a readable label, which a fixed-height canvas handles badly.
+ *
+ * Records with no country are counted separately and reported as a note, so a
+ * partly-filled dataset cannot be mistaken for a complete one.
+ */
+function drawCountries(rows){
+  const list = document.getElementById("ccList");
+  const note = document.getElementById("ccNote");
+  const tally = new Map();
+  let unknown = 0;
+  rows.forEach(d => {
+    if (!d.cc) { unknown++; return; }
+    tally.set(d.cc, (tally.get(d.cc) || 0) + 1);
+  });
+
+  const top = [...tally.entries()].sort((a,b) => b[1] - a[1]).slice(0, 12);
+  const max = top.length ? top[0][1] : 1;
+
+  list.innerHTML = top.map(([cc, n]) => `
+    <div class="ccrow">
+      <span class="nm" title="${esc(regionName(cc))} (${esc(cc)})">${esc(regionName(cc))}</span>
+      <span class="tr"><span class="fl" style="width:${(n/max*100).toFixed(1)}%"></span></span>
+      <span class="vl">${n}</span>
+    </div>`).join("") ||
+    `<div style="color:var(--faint);font-size:12px;padding:6px 0">No country data yet</div>`;
+
+  note.textContent = unknown
+    ? `${unknown} without country` + (tally.size > 12 ? ` · top 12 of ${tally.size}` : "")
+    : (tally.size > 12 ? `top 12 of ${tally.size}` : "");
+}
 
 const fmt = ms => new Date(ms).toLocaleString([], {
   year:"numeric", month:"short", day:"2-digit", hour:"2-digit", minute:"2-digit" });
@@ -601,11 +690,11 @@ let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTime
 
 /* ── EXPORT ── */
 window.exportCsv = () => {
-  const head = "email,uid,trial_started,trial_ends,days_left,status\n";
+  const head = "email,uid,trial_started,trial_ends,days_left,status,country\n";
   const body = data.map(d =>
     [d.email, d.uid, d.start ? new Date(d.start).toISOString() : "",
      d.start ? new Date(d.end).toISOString() : "", d.days,
-     d.status === "active" && d.soon ? "soon" : d.status].join(",")
+     d.status === "active" && d.soon ? "soon" : d.status, d.cc].join(",")
   ).join("\n");
   const url = URL.createObjectURL(new Blob([head+body], {type:"text/csv"}));
   const a = document.createElement("a");
