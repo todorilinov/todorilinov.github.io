@@ -15,6 +15,14 @@
   "mainEntity": [
     {
       "@type": "Question",
+      "name": "The sound doesn't change at all on my Google TV or TV box.",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The most common cause is the surround sound output setting. When the TV is set to pass audio through as Dolby Digital or DTS, often shown as Auto, the sound is never decoded on the device itself. It leaves as a compressed stream, so no app on Android can apply an equalizer to it. Try Settings > Display & Sound > Advanced sound settings > Surround sound and set it to None, or Stereo or PCM depending on the model. The wording varies between devices, so on some it sits under Settings > System > Sound instead. The app also tells you which problem you have: if the status line reads DSP Active in green but the sound does not change, the audio is not being decoded on the device and this setting is what to look at. If it reads DSP Active - no effect on this device in red, Android is not giving the app control over audio effects, which is a different problem."
+      }
+    },
+    {
+      "@type": "Question",
       "name": "Why does the equalizer have little or no effect on my phone?",
       "acceptedAnswer": {
         "@type": "Answer",
@@ -151,13 +159,26 @@
     <p class="sub">Answers to the most common questions about the equalizer, device compatibility, and Pro features.</p>
 
     <details>
+      <summary>The sound doesn't change at all on my Google TV or TV box.</summary>
+      <div class="answer">The most common cause is the <strong>surround sound output setting</strong>. When the TV is set to pass audio through as Dolby Digital or DTS — often shown as <strong>Auto</strong> — the sound is never decoded on the device itself. It leaves as a compressed stream, so no app on Android can apply an equaliser to it.
+      <br><br>
+      Try this first:
+      <br><br>
+      <strong>Settings &rsaquo; Display &amp; Sound &rsaquo; Advanced sound settings &rsaquo; Surround sound</strong> — set it to <strong>None</strong>, or <strong>Stereo</strong> / <strong>PCM</strong> depending on your model. The wording varies between devices, so on some it sits under <strong>Settings &rsaquo; System &rsaquo; Sound</strong> instead. Then reopen TV DSP Center and play something.
+      <br><br>
+      The app itself tells you which of the two problems you have. If the status line reads <strong>✓ DSP Active</strong> in green but the sound still doesn't change, the app is working and the audio simply isn't being decoded on the device — the setting above is what to look at. If it reads <strong>DSP Active — no effect on this device</strong> in red, it is a different problem: see the next two questions.</div>
+    </details>
+
+    <details>
       <summary>Why does the equalizer have little or no effect on my phone?</summary>
-      <div class="answer">Some devices — particularly certain phones with custom audio systems (such as some Asus, Xiaomi and Realme models) — <strong>restrict apps from controlling system-wide audio effects</strong>. On those devices the equalizer may have reduced or no effect. The app will tell you clearly if this is the case on your device. Using headphones, enabling Bass Boost and Loudness together, and disabling any built-in sound enhancement in your phone's own settings usually helps a lot.</div>
+      <div class="answer">Some devices — particularly certain phones with custom audio systems (such as some Asus, Xiaomi and Realme models) — <strong>restrict apps from controlling system-wide audio effects</strong>. On those devices the equalizer may have reduced or no effect. The app will tell you clearly if this is the case on your device. Using headphones, enabling Bass Boost and Loudness together, and disabling any built-in sound enhancement in your phone's own settings usually helps a lot.
+      <br><br>
+      One case worth ruling out first: if another equaliser or sound-effect app is running, it may be holding the audio effect. Close it and tap <strong>Retry</strong> in the warning box — that often releases it.</div>
     </details>
 
     <details>
       <summary>Does it work with HDMI ARC passthrough to a soundbar?</summary>
-      <div class="answer">When your TV uses HDMI ARC passthrough, it sends the <strong>raw compressed bitstream</strong> (Dolby/DTS) straight to the soundbar without decoding it. Android audio effects can only process decoded <strong>PCM</strong> audio, so no equalizer can affect passthrough audio — it's a system-level limitation, not specific to this app. The workaround: set your TV's digital audio output from Auto/Bitstream to <strong>PCM</strong>. The TV then decodes locally and the equalizer works, though you trade 5.1 surround for stereo.</div>
+      <div class="answer">When your TV uses HDMI ARC passthrough, it sends the <strong>raw compressed bitstream</strong> (Dolby/DTS) straight to the soundbar without decoding it. Android audio effects can only process decoded <strong>PCM</strong> audio, so no equalizer can affect passthrough audio — it's a system-level limitation, not specific to this app. The workaround: set your TV's digital audio output from Auto/Bitstream to <strong>PCM</strong>. The TV then decodes locally and the equalizer works, though you trade 5.1 surround for stereo. The same applies to the TV's own surround setting — see the first question above for where it lives on Google TV.</div>
     </details>
 
     <details>
