@@ -29,6 +29,10 @@
   h2{font-size:1.25rem;font-weight:800;margin:40px 0 12px;padding-top:8px}
   h2::before{content:'';display:inline-block;width:22px;height:4px;border-radius:2px;margin-right:12px;vertical-align:middle;background:linear-gradient(90deg,var(--cyan),var(--orange))}
   p,li{color:var(--muted);font-size:.98rem}
+  /* The global reset strips paragraph margins, which was invisible while every
+     section held a single <p>. Only consecutive ones need separating; the
+     app list keeps its own tighter spacing through a higher-specificity rule. */
+  p+p{margin-top:12px}
   strong{color:var(--text)}
   ul{margin:10px 0 10px 22px}
   li{margin:6px 0}
@@ -53,7 +57,7 @@
 <main>
 <div class="wrap">
   <h1>Privacy Policy</h1>
-  <div class="updated">Last updated: August 7, 2026</div>
+  <div class="updated">Last updated: September 9, 2026</div>
 
   <p>This Privacy Policy describes how Todor Ilinov ("TI Apps", "we", "I") handles information in the mobile applications published under this developer account.</p>
 
@@ -64,7 +68,8 @@
   </div>
 
   <h2>Information we do not collect</h2>
-  <p>Our apps do <strong>not</strong> require you to create an account. We do not collect your name, email address, contacts, photos or any other personally identifying information, and none of our apps send your personal data to us. Audio processed by TV DSP Center never leaves your device. Fake Location reads your device's location, but only on the device itself — see the section on Fake Location below.</p>
+  <p>Our apps do <strong>not</strong> require you to create an account in order to use them. We do not collect your name, contacts, photos or any other personally identifying information. Audio processed by TV DSP Center never leaves your device. Fake Location reads your device's location, but only on the device itself — see the section on Fake Location below.</p>
+  <p>There is one exception, and it is optional: starting the free trial in TV DSP Center requires signing in with a Google account, which does record your email address. That is described in full under <a href="#trial">Free trial</a> below. If you never start a trial, none of it applies to you.</p>
 
   <h2>Information collected automatically</h2>
   <p>The apps use the following third-party services, which may collect limited technical data:</p>
@@ -74,6 +79,18 @@
     <li><strong>Google AdMob</strong> — serves advertisements. AdMob may use an advertising identifier to show relevant ads. See <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">Google's Advertising Policy</a>.</li>
   </ul>
   <p>This data is aggregated and does not identify you personally. It is processed by Google in accordance with the <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a>.</p>
+
+  <h2 id="trial">Free trial (TV DSP Center)</h2>
+  <p>TV DSP Center offers a seven-day free trial. Starting it is optional — the app works without it — but because the trial is tied to an account rather than to an installation, starting it requires you to sign in with Google. You are asked only when you choose to begin the trial.</p>
+  <p>When you do, the following is stored in our Firebase database:</p>
+  <ul>
+    <li><strong>Your Google account's email address</strong> and the Firebase user ID it maps to — so the trial follows your account, and so that we can tell trials apart without reading a wall of anonymous identifiers.</li>
+    <li><strong>The date the trial started</strong> — to work out how many days remain.</li>
+    <li><strong>The country the trial was started from</strong> — recorded once, to understand which regions the app is used in. It is stored as a two-letter country code only, never a precise location, and it is not updated afterwards.</li>
+    <li><strong>A one-way hash of a device identifier</strong> — so the same device cannot start the trial over and over with different accounts. The raw identifier is never stored, and the hash is salted so it cannot be matched against any other app.</li>
+  </ul>
+  <p>To determine the country, the app makes a single request to <a href="https://www.cloudflare.com/cdn-cgi/trace" target="_blank" rel="noopener">Cloudflare</a>, which reports the country it sees for that connection. Like any server you connect to, Cloudflare sees your IP address as part of the request; we do not send it, and we do not receive or store it — only the resulting country code. If the request fails, no country is recorded and the app simply carries on. The request is made once, and not again after the country has been stored.</p>
+  <p>This information is used only to run the trial and to understand where the app is being used. It is never sold, never shared with advertisers, and never used to contact you. To have it deleted, see <a href="#deletion">Data deletion</a>.</p>
 
   <h2>Purchases</h2>
   <p>TV DSP Center offers an optional one-time in-app purchase (Pro upgrade). Payments are processed entirely by Google Play. We never see or store your payment details.</p>
@@ -113,8 +130,9 @@
   <h2>Children</h2>
   <p>Our apps are not directed at children under 13 and we do not knowingly collect data from children.</p>
 
-  <h2>Data deletion</h2>
-  <p>Analytics data is anonymous and cannot be linked back to you. Uninstalling the app stops all data collection. You can also reset your advertising ID in your device's Google settings at any time.</p>
+  <h2 id="deletion">Data deletion</h2>
+  <p>Analytics and crash data are anonymous and cannot be linked back to you. Uninstalling an app stops all data collection. You can also reset your advertising ID in your device's Google settings at any time.</p>
+  <p>The trial record described above is the one thing that does not disappear when you uninstall, because it is what stops a used trial from starting again. To have it deleted, email <a href="mailto:tvdspcenter@gmail.com">tvdspcenter@gmail.com</a> from the Google account you signed in with, and we will remove it. Note that deleting the record does not grant a new trial — the device record remains.</p>
 
   <h2>Changes to this policy</h2>
   <p>We may update this policy from time to time. Changes will be posted on this page with an updated date.</p>
