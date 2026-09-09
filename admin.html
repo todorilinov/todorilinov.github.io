@@ -51,6 +51,25 @@
     padding:6px 9px;font-size:12px;line-height:1.35;color:var(--txt);
     box-shadow:0 6px 18px rgba(0,0,0,.55);white-space:nowrap}
   #chartTip b{color:var(--accent)}
+
+  /* Hover card for a table row. Same visual family as the chart tooltip, but
+     it carries a whole record rather than one number, so it is a panel rather
+     than a strip: the values are the untruncated ones the table cannot show. */
+  #acctCard{position:fixed;z-index:1000;pointer-events:none;display:none;
+    background:#11161f;border:1px solid rgba(255,255,255,.28);border-radius:10px;
+    padding:13px 15px;font-size:12.5px;line-height:1.5;color:var(--txt);
+    box-shadow:0 12px 34px rgba(0,0,0,.62);width:310px}
+  #acctCard .hd{font-size:13px;word-break:break-all}
+  #acctCard .hd.none{color:var(--faint);font-style:italic}
+  #acctCard .cuid{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:10.5px;color:var(--faint);word-break:break-all;margin-top:3px}
+  #acctCard .sep{height:1px;background:var(--line);margin:11px 0 9px}
+  #acctCard .kv{display:grid;grid-template-columns:auto 1fr;gap:5px 12px}
+  #acctCard .k{color:var(--dim);white-space:nowrap}
+  #acctCard .v{text-align:right;word-break:break-word}
+  #acctCard .v.mute{color:var(--faint)}
+  #acctCard .note{margin-top:10px;padding-top:9px;border-top:1px solid var(--line);
+    color:var(--faint);font-size:11.5px;line-height:1.45}
   .legend{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:10px}
   .legend span{font-size:12px;color:var(--dim);display:flex;align-items:center;gap:6px}
   .legend i{width:9px;height:9px;border-radius:2px;display:inline-block}
@@ -285,13 +304,17 @@ window.load = async () => {
       const soon    = !expired && left <= 2;   // ending soon is a sub-state of active
       // the app may store the address next to trialStart; fall back to the UID
       const email = String((v && (v.email || v.userEmail || v.mail)) || "").trim();
-      // Country of activation, written by the app. `country` is the resolved
-      // one; `locale` is the device setting kept as a fallback. Absent on every
-      // record written before the field existed - those render as an em dash.
-      const cc      = iso2(v && (v.country || v.locale));
+      // Country of activation, written by the app. The two sources are kept
+      // apart rather than merged: `country` is resolved from the request IP,
+      // `locale` is the device setting, and on a TV box the latter is often a
+      // factory default nobody changed. The column shows the better of the two;
+      // the hover card shows both, so a disagreement stays visible.
+      const ccIp  = iso2(v && v.country);
+      const ccDev = iso2(v && v.locale);
+      const cc      = ccIp || ccDev;
       const country = cc ? regionName(cc) : "";
       return { uid, email, who: email || uid, start, end, days: left, status, soon,
-               cc, country };
+               cc, country, ccIp, ccDev };
     });
     // Reveal the country column and card only once something actually carries
     // a country; until the app writes the field the page is unchanged.
@@ -371,10 +394,13 @@ window.render = () => {
   document.getElementById("rows").innerHTML = rows.map(d => {
     const key = d.status === "active" && d.soon ? "soon" : d.status;
     const [txt, cls] = label[key];
-    return `<tr>
+    // No title attribute: the native tooltip would sit on top of the hover
+    // card and repeat what it already says. data-uid is how the card finds
+    // the record again on hover.
+    return `<tr data-uid="${esc(d.uid)}">
       ${d.email
-        ? `<td class="acct" title="${esc(d.uid)}">${esc(d.email)}<span class="sub-uid">${esc(d.uid.slice(0,16))}…</span></td>`
-        : `<td class="uid" title="${esc(d.uid)}">${esc(d.uid.slice(0,20))}…</td>`}
+        ? `<td class="acct">${esc(d.email)}<span class="sub-uid">${esc(d.uid.slice(0,16))}…</span></td>`
+        : `<td class="uid">${esc(d.uid.slice(0,20))}…</td>`}
       <td>${d.start ? esc(fmt(d.start)) : "—"}</td>
       <td class="hide-s">${d.start ? esc(fmt(d.end)) : "—"}</td>
       <td class="cc col-cc">${d.cc
@@ -428,8 +454,95 @@ function drawCountries(rows){
 const fmt = ms => new Date(ms).toLocaleString([], {
   year:"numeric", month:"short", day:"2-digit", hour:"2-digit", minute:"2-digit" });
 
+/* The card has room the table cell does not, so it spells the day out. */
+const fmtLong = ms => new Date(ms).toLocaleString([], {
+  weekday:"short", year:"numeric", month:"short", day:"2-digit",
+  hour:"2-digit", minute:"2-digit" });
+
 const esc = s => String(s).replace(/[&<>"']/g, c =>
   ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+
+/* ── ACCOUNT HOVER CARD ──────────────────────────────────
+   The table truncates the address, the UID and nothing else fits at all. The
+   card carries the whole record, so the columns can stay narrow.             */
+
+/** Rows are rebuilt on every render, so the lookup goes through the model. */
+const byUid = uid => data.find(d => d.uid === uid);
+
+/** One label/value line; `mute` greys out an absent value. */
+const kv = (k, v, mute) =>
+  `<span class="k">${k}</span><span class="v${mute ? " mute" : ""}">${v}</span>`;
+
+/** A country line as "Bulgaria BG", or an em dash when the field is empty. */
+const ccLine = c => c
+  ? `${esc(regionName(c))} <span style="color:var(--faint)">${esc(c)}</span>`
+  : "—";
+
+function cardHtml(d){
+  const key = d.status === "active" && d.soon ? "soon" : d.status;
+  const [txt, cls] = { active:["Active","p-act"], soon:["Ending soon","p-end"],
+                       expired:["Expired","p-exp"] }[key];
+
+  // The two country fields disagree when someone travels, uses a VPN, or runs
+  // a box whose factory locale was never changed. Worth saying out loud rather
+  // than leaving the reader to compare two codes.
+  const disagree = d.ccIp && d.ccDev && d.ccIp !== d.ccDev;
+
+  return `
+    <div class="hd${d.email ? "" : " none"}">${d.email ? esc(d.email) : "no email on record"}</div>
+    <div class="cuid">${esc(d.uid)}</div>
+    <div class="sep"></div>
+    <div class="kv">
+      ${kv("Status", `<span class="pill ${cls}">${txt}</span>`)}
+      ${kv("Trial started", d.start ? esc(fmtLong(d.start)) : "—", !d.start)}
+      ${kv("Ends", d.start ? esc(fmtLong(d.end)) : "—", !d.start)}
+      ${kv("Days left", d.status === "expired" ? "0" : d.days)}
+      ${kv("Country (IP)", ccLine(d.ccIp), !d.ccIp)}
+      ${kv("Device locale", ccLine(d.ccDev), !d.ccDev)}
+    </div>
+    ${disagree ? `<div class="note">IP and device locale disagree — a VPN, a
+      recent move, or a box still set to its factory locale.</div>` : ""}
+    ${!d.ccIp && !d.ccDev ? `<div class="note">No country: this trial started
+      before the app recorded one.</div>` : ""}`;
+}
+
+/**
+ * Follows the cursor the way the chart tooltips do, and flips near the edges so
+ * the card never lands off-screen. Delegated to the tbody because the rows are
+ * replaced wholesale on every sort, filter and refresh.
+ */
+(function bindAcctCard(){
+  const card = document.getElementById("acctCard");
+  const rows = document.getElementById("rows");
+
+  const place = e => {
+    const w = card.offsetWidth, h = card.offsetHeight;
+    let left = e.clientX + 16, top = e.clientY - h - 12;
+    if (left + w > window.innerWidth - 8)  left = e.clientX - w - 16;
+    if (left < 8) left = 8;
+    if (top < 8) top = e.clientY + 20;
+    if (top + h > window.innerHeight - 8) top = Math.max(8, window.innerHeight - h - 8);
+    card.style.left = left + "px";
+    card.style.top  = top + "px";
+  };
+
+  rows.addEventListener("mousemove", e => {
+    const tr = e.target.closest("tr[data-uid]");
+    if (!tr){ card.style.display = "none"; return; }
+    const d = byUid(tr.dataset.uid);
+    if (!d){ card.style.display = "none"; return; }
+    if (card.dataset.uid !== d.uid){
+      card.dataset.uid = d.uid;
+      card.innerHTML = cardHtml(d);
+    }
+    card.style.display = "block";
+    place(e);
+  });
+
+  rows.addEventListener("mouseleave", () => { card.style.display = "none"; });
+  window.addEventListener("scroll", () => { card.style.display = "none"; }, true);
+})();
+
 
 /* ── CHARTS (plain canvas, no libraries) ───────────────────────────── */
 const CSS = k => getComputedStyle(document.documentElement).getPropertyValue(k).trim();
@@ -690,11 +803,11 @@ let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTime
 
 /* ── EXPORT ── */
 window.exportCsv = () => {
-  const head = "email,uid,trial_started,trial_ends,days_left,status,country\n";
+  const head = "email,uid,trial_started,trial_ends,days_left,status,country,locale\n";
   const body = data.map(d =>
     [d.email, d.uid, d.start ? new Date(d.start).toISOString() : "",
      d.start ? new Date(d.end).toISOString() : "", d.days,
-     d.status === "active" && d.soon ? "soon" : d.status, d.cc].join(",")
+     d.status === "active" && d.soon ? "soon" : d.status, d.ccIp, d.ccDev].join(",")
   ).join("\n");
   const url = URL.createObjectURL(new Blob([head+body], {type:"text/csv"}));
   const a = document.createElement("a");
@@ -705,5 +818,6 @@ window.exportCsv = () => {
 document.getElementById("login").style.display = "block";
 </script>
 <div id="chartTip"></div>
+<div id="acctCard"></div>
 </body>
 </html>
