@@ -160,6 +160,7 @@
       <div style="display:flex;gap:8px">
         <button class="ghost" onclick="load()">Refresh</button>
         <button class="ghost" onclick="exportCsv()">Export CSV</button>
+        <button class="ghost" onclick="exportXlsx()">Export Excel</button>
         <button class="ghost" onclick="signOut()">Sign out</button>
       </div>
     </div>
@@ -868,6 +869,184 @@ window.exportCsv = () => {
   const a = document.createElement("a");
   a.href = url; a.download = `tvdsp-trials-${new Date().toISOString().slice(0,10)}.csv`;
   a.click(); URL.revokeObjectURL(url);
+};
+
+
+/* ── EXCEL EXPORT ──────────────────────────────────────────────────────
+   An .xlsx file is a ZIP holding a handful of XML parts. It is written here
+   by hand rather than by loading a spreadsheet library, because this page
+   lists every customer's email address and any third-party script loaded
+   into it would be able to read them.
+
+   Entries are stored uncompressed. At a few hundred rows the size difference
+   does not matter, and it removes the need for a deflate implementation.
+
+   Unlike the CSV, this carries real types: the dates are Excel dates and the
+   day counts are numbers, so sorting and filtering behave as expected instead
+   of ordering everything as text.                                          */
+
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let i = 0; i < 256; i++) {
+    let c = i;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    t[i] = c >>> 0;
+  }
+  return t;
+})();
+
+const crc32 = bytes => {
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+};
+
+/** ZIP with stored (method 0) entries — enough for what Excel needs to open. */
+function zipStore(files){
+  const enc = new TextEncoder();
+  const body = [], central = [];
+  let offset = 0;
+
+  files.forEach(f => {
+    const name = enc.encode(f.name);
+    const data = enc.encode(f.data);
+    const crc  = crc32(data);
+
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true);   // local file header
+    lh.setUint16(4, 20, true);           // version needed
+    lh.setUint16(8, 0, true);            // method 0 = stored
+    lh.setUint16(12, 0x21, true);        // date stamp: 1980-01-01
+    lh.setUint32(14, crc, true);
+    lh.setUint32(18, data.length, true);
+    lh.setUint32(22, data.length, true);
+    lh.setUint16(26, name.length, true);
+    body.push(new Uint8Array(lh.buffer), name, data);
+
+    const cd = new DataView(new ArrayBuffer(46));
+    cd.setUint32(0, 0x02014b50, true);   // central directory header
+    cd.setUint16(4, 20, true);
+    cd.setUint16(6, 20, true);
+    cd.setUint16(10, 0, true);
+    cd.setUint16(14, 0x21, true);
+    cd.setUint32(16, crc, true);
+    cd.setUint32(20, data.length, true);
+    cd.setUint32(24, data.length, true);
+    cd.setUint16(28, name.length, true);
+    cd.setUint32(42, offset, true);
+    central.push(new Uint8Array(cd.buffer), name);
+
+    offset += 30 + name.length + data.length;
+  });
+
+  const cdSize = central.reduce((n, p) => n + p.length, 0);
+  const eocd = new DataView(new ArrayBuffer(22));
+  eocd.setUint32(0, 0x06054b50, true);
+  eocd.setUint16(8, files.length, true);
+  eocd.setUint16(10, files.length, true);
+  eocd.setUint32(12, cdSize, true);
+  eocd.setUint32(16, offset, true);
+
+  const all = [...body, ...central, new Uint8Array(eocd.buffer)];
+  const out = new Uint8Array(all.reduce((n, p) => n + p.length, 0));
+  let at = 0;
+  all.forEach(p => { out.set(p, at); at += p.length; });
+  return out;
+}
+
+/**
+ * Excel counts days from 1899-12-30. Built from the local calendar fields so the
+ * cell reads the same wall-clock time the table shows, rather than shifting by
+ * the timezone offset.
+ */
+const xlDate = ms => {
+  const d = new Date(ms);
+  return (Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(),
+                   d.getHours(), d.getMinutes(), d.getSeconds())
+          - Date.UTC(1899, 11, 30)) / 86400000;
+};
+
+window.exportXlsx = () => {
+  const COLS = ["Email", "UID", "Trial started", "Ends", "Days left",
+                "Status", "Country (IP)", "Device locale"];
+  const col = i => String.fromCharCode(65 + i);
+  const str = (ref, v, st) => !v ? "" :
+    `<c r="${ref}"${st ? ` s="${st}"` : ""} t="inlineStr"><is><t>${esc(v)}</t></is></c>`;
+  const num = (ref, v, st) =>
+    `<c r="${ref}"${st ? ` s="${st}"` : ""}><v>${v}</v></c>`;
+
+  const head = `<row r="1">${COLS.map((h, i) => str(col(i) + "1", h, 1)).join("")}</row>`;
+
+  const body = data.map((d, n) => {
+    const r = n + 2;
+    return `<row r="${r}">` +
+      str(col(0) + r, d.email) +
+      str(col(1) + r, d.uid) +
+      (d.start ? num(col(2) + r, xlDate(d.start), 2) : "") +
+      (d.start ? num(col(3) + r, xlDate(d.end), 2) : "") +
+      num(col(4) + r, d.status === "expired" ? 0 : d.days) +
+      str(col(5) + r, d.status === "active" && d.soon ? "soon" : d.status) +
+      str(col(6) + r, d.ccIp) +
+      str(col(7) + r, d.ccDev) +
+    `</row>`;
+  }).join("");
+
+  const widths = [34, 32, 19, 19, 10, 10, 13, 14]
+    .map((w, i) => `<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join("");
+
+  const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
+<cols>${widths}</cols>
+<sheetData>${head}${body}</sheetData>
+<autoFilter ref="A1:H${data.length + 1}"/>
+</worksheet>`;
+
+  // Style 1 is the bold header, style 2 the date format.
+  const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<numFmts count="1"><numFmt numFmtId="164" formatCode="yyyy-mm-dd hh:mm"/></numFmts>
+<fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts>
+<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>
+<borders count="1"><border/></borders>
+<cellStyleXfs count="1"><xf/></cellStyleXfs>
+<cellXfs count="3"><xf xfId="0"/><xf xfId="0" fontId="1" applyFont="1"/><xf xfId="0" numFmtId="164" applyNumberFormat="1"/></cellXfs>
+<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
+</styleSheet>`;
+
+  const zip = zipStore([
+    { name: "[Content_Types].xml", data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+</Types>` },
+    { name: "_rels/.rels", data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>` },
+    { name: "xl/workbook.xml", data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<sheets><sheet name="Trials" sheetId="1" r:id="rId1"/></sheets>
+</workbook>` },
+    { name: "xl/_rels/workbook.xml.rels", data: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>` },
+    { name: "xl/styles.xml", data: styles },
+    { name: "xl/worksheets/sheet1.xml", data: sheet },
+  ]);
+
+  const url = URL.createObjectURL(new Blob([zip],
+    { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `tvdsp-trials-${new Date().toISOString().slice(0,10)}.xlsx`;
+  a.click();
+  URL.revokeObjectURL(url);
 };
 
 document.getElementById("login").style.display = "block";
