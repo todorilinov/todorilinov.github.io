@@ -30,7 +30,7 @@
   h2::before{content:'';display:inline-block;width:22px;height:4px;border-radius:2px;margin-right:12px;vertical-align:middle;background:linear-gradient(90deg,var(--cyan),var(--orange))}
   p,li{color:var(--muted);font-size:.98rem}
   /* The global reset strips paragraph margins, which was invisible while every
-     section held a single <p>. Only consecutive ones need separating; the
+     section held a single paragraph. Only consecutive ones need separating; the
      app list keeps its own tighter spacing through a higher-specificity rule. */
   p+p{margin-top:12px}
   strong{color:var(--text)}
@@ -131,8 +131,15 @@
   <p>Our apps are not directed at children under 13 and we do not knowingly collect data from children.</p>
 
   <h2 id="deletion">Data deletion</h2>
+  <p>This section covers the apps published by Todor Ilinov (TI Apps): TV DSP Center — Equalizer, World Radio and Fake Location.</p>
   <p>Analytics and crash data are anonymous and cannot be linked back to you. Uninstalling an app stops all data collection. You can also reset your advertising ID in your device's Google settings at any time.</p>
-  <p>The trial record described above is the one thing that does not disappear when you uninstall, because it is what stops a used trial from starting again. To have it deleted, email <a href="mailto:tvdspcenter@gmail.com">tvdspcenter@gmail.com</a> from the Google account you signed in with, and we will remove it. Note that deleting the record does not grant a new trial — the device record remains.</p>
+  <p>The free trial record in TV DSP Center is the one thing that does not disappear when you uninstall, because it is what stops a used trial from starting again. You can ask us to delete it.</p>
+
+  <p><strong>How to request deletion.</strong> Send an email to <a href="mailto:tvdspcenter@gmail.com?subject=Data%20deletion">tvdspcenter@gmail.com</a> with the subject <em>Data deletion</em>, from the Google account you signed in with. Nothing else is needed — that address is what identifies your record. We will delete it and reply to confirm within 30 days.</p>
+
+  <p><strong>What is deleted.</strong> Your entire trial record: your email address, your account identifier, the date the trial started, and the country code it was started from. Your sign-in record is removed along with it.</p>
+
+  <p><strong>What is kept, and why.</strong> One item remains: the one-way hash of a device identifier described under <a href="#trial">Free trial</a>. It holds nothing about you personally — it cannot be reversed, it is not linked to your email or your account once they are gone, and it records only that a free trial has already been used on that device. Without it, deleting the record would simply hand out another free trial, which is the one thing it exists to prevent. It is retained for as long as the app remains published.</p>
 
   <h2>Changes to this policy</h2>
   <p>We may update this policy from time to time. Changes will be posted on this page with an updated date.</p>
