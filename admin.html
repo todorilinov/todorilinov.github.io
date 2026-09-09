@@ -107,13 +107,26 @@
   td.cc{white-space:nowrap;font-size:12.5px}
   td.cc .code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
               color:var(--faint);margin-left:6px}
-  .ccrow{display:grid;grid-template-columns:120px 1fr 34px;align-items:center;
+  .ccrow{display:grid;grid-template-columns:120px 1fr 30px 42px;align-items:center;
          gap:10px;margin:7px 0}
   .ccrow .nm{font-size:12.5px;color:var(--dim);overflow:hidden;
              text-overflow:ellipsis;white-space:nowrap}
   .ccrow .tr{background:var(--line);border-radius:3px;height:9px;overflow:hidden}
   .ccrow .fl{background:var(--ok);height:100%;border-radius:3px}
   .ccrow .vl{font-size:12px;color:var(--dim);text-align:right}
+  /* The share reads as text, so it wears text ink rather than the series colour. */
+  .ccrow .pc{font-size:12px;color:var(--faint);text-align:right;
+             font-variant-numeric:tabular-nums}
+
+  /* One 100%-wide strip: how concentrated the user base is, at a glance. The
+     rows below answer "which countries"; this answers "how spread out". Only a
+     handful of segments are drawn - past about seven, neighbouring shades stop
+     being tellable apart, so the tail folds into a single grey Other. */
+  .ccstrip{display:flex;gap:2px;height:10px;margin:2px 0 14px;
+           border-radius:5px;overflow:hidden}
+  .ccstrip span{height:100%}
+  .ccstrip span:first-child{border-radius:5px 0 0 5px}
+  .ccstrip span:last-child{border-radius:0 5px 5px 0}
   .p-act{background:rgba(0,255,153,.13);color:var(--ok)}
   .p-exp{background:rgba(255,92,92,.13);color:var(--bad)}
   .p-end{background:rgba(255,176,32,.15);color:var(--warn)}
@@ -425,6 +438,34 @@ window.render = () => {
  * Records with no country are counted separately and reported as a note, so a
  * partly-filled dataset cannot be mistaken for a complete one.
  */
+/**
+ * A single 100%-wide bar, biggest share first. Six segments at most: they are
+ * steps of one hue rather than six identities, because more than a handful of
+ * shades side by side stop being distinguishable - and the countries beyond the
+ * sixth are exactly the ones a slice would render as an unreadable sliver.
+ * Everything past that becomes one grey Other, which is honest and readable.
+ */
+function shareStrip(ranked, known){
+  const SHOWN = 6;
+  const head = ranked.slice(0, SHOWN);
+  const tailN = ranked.slice(SHOWN).reduce((sum, [, n]) => sum + n, 0);
+
+  // One colour for every country segment, separated by the 2px gaps in the CSS.
+  // Shading them by rank would repaint the survivors whenever a filter changed
+  // the order, making the strip look as though the data moved when it did not.
+  // Width carries the share, the rows below carry identity, grey means Other.
+  const COUNTRY = "var(--ok)";
+
+  const seg = (label, n, colour) =>
+    `<span title="${esc(label)}: ${n} (${Math.round(n / known * 100)}%)"
+           style="width:${(n / known * 100).toFixed(2)}%;background:${colour}"></span>`;
+
+  return `<div class="ccstrip">
+    ${head.map(([cc, n]) => seg(`${regionName(cc)} (${cc})`, n, COUNTRY)).join("")}
+    ${tailN ? seg(`Other (${ranked.length - SHOWN} more countries)`, tailN, "var(--line)") : ""}
+  </div>`;
+}
+
 function drawCountries(rows){
   const list = document.getElementById("ccList");
   const note = document.getElementById("ccNote");
@@ -435,20 +476,34 @@ function drawCountries(rows){
     tally.set(d.cc, (tally.get(d.cc) || 0) + 1);
   });
 
-  const top = [...tally.entries()].sort((a,b) => b[1] - a[1]).slice(0, 12);
-  const max = top.length ? top[0][1] : 1;
+  const ranked = [...tally.entries()].sort((a,b) => b[1] - a[1]);
+  const known  = ranked.reduce((sum, [, n]) => sum + n, 0);
+  const top    = ranked.slice(0, 12);
+  const max    = top.length ? top[0][1] : 1;
 
-  list.innerHTML = top.map(([cc, n]) => `
+  // Percentages are of the records that HAVE a country, never of every row.
+  // While most trials predate the field, a share of all rows would read far
+  // lower than reality and quietly mislead.
+  const pct = n => known ? (n / known * 100) : 0;
+  const fmtPct = n => {
+    const p = pct(n);
+    return p > 0 && p < 1 ? "<1%" : Math.round(p) + "%";
+  };
+
+  list.innerHTML = (known ? shareStrip(ranked, known) : "") + (top.map(([cc, n]) => `
     <div class="ccrow">
       <span class="nm" title="${esc(regionName(cc))} (${esc(cc)})">${esc(regionName(cc))}</span>
       <span class="tr"><span class="fl" style="width:${(n/max*100).toFixed(1)}%"></span></span>
       <span class="vl">${n}</span>
+      <span class="pc">${fmtPct(n)}</span>
     </div>`).join("") ||
-    `<div style="color:var(--faint);font-size:12px;padding:6px 0">No country data yet</div>`;
+    `<div style="color:var(--faint);font-size:12px;padding:6px 0">No country data yet</div>`);
 
-  note.textContent = unknown
-    ? `${unknown} without country` + (tally.size > 12 ? ` · top 12 of ${tally.size}` : "")
-    : (tally.size > 12 ? `top 12 of ${tally.size}` : "");
+  const parts = [];
+  if (unknown) parts.push(`${unknown} without country`);
+  if (known)   parts.push(`share of ${known} with one`);
+  if (tally.size > 12) parts.push(`top 12 of ${tally.size}`);
+  note.textContent = parts.join(" \u00b7 ");
 }
 
 const fmt = ms => new Date(ms).toLocaleString([], {
