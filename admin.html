@@ -103,6 +103,8 @@
      country, so the page looks exactly as before while the field is unused. */
   .col-cc,#ccBox{display:none}
   body.has-cc .col-cc{display:table-cell}
+  /* The filter is a select, not a cell, so it needs its own display value. */
+  body.has-cc select.col-cc{display:inline-block}
   body.has-cc #ccBox{display:block}
   td.cc{white-space:nowrap;font-size:12.5px}
   td.cc .code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
@@ -215,6 +217,9 @@
         <option value="active">Active only</option>
         <option value="soon">Ending soon (≤2d)</option>
         <option value="expired">Expired only</option>
+      </select>
+      <select id="fCountry" class="col-cc" onchange="render()">
+        <option value="all">All countries</option>
       </select>
       <select id="fRange" onchange="render()">
         <option value="0">Any start date</option>
@@ -333,6 +338,7 @@ window.load = async () => {
     // Reveal the country column and card only once something actually carries
     // a country; until the app writes the field the page is unchanged.
     document.body.classList.toggle("has-cc", data.some(d => d.cc));
+    fillCountryFilter();
     stats(now); render(); drawAll();
     document.getElementById("updated").textContent =
       "Last refreshed " + new Date().toLocaleString();
@@ -374,6 +380,34 @@ function stats(now){
 }
 const set = (id,v) => document.getElementById(id).textContent = v;
 
+/**
+ * Rebuilds the country picker from every record, never from the filtered rows —
+ * otherwise choosing a country would leave that country as the only option and
+ * there would be no way back. Ordered by count so the busy ones come first, and
+ * "No country" is offered explicitly because most records still have none.
+ */
+function fillCountryFilter(){
+  const sel = document.getElementById("fCountry");
+  const keep = sel.value;
+
+  const tally = new Map();
+  let none = 0;
+  data.forEach(d => {
+    if (!d.cc) { none++; return; }
+    tally.set(d.cc, (tally.get(d.cc) || 0) + 1);
+  });
+
+  const opts = [...tally.entries()].sort((a,b) => b[1] - a[1])
+    .map(([cc, n]) => `<option value="${esc(cc)}">${esc(regionName(cc))} (${n})</option>`)
+    .join("");
+
+  sel.innerHTML = `<option value="all">All countries</option>${opts}` +
+    (none ? `<option value="none">No country (${none})</option>` : "");
+
+  // Keep the current choice if it still exists; otherwise fall back to all.
+  sel.value = [...sel.options].some(o => o.value === keep) ? keep : "all";
+}
+
 /* ── SORT / FILTER / RENDER ── */
 window.sortBy = k => { sort = { key:k, dir: sort.key===k ? -sort.dir : 1 }; render(); };
 
@@ -381,11 +415,14 @@ window.render = () => {
   const q     = document.getElementById("q").value.trim().toLowerCase();
   const fS    = document.getElementById("fStatus").value;
   const fR    = Number(document.getElementById("fRange").value);
+  const fC    = document.getElementById("fCountry").value;
   const now   = Date.now();
 
   let rows = data.filter(d => {
     if (q && !d.who.toLowerCase().includes(q) && !d.uid.toLowerCase().includes(q)
           && !d.country.toLowerCase().includes(q) && d.cc.toLowerCase() !== q) return false;
+    if (fC === "none") { if (d.cc) return false; }
+    else if (fC !== "all" && d.cc !== fC) return false;
     if (fS === "soon") { if (!d.soon) return false; }
     else if (fS !== "all" && d.status !== fS) return false;
     if (fR === 1) {
@@ -522,6 +559,15 @@ const esc = s => String(s).replace(/[&<>"']/g, c =>
    The table truncates the address, the UID and nothing else fits at all. The
    card carries the whole record, so the columns can stay narrow.             */
 
+/**
+ * The build that records the country shipped on 10 September 2026, and it fills
+ * the field in for existing accounts too, the first time the updated app runs.
+ * So for a trial that began before this date the country is where the person was
+ * when they updated — not where they were when the trial started. Same thing for
+ * anyone who has not moved, different for anyone who has.
+ */
+const COUNTRY_SINCE = Date.UTC(2026, 8, 10);
+
 /** Rows are rebuilt on every render, so the lookup goes through the model. */
 const byUid = uid => data.find(d => d.uid === uid);
 
@@ -544,6 +590,9 @@ function cardHtml(d){
   // than leaving the reader to compare two codes.
   const disagree = d.ccIp && d.ccDev && d.ccIp !== d.ccDev;
 
+  // Older trial, but a country on file: it was filled in on update, not at start.
+  const backfilled = (d.ccIp || d.ccDev) && d.start && d.start < COUNTRY_SINCE;
+
   return `
     <div class="hd${d.email ? "" : " none"}">${d.email ? esc(d.email) : "no email on record"}</div>
     <div class="cuid">${esc(d.uid)}</div>
@@ -558,8 +607,10 @@ function cardHtml(d){
     </div>
     ${disagree ? `<div class="note">IP and device locale disagree — a VPN, a
       recent move, or a box still set to its factory locale.</div>` : ""}
+    ${backfilled ? `<div class="note">Country recorded when this account updated
+      to the September 2026 version, not when the trial started.</div>` : ""}
     ${!d.ccIp && !d.ccDev ? `<div class="note">No country: this trial started
-      before the app recorded one.</div>` : ""}`;
+      before the app recorded one, and has not opened the new version yet.</div>` : ""}`;
 }
 
 /**

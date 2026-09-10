@@ -57,7 +57,7 @@
 <main>
 <div class="wrap">
   <h1>Privacy Policy</h1>
-  <div class="updated">Last updated: September 9, 2026</div>
+  <div class="updated">Last updated: September 10, 2026</div>
 
   <p>This Privacy Policy describes how Todor Ilinov ("TI Apps", "we", "I") handles information in the mobile applications published under this developer account.</p>
 
@@ -86,7 +86,7 @@
   <ul>
     <li><strong>Your Google account's email address</strong> and the Firebase user ID it maps to — so the trial follows your account, and so that we can tell trials apart without reading a wall of anonymous identifiers.</li>
     <li><strong>The date the trial started</strong> — to work out how many days remain.</li>
-    <li><strong>The country the trial was started from</strong> — recorded once, to understand which regions the app is used in. It is stored as a two-letter country code only, never a precise location, and it is not updated afterwards.</li>
+    <li><strong>Your country</strong> — recorded once, to understand which regions the app is used in. For a trial started with the September 2026 version onwards, this is the country it was started from. For a trial that began before then, it is the country you were in the first time that version ran, since there was nothing recorded earlier to go on. Either way it is stored as a two-letter country code only, never a precise location, and it is not updated afterwards.</li>
     <li><strong>A one-way hash of a device identifier</strong> — so the same device cannot start the trial over and over with different accounts. The raw identifier is never stored, and the hash is salted so it cannot be matched against any other app.</li>
   </ul>
   <p>To determine the country, the app makes a single request to <a href="https://www.cloudflare.com/cdn-cgi/trace" target="_blank" rel="noopener">Cloudflare</a>, which reports the country it sees for that connection. Like any server you connect to, Cloudflare sees your IP address as part of the request; we do not send it, and we do not receive or store it — only the resulting country code. If the request fails, no country is recorded and the app simply carries on. The request is made once, and not again after the country has been stored.</p>
@@ -137,7 +137,7 @@
 
   <p><strong>How to request deletion.</strong> Send an email to <a href="mailto:tvdspcenter@gmail.com?subject=Data%20deletion">tvdspcenter@gmail.com</a> with the subject <em>Data deletion</em>, from the Google account you signed in with. Nothing else is needed — that address is what identifies your record. We will delete it and reply to confirm within 30 days.</p>
 
-  <p><strong>What is deleted.</strong> Your entire trial record: your email address, your account identifier, the date the trial started, and the country code it was started from. Your sign-in record is removed along with it.</p>
+  <p><strong>What is deleted.</strong> Your entire trial record: your email address, your account identifier, the date the trial started, and the country code recorded for it. Your sign-in record is removed along with it.</p>
 
   <p><strong>What is kept, and why.</strong> One item remains: the one-way hash of a device identifier described under <a href="#trial">Free trial</a>. It holds nothing about you personally — it cannot be reversed, it is not linked to your email or your account once they are gone, and it records only that a free trial has already been used on that device. Without it, deleting the record would simply hand out another free trial, which is the one thing it exists to prevent. It is retained for as long as the app remains published.</p>
 
