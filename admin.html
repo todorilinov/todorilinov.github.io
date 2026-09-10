@@ -129,6 +129,23 @@
   .ccstrip span{height:100%}
   .ccstrip span:first-child{border-radius:5px 0 0 5px}
   .ccstrip span:last-child{border-radius:0 5px 5px 0}
+
+  /* Device gate observations. Hidden until at least one device has been met by
+     a second account — on a healthy install that card should stay empty. */
+  #dvBox{display:none}
+  body.has-dv #dvBox{display:block}
+  .dvsum{font-size:12.5px;color:var(--dim);margin:2px 0 12px;line-height:1.6}
+  .dvsum b{color:var(--txt);font-weight:600}
+  .dvrow{display:grid;grid-template-columns:96px 1fr 28px;gap:12px;
+         align-items:start;padding:7px 0;border-top:1px solid var(--line)}
+  .dvrow:first-child{border-top:0}
+  .dvrow .hash{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+               font-size:11px;color:var(--faint);padding-top:2px}
+  .dvrow .who{font-size:12.5px;color:var(--dim);line-height:1.65;word-break:break-all}
+  .dvrow .who .own{color:var(--txt)}
+  .dvrow .who .tag{font-size:10.5px;color:var(--faint);
+                   border:1px solid var(--line);border-radius:4px;padding:0 4px;margin-left:5px}
+  .dvrow .n{font-size:12.5px;color:var(--dim);text-align:right;padding-top:2px}
   .p-act{background:rgba(0,255,153,.13);color:var(--ok)}
   .p-exp{background:rgba(255,92,92,.13);color:var(--bad)}
   .p-end{background:rgba(255,176,32,.15);color:var(--warn)}
@@ -201,6 +218,13 @@
       <div class="card chart-box wide">
         <div class="chart-h"><span>Trials by days remaining</span></div>
         <canvas id="cDays" height="140"></canvas>
+      </div>
+
+      <div class="card chart-box wide" id="dvBox">
+        <div class="chart-h"><span>Devices seen by more than one account</span>
+          <span id="dvNote" style="font-size:11.5px;color:var(--faint)"></span></div>
+        <div class="dvsum" id="dvSum"></div>
+        <div id="dvList"></div>
       </div>
 
       <div class="card chart-box wide" id="ccBox">
@@ -338,6 +362,19 @@ window.load = async () => {
     // Reveal the country column and card only once something actually carries
     // a country; until the app writes the field the page is unchanged.
     document.body.classList.toggle("has-cc", data.some(d => d.cc));
+
+    // Read separately from the trials node and with its own catch: if either
+    // branch is missing or unreadable, the dashboard must still work and only
+    // the device card goes away.
+    try {
+      const [dev, obs] = await Promise.all([
+        get(ref(db, "devices")), get(ref(db, "gate_observations"))
+      ]);
+      drawDevices(dev.val() || {}, obs.val() || {});
+    } catch (e) {
+      console.warn("Device gate data unavailable", e);
+      document.body.classList.remove("has-dv");
+    }
     fillCountryFilter();
     stats(now); render(); drawAll();
     document.getElementById("updated").textContent =
@@ -348,6 +385,60 @@ window.load = async () => {
       read access on <code>/trials</code> to this UID.</span></div>`;
   }
 };
+
+/**
+ * Devices met by more than one account.
+ *
+ * /devices/<hash> holds whoever claimed the device first; /gate_observations/
+ * <hash>/<uid> records every OTHER account that later found it taken. The first
+ * account is therefore never in the observations, which is why both branches
+ * have to be read and joined to get the real head count.
+ *
+ * The reason to look: your own note in the rules. A handful of accounts on one
+ * hash reads as somebody cycling trials. Dozens on one hash reads as a batch of
+ * boxes shipped with the same device id, and switching the gate to enforce
+ * would lock out every one of those people.
+ */
+function drawDevices(devices, observations){
+  const emailOf = new Map(data.map(d => [d.uid, d.email || d.uid]));
+  const name = uid => esc(emailOf.get(uid) || uid.slice(0, 16) + "\u2026");
+
+  const rows = Object.entries(observations).map(([hash, uids]) => {
+    const seen = Object.keys(uids || {});
+    const owner = devices[hash] && devices[hash].uid;
+    const all = new Set(seen);
+    if (owner) all.add(owner);
+    return { hash, owner, seen, total: all.size };
+  }).filter(r => r.total > 1).sort((a, b) => b.total - a.total);
+
+  document.body.classList.toggle("has-dv", rows.length > 0);
+  if (!rows.length) return;
+
+  const cycling = rows.filter(r => r.total <= 3).length;
+  const suspect = rows.filter(r => r.total >= 4).length;
+
+  document.getElementById("dvSum").innerHTML =
+    `<b>${cycling}</b> device${cycling === 1 ? "" : "s"} shared by two or three
+     accounts — the pattern of somebody starting the trial again on a new account.` +
+    (suspect
+      ? `<br><b>${suspect}</b> with four or more — more likely a batch of boxes
+         shipped with the same device id. Turning the gate to enforce would block
+         those people, who have done nothing wrong.`
+      : `<br>None with four or more, so no sign of boxes sharing a device id.`);
+
+  document.getElementById("dvList").innerHTML = rows.slice(0, 20).map(r => `
+    <div class="dvrow">
+      <span class="hash" title="${esc(r.hash)}">${esc(r.hash.slice(0, 12))}…</span>
+      <span class="who">${r.owner
+          ? `<span class="own">${name(r.owner)}</span><span class="tag">first</span><br>`
+          : `<span style="color:var(--faint)">device record missing</span><br>`}
+        ${r.seen.filter(u => u !== r.owner).map(name).join("<br>")}</span>
+      <span class="n">${r.total}</span>
+    </div>`).join("");
+
+  document.getElementById("dvNote").textContent =
+    rows.length > 20 ? `top 20 of ${rows.length}` : `${rows.length} in total`;
+}
 
 /* -- COUNTRY HELPERS -------------------------------------------------
    Values arrive from the client, so nothing is trusted: only a bare two-letter
