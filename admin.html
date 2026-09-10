@@ -296,6 +296,16 @@ const firebaseConfig = {
   messagingSenderId: "845731119367",
   appId: "1:845731119367:android:d1ca244d953238ef2745a2"
 };
+/**
+ * Your own accounts. They hold real trial records, so they stay in the table and
+ * in every total — but a device shared only between them is you testing, not a
+ * finding, so the device card leaves it out. Add any further test accounts here.
+ */
+const OWN_ACCOUNTS = [
+  "nikolaystoyanov569@gmail.com",
+  "georgitomovv@gmail.com",
+];
+
 const ADMIN_UID   = "dQYQkefbgjRxaZdQpClWqhA8Ipm2";
 const TRIAL_DAYS  = 7;
 const DAY_MS      = 86400000;
@@ -402,29 +412,43 @@ window.load = async () => {
 function drawDevices(devices, observations){
   const emailOf = new Map(data.map(d => [d.uid, d.email || d.uid]));
   const name = uid => esc(emailOf.get(uid) || uid.slice(0, 16) + "\u2026");
+  const mine = uid => OWN_ACCOUNTS.includes(emailOf.get(uid));
 
-  const rows = Object.entries(observations).map(([hash, uids]) => {
+  const all = Object.entries(observations).map(([hash, uids]) => {
     const seen = Object.keys(uids || {});
     const owner = devices[hash] && devices[hash].uid;
-    const all = new Set(seen);
-    if (owner) all.add(owner);
-    return { hash, owner, seen, total: all.size };
-  }).filter(r => r.total > 1).sort((a, b) => b.total - a.total);
+    const everyone = new Set(seen);
+    if (owner) everyone.add(owner);
+    return { hash, owner, seen, total: everyone.size,
+             ours: [...everyone].every(mine) };
+  }).filter(r => r.total > 1);
+
+  // A device where every account is yours is your own testing.
+  const rows = all.filter(r => !r.ours).sort((a, b) => b.total - a.total);
+  const ourOwn = all.length - rows.length;
 
   document.body.classList.toggle("has-dv", rows.length > 0);
   if (!rows.length) return;
 
-  const cycling = rows.filter(r => r.total <= 3).length;
-  const suspect = rows.filter(r => r.total >= 4).length;
+  // The threshold comes from your own note in the rules: a duplicated device id
+  // shows up as DOZENS of accounts on one hash. A handful is far more likely to
+  // be one person starting over — or, on a TV in a shared room, two people who
+  // each signed in with their own account.
+  const few  = rows.filter(r => r.total <= 3).length;
+  const some = rows.filter(r => r.total >= 4 && r.total < 10).length;
+  const many = rows.filter(r => r.total >= 10).length;
 
-  document.getElementById("dvSum").innerHTML =
-    `<b>${cycling}</b> device${cycling === 1 ? "" : "s"} shared by two or three
-     accounts — the pattern of somebody starting the trial again on a new account.` +
-    (suspect
-      ? `<br><b>${suspect}</b> with four or more — more likely a batch of boxes
-         shipped with the same device id. Turning the gate to enforce would block
-         those people, who have done nothing wrong.`
-      : `<br>None with four or more, so no sign of boxes sharing a device id.`);
+  const line = [];
+  if (few)  line.push(`<b>${few}</b> with two or three accounts — one person
+    starting over, or two people sharing the same TV.`);
+  if (some) line.push(`<b>${some}</b> with four to nine — too many for a household,
+    too few for a firmware fault. Worth opening and reading the addresses.`);
+  if (many) line.push(`<b>${many}</b> with ten or more — this is the shape of a batch
+    of boxes shipped with the same device id. Enforce would lock out every one of
+    those people, and none of them did anything wrong.`);
+  if (ourOwn) line.push(`<span style="color:var(--faint)">${ourOwn} device${ourOwn === 1
+    ? "" : "s"} of your own hidden.</span>`);
+  document.getElementById("dvSum").innerHTML = line.join("<br>");
 
   document.getElementById("dvList").innerHTML = rows.slice(0, 20).map(r => `
     <div class="dvrow">
