@@ -99,61 +99,28 @@
 
   .pill{display:inline-block;padding:3px 9px;border-radius:11px;font-size:11.5px;font-weight:600}
 
-  /* Country column and card stay hidden until at least one record carries a
+  /* The country column stays hidden until at least one record carries a
      country, so the page looks exactly as before while the field is unused. */
-  .col-cc,#ccBox{display:none}
+  .col-cc{display:none}
   body.has-cc .col-cc{display:table-cell}
   /* The filter is a select, not a cell, so it needs its own display value. */
   body.has-cc select.col-cc{display:inline-block}
-  body.has-cc #ccBox{display:block}
   td.cc{white-space:nowrap;font-size:12.5px}
   td.cc .code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
               color:var(--faint);margin-left:6px}
-  .ccrow{display:grid;grid-template-columns:120px 1fr 30px 42px;align-items:center;
-         gap:10px;margin:7px 0}
-  .ccrow .nm{font-size:12.5px;color:var(--dim);overflow:hidden;
-             text-overflow:ellipsis;white-space:nowrap}
-  .ccrow .tr{background:var(--line);border-radius:3px;height:9px;overflow:hidden}
-  .ccrow .fl{background:var(--ok);height:100%;border-radius:3px}
-  .ccrow .vl{font-size:12px;color:var(--dim);text-align:right}
-  /* The share reads as text, so it wears text ink rather than the series colour. */
-  .ccrow .pc{font-size:12px;color:var(--faint);text-align:right;
-             font-variant-numeric:tabular-nums}
 
-  /* One 100%-wide strip: how concentrated the user base is, at a glance. The
-     rows below answer "which countries"; this answers "how spread out". Only a
-     handful of segments are drawn - past about seven, neighbouring shades stop
-     being tellable apart, so the tail folds into a single grey Other. */
-  .ccstrip{display:flex;gap:2px;height:10px;margin:2px 0 14px;
-           border-radius:5px;overflow:hidden}
-  .ccstrip span{height:100%}
-  .ccstrip span:first-child{border-radius:5px 0 0 5px}
-  .ccstrip span:last-child{border-radius:0 5px 5px 0}
+  /* The way through to the full country and device lists. Both of those grow
+     without a ceiling — every country there has ever been a trial in, every
+     device ever met by a second account — so they live on their own page and
+     the dashboard keeps only the one line that says whether to go and look. */
+  a.linkbox{display:flex;justify-content:space-between;align-items:center;gap:16px;
+            padding:15px 18px;text-decoration:none;color:inherit}
+  a.linkbox:hover{border-color:var(--faint)}
+  a.linkbox .lt{display:block;font-size:13.5px;font-weight:600}
+  a.linkbox .ls{display:block;color:var(--dim);font-size:12.5px;margin-top:3px}
+  a.linkbox .ls .warn{color:var(--warn)}
+  a.linkbox .go{color:var(--accent);font-size:12.5px;white-space:nowrap}
 
-  /* Device gate observations. Hidden until at least one device has been met by
-     a second account — on a healthy install that card should stay empty. */
-  #dvBox{display:none}
-  body.has-dv #dvBox{display:block}
-  .dvsum{font-size:12.5px;color:var(--dim);margin:2px 0 12px;line-height:1.6}
-  .dvsum b{color:var(--txt);font-weight:600}
-  .dvrow{display:grid;grid-template-columns:96px 1fr 28px;gap:12px;
-         align-items:start;padding:7px 0;border-top:1px solid var(--line)}
-  .dvrow:first-child{border-top:0}
-  .dvrow .hash{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
-               font-size:11px;color:var(--faint);padding-top:2px}
-  .dvrow .who{font-size:12.5px;color:var(--dim);line-height:1.65;word-break:break-all}
-  .dvrow .who .own{color:var(--txt)}
-  .dvrow .who .tag{font-size:10.5px;color:var(--faint);
-                   border:1px solid var(--line);border-radius:4px;padding:0 4px;margin-left:5px}
-  /* Each account is its own line with the date pushed to the right, so the
-     dates form a column instead of trailing off the end of the addresses. */
-  .dvrow .who .acc{display:flex;justify-content:space-between;align-items:baseline;
-                   gap:14px;padding:1px 0;max-width:420px}
-  .dvrow .who .when{color:var(--faint);font-size:11.5px;white-space:nowrap;
-                    font-variant-numeric:tabular-nums}
-  .dvrow .span{font-size:11.5px;color:var(--warn);display:block;margin-top:7px;
-               padding-top:7px;border-top:1px solid var(--line);line-height:1.5}
-  .dvrow .n{font-size:12.5px;color:var(--dim);text-align:right;padding-top:2px}
   .p-act{background:rgba(0,255,153,.13);color:var(--ok)}
   .p-exp{background:rgba(255,92,92,.13);color:var(--bad)}
   .p-end{background:rgba(255,176,32,.15);color:var(--warn)}
@@ -228,18 +195,14 @@
         <canvas id="cDays" height="140"></canvas>
       </div>
 
-      <div class="card chart-box wide" id="dvBox">
-        <div class="chart-h"><span>Devices seen by more than one account</span>
-          <span id="dvNote" style="font-size:11.5px;color:var(--faint)"></span></div>
-        <div class="dvsum" id="dvSum"></div>
-        <div id="dvList"></div>
-      </div>
-
-      <div class="card chart-box wide" id="ccBox">
-        <div class="chart-h"><span>Trials by country</span>
-          <span id="ccNote" style="font-size:11.5px;color:var(--faint)"></span></div>
-        <div id="ccList"></div>
-      </div>
+      <a class="card chart-box wide linkbox" href="admin-insights.html">
+        <span>
+          <span class="lt">Countries &amp; devices</span>
+          <span class="ls" id="insSum">Every country, and every device seen by
+            more than one account.</span>
+        </span>
+        <span class="go">Open &rarr;</span>
+      </a>
     </div>
 
     <div class="controls">
@@ -382,16 +345,16 @@ window.load = async () => {
     document.body.classList.toggle("has-cc", data.some(d => d.cc));
 
     // Read separately from the trials node and with its own catch: if either
-    // branch is missing or unreadable, the dashboard must still work and only
-    // the device card goes away.
+    // branch is missing or unreadable, the dashboard must still work and the
+    // line simply says nothing about devices.
     try {
       const [dev, obs] = await Promise.all([
         get(ref(db, "devices")), get(ref(db, "gate_observations"))
       ]);
-      drawDevices(dev.val() || {}, obs.val() || {});
+      insightsLine(dev.val() || {}, obs.val() || {});
     } catch (e) {
       console.warn("Device gate data unavailable", e);
-      document.body.classList.remove("has-dv");
+      insightsLine(null, null);
     }
     fillCountryFilter();
     stats(now); render(); drawAll();
@@ -405,101 +368,50 @@ window.load = async () => {
 };
 
 /**
- * Devices met by more than one account.
+ * The one line under the link to admin-insights.html.
+ *
+ * Both lists over there grow without a ceiling, so the dashboard keeps only
+ * what decides whether to go and look: how many countries there are, how many
+ * trials still carry none, and whether any device has been met by more
+ * accounts than a household explains.
  *
  * /devices/<hash> holds whoever claimed the device first; /gate_observations/
  * <hash>/<uid> records every OTHER account that later found it taken. The first
  * account is therefore never in the observations, which is why both branches
- * have to be read and joined to get the real head count.
+ * have to be read and joined to get the real head count. A device whose every
+ * account is one of yours is your own testing and is left out.
  *
- * The reason to look: your own note in the rules. A handful of accounts on one
- * hash reads as somebody cycling trials. Dozens on one hash reads as a batch of
- * boxes shipped with the same device id, and switching the gate to enforce
- * would lock out every one of those people.
+ * Called with nulls when the device branches could not be read — the country
+ * half of the line is still worth showing on its own.
  */
-function drawDevices(devices, observations){
+function insightsLine(devices, observations){
   const emailOf = new Map(data.map(d => [d.uid, d.email || d.uid]));
-  const name = uid => esc(emailOf.get(uid) || uid.slice(0, 16) + "\u2026");
   const mine = uid => OWN_ACCOUNTS.includes(emailOf.get(uid));
 
-  const all = Object.entries(observations).map(([hash, uids]) => {
-    const seen = Object.entries(uids || {});          // [uid, when]
-    const dev = devices[hash];
-    const owner = dev && dev.uid;
-    const everyone = new Set(seen.map(([u]) => u));
+  const shared = Object.entries(observations || {}).map(([hash, uids]) => {
+    const everyone = new Set(Object.keys(uids || {}));
+    const owner = (devices || {})[hash] && devices[hash].uid;
     if (owner) everyone.add(owner);
+    return { n: everyone.size, ours: [...everyone].every(mine) };
+  }).filter(r => r.n > 1 && !r.ours);
 
-    // When each account met this device, the first claim included. The spread
-    // between them is the tell: weeks apart reads as one person coming back,
-    // hours apart as several different boxes answering to the same id.
-    const stamps = seen.map(([, w]) => Number(w)).filter(Boolean);
-    if (dev && dev.trialStart) stamps.push(Number(dev.trialStart));
-    const spread = stamps.length > 1 ? Math.max(...stamps) - Math.min(...stamps) : 0;
+  const countries = new Set(data.filter(d => d.cc).map(d => d.cc)).size;
+  const noCc      = data.filter(d => !d.cc).length;
+  const busiest   = shared.reduce((m, r) => Math.max(m, r.n), 0);
 
-    return { hash, owner, seen, total: everyone.size, spread,
-             ownerWhen: dev && dev.trialStart,
-             ours: [...everyone].every(mine) };
-  }).filter(r => r.total > 1);
+  const parts = [];
+  parts.push(countries
+    ? `${countries} countr${countries === 1 ? "y" : "ies"}`
+    : "no country recorded yet");
+  if (noCc) parts.push(`${noCc} trial${noCc === 1 ? "" : "s"} without one`);
+  if (observations) parts.push(shared.length
+    ? `${shared.length} device${shared.length === 1 ? "" : "s"} seen by more than one account`
+    : "no shared devices");
 
-  // A device where every account is yours is your own testing.
-  const rows = all.filter(r => !r.ours).sort((a, b) => b.total - a.total);
-  const ourOwn = all.length - rows.length;
-
-  document.body.classList.toggle("has-dv", rows.length > 0);
-  if (!rows.length) return;
-
-  // The threshold comes from your own note in the rules: a duplicated device id
-  // shows up as DOZENS of accounts on one hash. A handful is far more likely to
-  // be one person starting over — or, on a TV in a shared room, two people who
-  // each signed in with their own account.
-  const few  = rows.filter(r => r.total <= 3).length;
-  const some = rows.filter(r => r.total >= 4 && r.total < 10).length;
-  const many = rows.filter(r => r.total >= 10).length;
-
-  const line = [];
-  if (few)  line.push(`<b>${few}</b> with two or three accounts — one person
-    starting over, or two people sharing the same TV.`);
-  if (some) line.push(`<b>${some}</b> with four to nine — too many for a household,
-    too few for a firmware fault. Worth opening and reading the addresses.`);
-  if (many) line.push(`<b>${many}</b> with ten or more — this is the shape of a batch
-    of boxes shipped with the same device id. Enforce would lock out every one of
-    those people, and none of them did anything wrong.`);
-  if (ourOwn) line.push(`<span style="color:var(--faint)">${ourOwn} device${ourOwn === 1
-    ? "" : "s"} of your own hidden.</span>`);
-  document.getElementById("dvSum").innerHTML = line.join("<br>");
-
-  const day = ms => ms ? new Date(Number(ms)).toLocaleDateString([],
-    { day:"2-digit", month:"short" }) : "";
-  const acc = (who, ms, tag) =>
-    `<span class="acc"><span>${who}${tag || ""}</span>` +
-    `<span class="when">${esc(day(ms))}</span></span>`;
-
-  document.getElementById("dvList").innerHTML = rows.slice(0, 20).map(r => {
-    const hours = Math.round(r.spread / 3600000);
-    // Only worth calling out when the cluster is genuinely tight. Three accounts
-    // spread over a few days is just as easily a household; three inside a day
-    // is not, because the people are not in the same room.
-    const tight = r.total >= 3 && hours <= 24;
-    return `
-    <div class="dvrow">
-      <span class="hash" title="${esc(r.hash)}">${esc(r.hash.slice(0, 12))}…</span>
-      <span class="who">${r.owner
-          ? acc(`<span class="own">${name(r.owner)}</span>`, r.ownerWhen,
-                `<span class="tag">first</span>`)
-          : `<span style="color:var(--faint)">device record missing</span>`}
-        ${r.seen.filter(([u]) => u !== r.owner)
-            .sort((a, b) => Number(a[1]) - Number(b[1]))
-            .map(([u, w]) => acc(name(u), w)).join("")}
-        ${tight ? `<span class="span">All ${r.total} within ${hours <= 1
-            ? "the hour" : hours + " hours"} — unrelated people rarely meet the
-            same box inside a day, so this looks more like several boxes
-            answering to one device id.</span>` : ""}
-      </span>
-      <span class="n">${r.total}</span>
-    </div>`; }).join("");
-
-  document.getElementById("dvNote").textContent =
-    rows.length > 20 ? `top 20 of ${rows.length}` : `${rows.length} in total`;
+  // Four accounts on one device is where a household stops being the easy
+  // explanation, so that is the only part of the line that raises its voice.
+  document.getElementById("insSum").innerHTML = esc(parts.join(" · ")) +
+    (busiest >= 4 ? ` <span class="warn">· up to ${busiest} on one device</span>` : "");
 }
 
 /* -- COUNTRY HELPERS -------------------------------------------------
@@ -615,87 +527,10 @@ window.render = () => {
     </tr>`;
   }).join("");
 
-  drawCountries(rows);
   document.getElementById("empty").style.display = rows.length ? "none" : "block";
   document.getElementById("count").textContent =
     `${rows.length} of ${data.length} shown`;
 };
-
-/**
- * Country breakdown for the rows currently shown, biggest first. Plain DOM
- * rather than canvas: the number of countries is open-ended and each one needs
- * a readable label, which a fixed-height canvas handles badly.
- *
- * Records with no country are counted separately and reported as a note, so a
- * partly-filled dataset cannot be mistaken for a complete one.
- */
-/**
- * A single 100%-wide bar, biggest share first. Six segments at most: they are
- * steps of one hue rather than six identities, because more than a handful of
- * shades side by side stop being distinguishable - and the countries beyond the
- * sixth are exactly the ones a slice would render as an unreadable sliver.
- * Everything past that becomes one grey Other, which is honest and readable.
- */
-function shareStrip(ranked, known){
-  const SHOWN = 6;
-  const head = ranked.slice(0, SHOWN);
-  const tailN = ranked.slice(SHOWN).reduce((sum, [, n]) => sum + n, 0);
-
-  // One colour for every country segment, separated by the 2px gaps in the CSS.
-  // Shading them by rank would repaint the survivors whenever a filter changed
-  // the order, making the strip look as though the data moved when it did not.
-  // Width carries the share, the rows below carry identity, grey means Other.
-  const COUNTRY = "var(--ok)";
-
-  const seg = (label, n, colour) =>
-    `<span title="${esc(label)}: ${n} (${Math.round(n / known * 100)}%)"
-           style="width:${(n / known * 100).toFixed(2)}%;background:${colour}"></span>`;
-
-  return `<div class="ccstrip">
-    ${head.map(([cc, n]) => seg(`${regionName(cc)} (${cc})`, n, COUNTRY)).join("")}
-    ${tailN ? seg(`Other (${ranked.length - SHOWN} more countries)`, tailN, "var(--line)") : ""}
-  </div>`;
-}
-
-function drawCountries(rows){
-  const list = document.getElementById("ccList");
-  const note = document.getElementById("ccNote");
-  const tally = new Map();
-  let unknown = 0;
-  rows.forEach(d => {
-    if (!d.cc) { unknown++; return; }
-    tally.set(d.cc, (tally.get(d.cc) || 0) + 1);
-  });
-
-  const ranked = [...tally.entries()].sort((a,b) => b[1] - a[1]);
-  const known  = ranked.reduce((sum, [, n]) => sum + n, 0);
-  const top    = ranked.slice(0, 12);
-  const max    = top.length ? top[0][1] : 1;
-
-  // Percentages are of the records that HAVE a country, never of every row.
-  // While most trials predate the field, a share of all rows would read far
-  // lower than reality and quietly mislead.
-  const pct = n => known ? (n / known * 100) : 0;
-  const fmtPct = n => {
-    const p = pct(n);
-    return p > 0 && p < 1 ? "<1%" : Math.round(p) + "%";
-  };
-
-  list.innerHTML = (known ? shareStrip(ranked, known) : "") + (top.map(([cc, n]) => `
-    <div class="ccrow">
-      <span class="nm" title="${esc(regionName(cc))} (${esc(cc)})">${esc(regionName(cc))}</span>
-      <span class="tr"><span class="fl" style="width:${(n/max*100).toFixed(1)}%"></span></span>
-      <span class="vl">${n}</span>
-      <span class="pc">${fmtPct(n)}</span>
-    </div>`).join("") ||
-    `<div style="color:var(--faint);font-size:12px;padding:6px 0">No country data yet</div>`);
-
-  const parts = [];
-  if (unknown) parts.push(`${unknown} without country`);
-  if (known)   parts.push(`share of ${known} with one`);
-  if (tally.size > 12) parts.push(`top 12 of ${tally.size}`);
-  note.textContent = parts.join(" \u00b7 ");
-}
 
 const fmt = ms => new Date(ms).toLocaleString([], {
   year:"numeric", month:"short", day:"2-digit", hour:"2-digit", minute:"2-digit" });

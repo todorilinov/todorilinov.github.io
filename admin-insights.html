@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>TV DSP Center — Countries &amp; Devices</title>
+<style>
+  :root{
+    --bg:#0d1117; --card:#14181d; --line:#2a3038;
+    --txt:#e6edf3; --dim:#9aa4af; --faint:#7a828b;
+    --accent:#00CCFF; --ok:#00FF99; --warn:#ffb020; --bad:#ff5c5c;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+       font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:1100px;margin:0 auto;padding:24px 18px 60px}
+  h1{font-size:20px;margin:0 0 4px;font-weight:600}
+  .sub{color:var(--dim);font-size:13px}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px}
+  .box{padding:16px 18px 18px;margin-bottom:18px}
+  .box-h{display:flex;justify-content:space-between;align-items:baseline;
+         gap:14px;flex-wrap:wrap;margin-bottom:12px;color:var(--dim);
+         font-size:12.5px;font-weight:500}
+  .box-h .t{font-size:15px;color:var(--txt);font-weight:600}
+  .box-h .note{font-size:11.5px;color:var(--faint)}
+
+  button{font:inherit;cursor:pointer;border:none;border-radius:8px}
+  .primary{background:var(--accent);color:#002733;padding:12px 22px;font-weight:600}
+  .primary:hover{filter:brightness(1.08)}
+  .ghost{background:transparent;color:var(--dim);border:1px solid var(--line);padding:8px 14px}
+  .ghost:hover{color:var(--txt);border-color:var(--faint)}
+
+  #login{padding:40px 28px;text-align:center;max-width:400px;margin:60px auto}
+  #login p{color:var(--dim);margin:0 0 22px}
+
+  input[type=search]{background:var(--bg);border:1px solid var(--line);color:var(--txt);
+       padding:8px 11px;border-radius:8px;min-width:190px;font:inherit;font-size:13px}
+  input[type=search]:focus{outline:none;border-color:var(--accent)}
+  select{background:var(--bg);border:1px solid var(--line);color:var(--txt);
+       padding:8px 10px;border-radius:8px;font:inherit;font-size:13px}
+  label.chk{display:inline-flex;align-items:center;gap:7px;color:var(--dim);
+            font-size:12.5px;cursor:pointer}
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+  .spacer{flex:1}
+
+  /* ── Country list ──
+     Plain DOM rather than canvas: the number of countries is open-ended and
+     each one needs a readable label, which a fixed-height canvas handles badly.
+     This page draws every one of them — the tail is the reason to come here,
+     because that is where a market you did not expect shows up. */
+  .ccrow{display:grid;grid-template-columns:26px 180px 1fr 44px 46px;align-items:center;
+         gap:12px;padding:5px 0}
+  .ccrow .rk{font-size:11.5px;color:var(--faint);text-align:right;
+             font-variant-numeric:tabular-nums}
+  .ccrow .nm{font-size:13px;color:var(--txt);overflow:hidden;
+             text-overflow:ellipsis;white-space:nowrap}
+  .ccrow .nm .code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+                   font-size:10.5px;color:var(--faint);margin-left:6px}
+  .ccrow .tr{background:var(--line);border-radius:3px;height:9px;overflow:hidden}
+  .ccrow .fl{background:var(--ok);height:100%;border-radius:3px}
+  .ccrow .vl{font-size:12.5px;color:var(--dim);text-align:right;
+             font-variant-numeric:tabular-nums}
+  .ccrow .pc{font-size:12px;color:var(--faint);text-align:right;
+             font-variant-numeric:tabular-nums}
+  @media(max-width:620px){
+    .ccrow{grid-template-columns:22px 1fr 40px 42px}
+    .ccrow .tr{display:none}
+  }
+
+  /* One 100%-wide strip: how concentrated the user base is, at a glance. The
+     rows below answer "which countries"; this answers "how spread out". Only a
+     handful of segments are drawn — past about seven, neighbouring shades stop
+     being tellable apart, so the tail folds into a single grey Other. */
+  .ccstrip{display:flex;gap:2px;height:10px;margin:2px 0 16px;
+           border-radius:5px;overflow:hidden}
+  .ccstrip span{height:100%}
+  .ccstrip span:first-child{border-radius:5px 0 0 5px}
+  .ccstrip span:last-child{border-radius:0 5px 5px 0}
+
+  /* ── Device gate observations ── */
+  .dvsum{font-size:12.5px;color:var(--dim);margin:0 0 14px;line-height:1.65}
+  .dvsum b{color:var(--txt);font-weight:600}
+  .dvrow{padding:11px 0;border-top:1px solid var(--line)}
+  .dvrow:first-child{border-top:0}
+  .dvhead{display:flex;justify-content:space-between;align-items:baseline;
+          gap:14px;margin-bottom:5px}
+  .dvhead .hash{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+                font-size:11px;color:var(--faint);word-break:break-all}
+  .dvhead .n{font-size:12.5px;color:var(--dim);white-space:nowrap}
+  .dvhead .n b{color:var(--txt);font-weight:600}
+  .who{font-size:12.5px;color:var(--dim);line-height:1.65;word-break:break-all}
+  .who .own{color:var(--txt)}
+  .who .tag{font-size:10.5px;color:var(--faint);border:1px solid var(--line);
+            border-radius:4px;padding:0 4px;margin-left:5px}
+  /* Each account is its own line with the date pushed to the right, so the
+     dates form a column instead of trailing off the end of the addresses. */
+  .who .acc{display:flex;justify-content:space-between;align-items:baseline;
+            gap:14px;padding:1px 0;max-width:520px}
+  .who .when{color:var(--faint);font-size:11.5px;white-space:nowrap;
+             font-variant-numeric:tabular-nums}
+  .dvrow .span{font-size:11.5px;color:var(--warn);display:block;margin-top:7px;
+               padding-top:7px;border-top:1px solid var(--line);line-height:1.5;
+               max-width:520px}
+
+  .empty{padding:30px;text-align:center;color:var(--faint);font-size:13px}
+  .err{background:rgba(255,92,92,.1);border:1px solid rgba(255,92,92,.35);
+       color:#ffb3b3;padding:13px 16px;border-radius:9px;margin-bottom:16px;font-size:13px}
+  .foot{color:var(--faint);font-size:12px;display:flex;
+        justify-content:space-between;flex-wrap:wrap;gap:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ══ LOGIN ══ -->
+  <div id="login" class="card" style="display:none">
+    <h1>Countries &amp; Devices</h1>
+    <p>Sign in with your admin Google account.</p>
+    <button class="primary" onclick="signIn()">Sign in with Google</button>
+    <div id="loginErr"></div>
+  </div>
+
+  <!-- ══ APP ══ -->
+  <div id="app" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;
+                gap:12px;flex-wrap:wrap;margin-bottom:22px">
+      <div>
+        <h1>Countries &amp; Devices</h1>
+        <div class="sub"><a href="admin.html">&larr; Back to trial dashboard</a><span
+             id="who" style="color:var(--faint)"></span></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="ghost" onclick="load()">Refresh</button>
+        <button class="ghost" onclick="exportCountries()">Export countries CSV</button>
+        <button class="ghost" onclick="signOut()">Sign out</button>
+      </div>
+    </div>
+
+    <div id="err"></div>
+
+    <!-- ── every country, no top-N cut ── -->
+    <div class="card box">
+      <div class="box-h">
+        <span class="t">Trials by country</span>
+        <span class="note" id="ccNote"></span>
+      </div>
+      <div class="controls">
+        <input type="search" id="ccq" placeholder="Find a country…" oninput="render()">
+        <select id="ccStatus" onchange="render()">
+          <option value="all">All statuses</option>
+          <option value="active">Active only</option>
+          <option value="expired">Expired only</option>
+        </select>
+        <select id="ccSort" onchange="render()">
+          <option value="n">Most trials first</option>
+          <option value="na">Fewest trials first</option>
+          <option value="az">Country name A–Z</option>
+        </select>
+        <div class="spacer"></div>
+        <span id="ccCount" style="color:var(--dim);font-size:12.5px"></span>
+      </div>
+      <div id="ccList"></div>
+    </div>
+
+    <!-- ── every shared device, no top-20 cut ── -->
+    <div class="card box">
+      <div class="box-h">
+        <span class="t">Devices seen by more than one account</span>
+        <span class="note" id="dvNote"></span>
+      </div>
+      <div class="dvsum" id="dvSum"></div>
+      <div class="controls">
+        <select id="dvMin" onchange="render()">
+          <option value="2">Two accounts or more</option>
+          <option value="4">Four or more</option>
+          <option value="10">Ten or more</option>
+        </select>
+        <select id="dvSort" onchange="render()">
+          <option value="n">Most accounts first</option>
+          <option value="recent">Most recently seen first</option>
+          <option value="tight">Tightest time cluster first</option>
+        </select>
+        <label class="chk"><input type="checkbox" id="dvMine" onchange="render()">
+          Include my own test devices</label>
+      </div>
+      <div id="dvList"></div>
+    </div>
+
+    <div class="foot">
+      <span id="updated"></span>
+      <span>Times shown in your local timezone.</span>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut,
+         onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+/* ── CONFIG ─────────────────────────────────────────────────────────
+   The same project and the same admin gate as admin.html. Safe to expose:
+   these identify the project, they don't grant access — access is controlled
+   entirely by the Realtime Database rules, which only allow the ADMIN_UID
+   below to read these nodes.
+
+   Deliberately a second self-contained page rather than a shared script file:
+   this page lists every customer's email address, and the fewer files have to
+   be trusted to render it, the better.                                      */
+const firebaseConfig = {
+  apiKey: "AIzaSyAkmf7AKxuIHaIr8TDqttwlElR7xldiF50",
+  authDomain: "tv-dsp-center.firebaseapp.com",
+  databaseURL: "https://tv-dsp-center-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "tv-dsp-center",
+  storageBucket: "tv-dsp-center.firebasestorage.app",
+  messagingSenderId: "845731119367",
+  appId: "1:845731119367:android:d1ca244d953238ef2745a2"
+};
+/** Your own accounts — mirrors the list in admin.html; keep the two in step. */
+const OWN_ACCOUNTS = [
+  "nikolaystoyanov569@gmail.com",
+  "georgitomovv@gmail.com",
+];
+
+const ADMIN_UID  = "dQYQkefbgjRxaZdQpClWqhA8Ipm2";
+const TRIAL_DAYS = 7;
+const DAY_MS     = 86400000;
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getDatabase(app);
+
+let data    = [];     // normalised trial rows
+let devices = [];     // devices met by more than one account
+
+/* ── AUTH ── */
+window.signIn = async () => {
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch (e) { document.getElementById("loginErr").innerHTML =
+    `<div class="err" style="margin-top:16px">Sign-in failed: ${esc(e.code || e.message)}</div>`; }
+};
+window.signOut = () => fbSignOut(auth);
+
+onAuthStateChanged(auth, user => {
+  const login = document.getElementById("login"), appEl = document.getElementById("app");
+  if (!user) { login.style.display = "block"; appEl.style.display = "none"; return; }
+  if (user.uid !== ADMIN_UID) {
+    login.style.display = "block"; appEl.style.display = "none";
+    document.getElementById("loginErr").innerHTML =
+      `<div class="err" style="margin-top:16px">This account is not authorised.<br>
+       <span style="font-size:11.5px;opacity:.75">${esc(user.email || "")}</span></div>`;
+    fbSignOut(auth); return;
+  }
+  login.style.display = "none"; appEl.style.display = "block";
+  document.getElementById("who").textContent = ` · ${user.email}`;
+  load();
+});
+
+/* ── DATA ── */
+window.load = async () => {
+  const errEl = document.getElementById("err");
+  errEl.innerHTML = "";
+  try {
+    const [tSnap, dSnap, oSnap] = await Promise.all([
+      get(ref(db, "trials")),
+      // Either device branch may be missing or unreadable; that must not take
+      // the country list down with it, so they resolve to null instead of throwing.
+      get(ref(db, "devices")).catch(e => (console.warn("devices unavailable", e), null)),
+      get(ref(db, "gate_observations")).catch(e => (console.warn("observations unavailable", e), null)),
+    ]);
+
+    const raw = tSnap.val() || {};
+    const now = Date.now();
+    data = Object.entries(raw).map(([uid, v]) => {
+      const start   = Number(v && v.trialStart) || 0;
+      const end     = start + TRIAL_DAYS * DAY_MS;
+      const expired = start === 0 || now >= end;
+      // the app may store the address next to trialStart; fall back to the UID
+      const email   = String((v && (v.email || v.userEmail || v.mail)) || "").trim();
+      // `country` is resolved from the request IP, `locale` is the device
+      // setting — and on a TV box the latter is often a factory default nobody
+      // changed, so the IP wins whenever both are present.
+      const ccIp  = iso2(v && v.country);
+      const ccDev = iso2(v && v.locale);
+      const cc    = ccIp || ccDev;
+      return { uid, email, start, status: expired ? "expired" : "active",
+               cc, country: cc ? regionName(cc) : "", ccIp, ccDev };
+    });
+
+    devices = buildDevices((dSnap && dSnap.val()) || {}, (oSnap && oSnap.val()) || {});
+    render();
+    document.getElementById("updated").textContent =
+      "Last refreshed " + new Date().toLocaleString();
+  } catch (e) {
+    errEl.innerHTML = `<div class="err"><b>Could not read data.</b><br>${esc(e.message)}
+      <br><span style="font-size:11.5px;opacity:.8">Check that the Realtime Database rules grant
+      read access on <code>/trials</code>, <code>/devices</code> and
+      <code>/gate_observations</code> to this UID.</span></div>`;
+  }
+};
+
+/* ── COUNTRY HELPERS ──────────────────────────────────────────────────
+   Values arrive from the client, so nothing is trusted: only a bare two-letter
+   code is accepted and anything else is treated as absent.                   */
+const iso2 = v => {
+  const s = String(v == null ? "" : v).trim().toUpperCase();
+  return /^[A-Z]{2}$/.test(s) ? s : "";
+};
+
+/* Intl.DisplayNames turns "BG" into "Bulgaria" without shipping a lookup
+   table. Missing in old browsers, and it throws on codes it does not know —
+   both cases fall back to the raw code. */
+let _rn = null;
+try { _rn = new Intl.DisplayNames(["en"], { type:"region" }); } catch { _rn = null; }
+const regionName = cc => {
+  if (!_rn) return cc;
+  try { return _rn.of(cc) || cc; } catch { return cc; }
+};
+
+const esc = s => String(s).replace(/[&<>"']/g, c =>
+  ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+
+const day = ms => ms ? new Date(Number(ms)).toLocaleDateString([],
+  { day:"2-digit", month:"short", year:"numeric" }) : "";
+
+/* ── RENDER ── */
+window.render = () => { drawCountries(); drawDevices(); };
+
+/**
+ * A single 100%-wide bar, biggest share first. Six segments at most: they are
+ * steps of one hue rather than six identities, because more than a handful of
+ * shades side by side stop being distinguishable — and the countries beyond the
+ * sixth are exactly the ones a slice would render as an unreadable sliver.
+ * Everything past that becomes one grey Other, which is honest and readable;
+ * the full list is right underneath, so nothing is actually lost.
+ */
+function shareStrip(ranked, known){
+  const SHOWN = 6;
+  const head  = ranked.slice(0, SHOWN);
+  const tailN = ranked.slice(SHOWN).reduce((sum, [, n]) => sum + n, 0);
+  const COUNTRY = "var(--ok)";
+
+  const seg = (label, n, colour) =>
+    `<span title="${esc(label)}: ${n} (${Math.round(n / known * 100)}%)"
+           style="width:${(n / known * 100).toFixed(2)}%;background:${colour}"></span>`;
+
+  return `<div class="ccstrip">
+    ${head.map(([cc, n]) => seg(`${regionName(cc)} (${cc})`, n, COUNTRY)).join("")}
+    ${tailN ? seg(`Other (${ranked.length - SHOWN} more countries)`, tailN, "var(--line)") : ""}
+  </div>`;
+}
+
+/**
+ * Every country, in full — no top-N cut anywhere.
+ *
+ * The search box filters which ROWS are drawn, never how the shares are
+ * computed: a percentage that changed as you typed would mean nothing. Only the
+ * status filter moves the totals, because that is a real question about a
+ * different population.
+ */
+function drawCountries(){
+  const q    = document.getElementById("ccq").value.trim().toLowerCase();
+  const fS   = document.getElementById("ccStatus").value;
+  const sort = document.getElementById("ccSort").value;
+
+  const rows = data.filter(d => fS === "all" || d.status === fS);
+
+  const tally = new Map();
+  let unknown = 0;
+  rows.forEach(d => {
+    if (!d.cc) { unknown++; return; }
+    tally.set(d.cc, (tally.get(d.cc) || 0) + 1);
+  });
+
+  const ranked = [...tally.entries()].sort((a, b) => b[1] - a[1]);
+  const known  = ranked.reduce((sum, [, n]) => sum + n, 0);
+  const max    = ranked.length ? ranked[0][1] : 1;
+
+  // Percentages are of the records that HAVE a country, never of every row.
+  // While most trials predate the field, a share of all rows would read far
+  // lower than reality and quietly mislead.
+  const fmtPct = n => {
+    const p = known ? (n / known * 100) : 0;
+    return p > 0 && p < 1 ? "<1%" : Math.round(p) + "%";
+  };
+
+  // Rank is taken from the count order and carried through the other sorts, so
+  // "12" still means twelfth-busiest when the list is read alphabetically.
+  const rank = new Map(ranked.map(([cc], i) => [cc, i + 1]));
+  const shown = ranked
+    .filter(([cc]) => !q || regionName(cc).toLowerCase().includes(q)
+                         || cc.toLowerCase() === q)
+    .sort((a, b) =>
+      sort === "az" ? regionName(a[0]).localeCompare(regionName(b[0]))
+    : sort === "na" ? (a[1] - b[1]) || (rank.get(a[0]) - rank.get(b[0]))
+    : 0);
+
+  document.getElementById("ccList").innerHTML =
+    (known ? shareStrip(ranked, known) : "") +
+    (shown.map(([cc, n]) => `
+      <div class="ccrow">
+        <span class="rk">${rank.get(cc)}</span>
+        <span class="nm" title="${esc(regionName(cc))} (${esc(cc)})">${esc(regionName(cc))}<span class="code">${esc(cc)}</span></span>
+        <span class="tr"><span class="fl" style="width:${(n / max * 100).toFixed(1)}%"></span></span>
+        <span class="vl">${n}</span>
+        <span class="pc">${fmtPct(n)}</span>
+      </div>`).join("") ||
+     `<div class="empty">${known ? "No country matches that search."
+                                 : "No country data yet."}</div>`);
+
+  const parts = [];
+  if (tally.size) parts.push(`${tally.size} countr${tally.size === 1 ? "y" : "ies"}`);
+  if (known)      parts.push(`${known} trial${known === 1 ? "" : "s"} with a country`);
+  if (unknown)    parts.push(`${unknown} without`);
+  document.getElementById("ccNote").textContent = parts.join(" · ");
+  document.getElementById("ccCount").textContent = !ranked.length ? ""
+    : shown.length === ranked.length ? `all ${ranked.length} shown`
+    : `${shown.length} of ${ranked.length} shown`;
+}
+
+/**
+ * Devices met by more than one account.
+ *
+ * /devices/<hash> holds whoever claimed the device first; /gate_observations/
+ * <hash>/<uid> records every OTHER account that later found it taken. The first
+ * account is therefore never in the observations, which is why both branches
+ * have to be read and joined to get the real head count.
+ *
+ * The reason to look: your own note in the rules. A handful of accounts on one
+ * hash reads as somebody cycling trials. Dozens on one hash reads as a batch of
+ * boxes shipped with the same device id, and switching the gate to enforce
+ * would lock out every one of those people.
+ */
+function buildDevices(devs, observations){
+  const emailOf = new Map(data.map(d => [d.uid, d.email || d.uid]));
+  const mine = uid => OWN_ACCOUNTS.includes(emailOf.get(uid));
+
+  return Object.entries(observations).map(([hash, uids]) => {
+    const seen  = Object.entries(uids || {});          // [uid, when]
+    const dev   = devs[hash];
+    const owner = dev && dev.uid;
+    const everyone = new Set(seen.map(([u]) => u));
+    if (owner) everyone.add(owner);
+
+    // When each account met this device, the first claim included. The spread
+    // between them is the tell: weeks apart reads as one person coming back,
+    // hours apart as several different boxes answering to the same id.
+    const stamps = seen.map(([, w]) => Number(w)).filter(Boolean);
+    if (dev && dev.trialStart) stamps.push(Number(dev.trialStart));
+    const spread = stamps.length > 1 ? Math.max(...stamps) - Math.min(...stamps) : 0;
+
+    return { hash, owner, seen, total: everyone.size, spread,
+             last: stamps.length ? Math.max(...stamps) : 0,
+             ownerWhen: dev && dev.trialStart,
+             ours: [...everyone].every(mine) };
+  }).filter(r => r.total > 1);
+}
+
+function drawDevices(){
+  const min      = Number(document.getElementById("dvMin").value);
+  const sort     = document.getElementById("dvSort").value;
+  const showMine = document.getElementById("dvMine").checked;
+
+  // A device where every account is yours is your own testing, so it stays out
+  // of the way by default — but it is still real data, so the box brings it back.
+  const visible = devices.filter(r => showMine || !r.ours);
+  const ourOwn  = devices.filter(r => r.ours).length;
+
+  // The thresholds come from your own note in the rules: a duplicated device id
+  // shows up as DOZENS of accounts on one hash. A handful is far more likely to
+  // be one person starting over — or, on a TV in a shared room, two people who
+  // each signed in with their own account.
+  const few  = visible.filter(r => r.total <= 3).length;
+  const some = visible.filter(r => r.total >= 4 && r.total < 10).length;
+  const many = visible.filter(r => r.total >= 10).length;
+
+  const line = [];
+  if (few)  line.push(`<b>${few}</b> with two or three accounts — one person
+    starting over, or two people sharing the same TV.`);
+  if (some) line.push(`<b>${some}</b> with four to nine — too many for a household,
+    too few for a firmware fault. Worth opening and reading the addresses.`);
+  if (many) line.push(`<b>${many}</b> with ten or more — this is the shape of a batch
+    of boxes shipped with the same device id. Enforce would lock out every one of
+    those people, and none of them did anything wrong.`);
+  if (ourOwn && !showMine) line.push(`<span style="color:var(--faint)">${ourOwn}
+    device${ourOwn === 1 ? "" : "s"} of your own hidden.</span>`);
+  if (!visible.length) line.push(`<span style="color:var(--faint)">No device has been
+    met by a second account. That is what a healthy install looks like.</span>`);
+  document.getElementById("dvSum").innerHTML = line.join("<br>");
+
+  const rows = visible.filter(r => r.total >= min).sort((a, b) =>
+      sort === "recent" ? b.last - a.last
+    : sort === "tight"  ? (a.spread - b.spread) || (b.total - a.total)
+    : (b.total - a.total) || (b.last - a.last));
+
+  const emailOf = new Map(data.map(d => [d.uid, d.email || d.uid]));
+  const name = uid => esc(emailOf.get(uid) || uid.slice(0, 16) + "…");
+  const acc = (who, ms, tag) =>
+    `<span class="acc"><span>${who}${tag || ""}</span>` +
+    `<span class="when">${esc(day(ms))}</span></span>`;
+
+  document.getElementById("dvList").innerHTML = rows.map(r => {
+    const hours = Math.round(r.spread / 3600000);
+    // Only worth calling out when the cluster is genuinely tight. Three accounts
+    // spread over a few days is just as easily a household; three inside a day
+    // is not, because the people are not in the same room.
+    const tight = r.total >= 3 && hours <= 24;
+    return `
+    <div class="dvrow">
+      <div class="dvhead">
+        <span class="hash">${esc(r.hash)}</span>
+        <span class="n"><b>${r.total}</b> account${r.total === 1 ? "" : "s"}</span>
+      </div>
+      <div class="who">${r.owner
+          ? acc(`<span class="own">${name(r.owner)}</span>`, r.ownerWhen,
+                `<span class="tag">first</span>`)
+          : `<span style="color:var(--faint)">device record missing</span>`}
+        ${r.seen.filter(([u]) => u !== r.owner)
+            .sort((a, b) => Number(a[1]) - Number(b[1]))
+            .map(([u, w]) => acc(name(u), w)).join("")}
+        ${tight ? `<span class="span">All ${r.total} within ${hours <= 1
+            ? "the hour" : hours + " hours"} — unrelated people rarely meet the
+            same box inside a day, so this looks more like several boxes
+            answering to one device id.</span>` : ""}
+      </div>
+    </div>`; }).join("") ||
+    `<div class="empty">No device matches that filter.</div>`;
+
+  document.getElementById("dvNote").textContent = !visible.length ? ""
+    : rows.length === visible.length ? `${rows.length} in total`
+    : `${rows.length} of ${visible.length} shown`;
+}
+
+/* ── EXPORT ──
+   The country tally, not the trial rows — admin.html already exports those.
+   Written by hand rather than through a library: this page lists customer
+   email addresses and any third-party script loaded into it could read them. */
+window.exportCountries = () => {
+  const fS   = document.getElementById("ccStatus").value;
+  const rows = data.filter(d => fS === "all" || d.status === fS);
+
+  const tally = new Map();
+  let unknown = 0;
+  rows.forEach(d => {
+    if (!d.cc) { unknown++; return; }
+    tally.set(d.cc, (tally.get(d.cc) || 0) + 1);
+  });
+  const ranked = [...tally.entries()].sort((a, b) => b[1] - a[1]);
+  const known  = ranked.reduce((sum, [, n]) => sum + n, 0);
+
+  // Country names can carry a comma, so every text cell is quoted.
+  const cell = v => `"${String(v).replace(/"/g, '""')}"`;
+  const head = "rank,country,code,trials,share_of_known\n";
+  const body = ranked.map(([cc, n], i) =>
+    [i + 1, cell(regionName(cc)), cc, n,
+     (known ? (n / known * 100) : 0).toFixed(2) + "%"].join(",")).join("\n");
+  // The rows with no country are the context for every share above, so they
+  // travel with the file rather than being silently dropped from it.
+  const tail = unknown ? `\n,${cell("No country on record")},,${unknown},` : "";
+
+  const url = URL.createObjectURL(new Blob([head + body + tail], { type:"text/csv" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `tvdsp-countries-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+};
+
+document.getElementById("login").style.display = "block";
+</script>
+</body>
+</html>
