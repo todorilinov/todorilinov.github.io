@@ -415,11 +415,21 @@ function drawDevices(devices, observations){
   const mine = uid => OWN_ACCOUNTS.includes(emailOf.get(uid));
 
   const all = Object.entries(observations).map(([hash, uids]) => {
-    const seen = Object.keys(uids || {});
-    const owner = devices[hash] && devices[hash].uid;
-    const everyone = new Set(seen);
+    const seen = Object.entries(uids || {});          // [uid, when]
+    const dev = devices[hash];
+    const owner = dev && dev.uid;
+    const everyone = new Set(seen.map(([u]) => u));
     if (owner) everyone.add(owner);
-    return { hash, owner, seen, total: everyone.size,
+
+    // When each account met this device, the first claim included. The spread
+    // between them is the tell: weeks apart reads as one person coming back,
+    // hours apart as several different boxes answering to the same id.
+    const stamps = seen.map(([, w]) => Number(w)).filter(Boolean);
+    if (dev && dev.trialStart) stamps.push(Number(dev.trialStart));
+    const spread = stamps.length > 1 ? Math.max(...stamps) - Math.min(...stamps) : 0;
+
+    return { hash, owner, seen, total: everyone.size, spread,
+             ownerWhen: dev && dev.trialStart,
              ours: [...everyone].every(mine) };
   }).filter(r => r.total > 1);
 
@@ -450,15 +460,32 @@ function drawDevices(devices, observations){
     ? "" : "s"} of your own hidden.</span>`);
   document.getElementById("dvSum").innerHTML = line.join("<br>");
 
-  document.getElementById("dvList").innerHTML = rows.slice(0, 20).map(r => `
+  const day = ms => ms ? new Date(Number(ms)).toLocaleDateString([],
+    { day:"2-digit", month:"short" }) : "";
+  const when = ms => ms ? `<span class="when">${esc(day(ms))}</span>` : "";
+
+  document.getElementById("dvList").innerHTML = rows.slice(0, 20).map(r => {
+    const hours = Math.round(r.spread / 3600000);
+    // Only worth calling out when the cluster is genuinely tight. Three accounts
+    // spread over a few days is just as easily a household; three inside a day
+    // is not, because the people are not in the same room.
+    const tight = r.total >= 3 && hours <= 24;
+    return `
     <div class="dvrow">
       <span class="hash" title="${esc(r.hash)}">${esc(r.hash.slice(0, 12))}…</span>
       <span class="who">${r.owner
-          ? `<span class="own">${name(r.owner)}</span><span class="tag">first</span><br>`
+          ? `<span class="own">${name(r.owner)}</span><span class="tag">first</span>${when(r.ownerWhen)}<br>`
           : `<span style="color:var(--faint)">device record missing</span><br>`}
-        ${r.seen.filter(u => u !== r.owner).map(name).join("<br>")}</span>
+        ${r.seen.filter(([u]) => u !== r.owner)
+            .sort((a, b) => Number(a[1]) - Number(b[1]))
+            .map(([u, w]) => name(u) + when(w)).join("<br>")}
+        ${tight ? `<span class="span">All ${r.total} within ${hours <= 1
+            ? "the hour" : hours + " hours"} — unrelated people rarely meet the
+            same box inside a day, so this looks more like several boxes
+            answering to one device id.</span>` : ""}
+      </span>
       <span class="n">${r.total}</span>
-    </div>`).join("");
+    </div>`; }).join("");
 
   document.getElementById("dvNote").textContent =
     rows.length > 20 ? `top 20 of ${rows.length}` : `${rows.length} in total`;
