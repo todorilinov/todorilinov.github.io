@@ -108,6 +108,11 @@
   td.cc{white-space:nowrap;font-size:12.5px}
   td.cc .code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
               color:var(--faint);margin-left:6px}
+  /* Only the device locale to go on — on a TV box often a factory default — so
+     the cell says so instead of passing a guess off as the network country. */
+  td.cc.guess{color:var(--dim)}
+  td.cc .src{font-size:10.5px;color:var(--faint);border:1px solid var(--line);
+             border-radius:4px;padding:0 4px;margin-left:6px}
 
   /* The way through to the full country and device lists. Both of those grow
      without a ceiling — every country there has ever been a trial in, every
@@ -519,8 +524,9 @@ window.render = () => {
         : `<td class="uid">${esc(d.uid.slice(0,20))}…</td>`}
       <td>${d.start ? esc(fmt(d.start)) : "—"}</td>
       <td class="hide-s">${d.start ? esc(fmt(d.end)) : "—"}</td>
-      <td class="cc col-cc">${d.cc
-        ? `${esc(d.country)}<span class="code">${esc(d.cc)}</span>`
+      <td class="cc col-cc${d.cc && !d.ccIp ? " guess" : ""}">${d.cc
+        ? `${esc(d.country)}<span class="code">${esc(d.cc)}</span>${d.ccIp ? ""
+            : `<span class="src">locale</span>`}`
         : "—"}</td>
       <td>${d.status === "expired" ? "0" : d.days}</td>
       <td><span class="pill ${cls}">${txt}</span></td>
@@ -598,7 +604,11 @@ function cardHtml(d){
     ${backfilled ? `<div class="note">Country recorded when this account updated
       to the September 2026 version, not when the trial started.</div>` : ""}
     ${!d.ccIp && !d.ccDev ? `<div class="note">No country: this trial started
-      before the app recorded one, and has not opened the new version yet.</div>` : ""}`;
+      before the app recorded one, and has not opened the new version yet.</div>` : ""}
+    ${!d.ccIp && d.ccDev ? `<div class="note">No IP country yet. The app reached
+      Firebase but not Cloudflare, which it asks for the country: offline for a
+      moment, a VPN or network that blocks it, or a region where Cloudflare is
+      throttled. It tries again the next time the app opens.</div>` : ""}`;
 }
 
 /**
