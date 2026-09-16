@@ -1,50 +1,903 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vocal Split</title>
-<meta name="description" content="Vocal Split — separate a track into vocal and instrumental stems on your own computer.">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vocal Split — Vocal Remover, Karaoke Video Maker &amp; Karaoke Party for Windows | TI Apps</title>
+<meta name="description" content="Vocal Split for Windows separates any song into vocals and instrumental (or all four parts), times the words to the singing, writes karaoke videos in 1080p, 4K or phone shape, saves MP3+G, and runs a karaoke party on your TV — all on your own computer, nothing uploaded.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://tiapps.dev/VocalSplit.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="TI Apps">
+<meta property="og:url" content="https://tiapps.dev/VocalSplit.html">
+<meta property="og:title" content="Vocal Split — split any song, sing it tonight">
+<meta property="og:description" content="AI vocal remover, karaoke video maker, MP3+G export and a karaoke party on your TV. Runs entirely on your Windows PC.">
+<meta property="og:image" content="https://tiapps.dev/img/vocalsplit/app_splitter.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Vocal Split — split any song, sing it tonight">
+<meta name="twitter:description" content="AI vocal remover, karaoke videos, MP3+G and karaoke parties — on your own Windows PC.">
+<meta name="twitter:image" content="https://tiapps.dev/img/vocalsplit/app_splitter.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --base: #080B16;
-    --panel: #0E1223;
-    --text: #EEF1FA;
-    --muted: #8A93AF;
-    --accent: #A78BFA;
+  :root{
+    --bg:#0A0E16;
+    --card:#111726;
+    --card-hi:#161D30;
+    --card-edge:#1C2436;
+    --cyan:#19A0EA;
+    --orange:#F5821A;
+    --violet:#8B5CF6;
+    --lilac:#A78BFA;
+    --pink:#EC4899;
+    --green:#34D399;
+    --amber:#FBBF24;
+    --sky:#38BDF8;
+    --rose:#FB7185;
+    --text:#E9EDF5;
+    --muted:#8A93A8;
+    --faint:#5A6280;
+    --mono:'IBM Plex Mono',monospace;
   }
-  * { box-sizing: border-box; }
-  html, body { height: 100%; }
-  body {
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2rem;
-    padding: 2rem 1.5rem;
-    background: radial-gradient(120% 90% at 50% 0%, #141A33 0%, var(--base) 70%);
-    color: var(--text);
-    font: 400 16px/1.5 "Segoe UI", system-ui, -apple-system, sans-serif;
-    text-align: center;
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Archivo',sans-serif;
+    font-variation-settings:'wdth' 100;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
   }
-  h1 {
-    margin: 0;
-    font-size: clamp(1.75rem, 6vw, 2.75rem);
-    letter-spacing: -0.02em;
+  a{color:inherit}
+  strong{color:var(--text);font-weight:700}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+  .narrow{max-width:820px}
+
+  /* ------------------------------------------------------------ header */
+  header{padding:28px 0;border-bottom:1px solid var(--card-edge)}
+  .header-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .logo{
+    font-weight:900;font-variation-settings:'wdth' 125;font-size:1.35rem;
+    letter-spacing:.02em;text-decoration:none;
   }
-  h1 span { color: var(--accent); }
-  p { margin: 0.5rem 0 0; color: var(--muted); }
-  img {
-    display: block;
-    width: min(100%, 780px);
-    height: auto;
+  .logo .ti{color:var(--cyan)}
+  .logo .apps{color:var(--orange)}
+  nav a{
+    text-decoration:none;color:var(--muted);
+    font-size:.92rem;margin-left:28px;transition:color .2s;
   }
+  nav a:first-child{margin-left:0}
+  nav a:hover,nav a:focus-visible{color:var(--text)}
+  nav a:focus-visible{outline:2px solid var(--lilac);outline-offset:4px;border-radius:2px}
+  @media(max-width:640px){nav a{margin-left:16px;font-size:.86rem}}
+
+  /* -------------------------------------------------------------- hero */
+  .page-hero{padding:72px 0 40px;text-align:center}
+  .eyebrow{
+    font-family:var(--mono);font-size:.8rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--pink);margin-bottom:22px;
+  }
+  .page-hero h1{
+    font-weight:900;font-variation-settings:'wdth' 122;
+    font-size:clamp(2.4rem,6.4vw,4.2rem);line-height:1.04;letter-spacing:-.01em;
+    margin:0 auto;max-width:17ch;
+  }
+  .grad{
+    background:linear-gradient(90deg,var(--violet) 0%,var(--pink) 100%);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;color:transparent;
+  }
+  .page-hero .lead{
+    margin:22px auto 0;color:var(--muted);font-size:1.13rem;max-width:62ch;
+  }
+  .hero-cta{margin-top:32px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+  .btn{
+    display:inline-flex;align-items:center;gap:10px;
+    background:linear-gradient(90deg,var(--violet),var(--pink));color:#fff;
+    text-decoration:none;font-weight:700;font-size:.95rem;
+    padding:13px 22px;border-radius:12px;transition:opacity .2s;
+  }
+  .btn:hover{opacity:.88}
+  .btn:focus-visible{outline:2px solid var(--lilac);outline-offset:3px}
+  .ghost-btn{
+    display:inline-flex;align-items:center;gap:10px;
+    background:transparent;color:var(--lilac);border:1px solid var(--lilac);
+    text-decoration:none;font-weight:700;font-size:.95rem;
+    padding:13px 22px;border-radius:12px;transition:background .2s,color .2s;
+  }
+  .ghost-btn:hover{background:var(--lilac);color:#0B0F18}
+  .ghost-btn:focus-visible{outline:2px solid var(--lilac);outline-offset:3px}
+  .status{
+    display:inline-block;margin-top:18px;font-family:var(--mono);font-size:.78rem;
+    color:var(--amber);letter-spacing:.06em;
+  }
+  .hero-shot{
+    margin:48px auto 0;border-radius:18px;overflow:hidden;
+    border:1px solid var(--card-edge);
+    box-shadow:0 30px 80px -30px rgba(139,92,246,.55);
+  }
+  .hero-shot img{display:block;width:100%;height:auto}
+
+  .facts{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:40px auto 0}
+  @media(max-width:760px){.facts{grid-template-columns:repeat(2,1fr)}}
+  .fact{
+    background:var(--card);border:1px solid var(--card-edge);
+    border-radius:14px;padding:18px 16px;text-align:center;
+  }
+  .fact b{display:block;font-size:1.25rem;font-weight:800;font-variation-settings:'wdth' 110}
+  .fact span{font-family:var(--mono);font-size:.72rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+
+  .promise{
+    margin:36px auto 0;padding:18px 22px;border-radius:14px;
+    border:1px solid var(--card-edge);
+    background:linear-gradient(135deg,rgba(139,92,246,.10),rgba(236,72,153,.10));
+    font-weight:700;font-variation-settings:'wdth' 110;font-size:1.05rem;
+  }
+  .promise span{color:var(--muted);font-weight:400;display:block;font-size:.92rem;margin-top:4px;
+    font-variation-settings:'wdth' 100}
+
+  /* -------------------------------------------------------- page index */
+  .toc{padding:28px 0 8px}
+  .toc-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+  .chip{
+    font-family:var(--mono);font-size:.74rem;letter-spacing:.04em;
+    color:var(--text);background:var(--card);
+    border:1px solid var(--card-edge);
+    padding:6px 12px;border-radius:99px;text-decoration:none;
+  }
+  a.chip:hover{border-color:var(--lilac)}
+
+  /* ----------------------------------------------------------- sections */
+  section{padding:64px 0 16px}
+  .sec-label{
+    font-family:var(--mono);font-size:.8rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:34px;
+    display:flex;align-items:center;gap:14px;
+  }
+  .sec-label::after{content:'';flex:1;height:1px;background:var(--card-edge)}
+  .num{
+    font-family:var(--mono);font-size:.78rem;letter-spacing:.14em;
+    color:var(--pink);text-transform:uppercase;margin-bottom:10px;
+  }
+  h2{
+    font-size:clamp(1.6rem,3.4vw,2.2rem);font-weight:850;
+    font-variation-settings:'wdth' 114;line-height:1.12;margin-bottom:14px;
+  }
+  h3{
+    font-size:1.2rem;font-weight:800;font-variation-settings:'wdth' 108;
+    line-height:1.2;margin:34px 0 10px;
+  }
+  h4{font-size:1rem;font-weight:800;margin:22px 0 6px}
+  p{color:var(--muted);font-size:1rem;max-width:74ch}
+  p + p{margin-top:12px}
+  .intro{font-size:1.08rem}
+
+  .shot{
+    margin:26px 0 8px;border-radius:14px;overflow:hidden;
+    border:1px solid var(--card-edge);background:#05070C;
+    box-shadow:0 24px 60px -30px rgba(236,72,153,.35);
+  }
+  .shot img{display:block;width:100%;height:auto}
+  figcaption{
+    font-family:var(--mono);font-size:.74rem;color:var(--faint);
+    letter-spacing:.03em;margin:8px 2px 0;
+  }
+
+  .split{display:grid;grid-template-columns:1fr 360px;gap:40px;align-items:start}
+  .split.flip{grid-template-columns:360px 1fr}
+  .split.flip > :first-child{order:2}
+  @media(max-width:880px){
+    .split,.split.flip{grid-template-columns:1fr}
+    .split.flip > :first-child{order:0}
+    .split .shot{max-width:420px;margin-left:auto;margin-right:auto}
+  }
+
+  /* control lists: a name in the app, then what it does */
+  .controls{list-style:none;margin-top:14px;display:grid;gap:10px}
+  .controls li{
+    background:var(--card);border:1px solid var(--card-edge);
+    border-radius:12px;padding:12px 16px;color:var(--muted);font-size:.95rem;
+  }
+  .controls li b{
+    display:inline-block;color:var(--text);font-weight:700;margin-right:6px;
+  }
+  .ui{
+    font-family:var(--mono);font-size:.82rem;color:var(--lilac);
+    background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.28);
+    padding:1px 7px;border-radius:6px;white-space:nowrap;
+  }
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:760px){.cols{grid-template-columns:1fr}}
+
+  .gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:26px}
+  @media(max-width:760px){.gallery{grid-template-columns:1fr}}
+  .gallery figure{margin:0}
+  .gallery .shot{margin:0}
+  .tall-row{display:grid;grid-template-columns:260px 1fr;gap:24px;align-items:center;margin-top:18px}
+  @media(max-width:760px){.tall-row{grid-template-columns:1fr}.tall-row .shot{max-width:260px;margin:0 auto}}
+
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:22px}
+  @media(max-width:860px){.steps{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:520px){.steps{grid-template-columns:1fr}}
+  .step{background:var(--card);border:1px solid var(--card-edge);border-radius:14px;padding:18px}
+  .step i{
+    font-style:normal;font-family:var(--mono);font-size:.74rem;color:var(--pink);
+    letter-spacing:.12em;display:block;margin-bottom:6px;
+  }
+  .step b{display:block;font-size:1.05rem;margin-bottom:4px}
+  .step p{font-size:.9rem}
+
+  .note{
+    margin-top:18px;border-left:3px solid var(--violet);
+    background:var(--card);border-radius:0 12px 12px 0;padding:12px 16px;
+    color:var(--muted);font-size:.93rem;max-width:80ch;
+  }
+
+  /* tables */
+  .table-wrap{overflow-x:auto;margin-top:18px;border:1px solid var(--card-edge);border-radius:14px}
+  table{border-collapse:collapse;width:100%;min-width:620px;font-size:.93rem}
+  th,td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--card-edge);vertical-align:top}
+  th{font-family:var(--mono);font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;
+     color:var(--muted);background:var(--card);font-weight:500}
+  td{color:var(--muted)}
+  td:first-child{color:var(--text)}
+  tr:last-child td{border-bottom:none}
+  .yes{color:var(--green);font-weight:700}
+  .no{color:var(--faint)}
+  .lim{color:var(--amber)}
+  kbd{
+    font-family:var(--mono);font-size:.8rem;color:var(--text);
+    background:var(--card-hi);border:1px solid var(--card-edge);border-bottom-width:2px;
+    padding:1px 7px;border-radius:6px;
+  }
+
+  pre.tree{
+    margin-top:14px;font-family:var(--mono);font-size:.82rem;line-height:1.7;color:var(--muted);
+    background:#070A11;border:1px solid var(--card-edge);border-radius:12px;padding:14px 18px;
+    overflow-x:auto;
+  }
+
+  details{
+    background:var(--card);border:1px solid var(--card-edge);border-radius:12px;
+    padding:14px 18px;margin-top:10px;
+  }
+  summary{cursor:pointer;font-weight:700;color:var(--text);list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:'+ ';color:var(--pink);font-family:var(--mono)}
+  details[open] summary::before{content:'– '}
+  details p{margin-top:10px}
+
+  .cta-band{padding:72px 0 88px;text-align:center}
+  .cta-card{
+    background:linear-gradient(135deg,rgba(139,92,246,.12),rgba(236,72,153,.12));
+    border:1px solid var(--card-edge);border-radius:18px;padding:52px 32px;
+  }
+  .cta-card h2{margin-bottom:12px}
+  .cta-card p{max-width:56ch;margin:0 auto 28px}
+
+  footer{border-top:1px solid var(--card-edge);padding:36px 0 44px;color:var(--muted);font-size:.88rem}
+  .foot-row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
+  footer a{color:var(--muted);text-decoration:none;margin-right:22px}
+  footer a:hover{color:var(--text)}
+  .foot-mono{font-family:var(--mono);font-size:.78rem}
 </style>
 </head>
 <body>
-  <h1>Vocal <span>Split</span></h1>
-  <img src="underconstruction.png" width="900" height="600" alt="Website under construction">
-  <p>This page is being built.</p>
+
+<header>
+  <div class="wrap header-row">
+    <a class="logo" href="index.html"><span class="ti">TI</span>&hairsp;<span class="apps">APPS</span></a>
+    <nav>
+      <a href="index.html#apps">Apps</a>
+      <a href="#features">Features</a>
+      <a href="#editions">Editions</a>
+      <a href="#faq">FAQ</a>
+      <a href="contact.html">Contact</a>
+      <a href="privacy.html">Privacy</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ================================================================ HERO -->
+<div class="page-hero">
+  <div class="wrap">
+    <div class="eyebrow">Windows · AI vocal remover · Karaoke maker</div>
+    <h1>Split any song. <span class="grad">Sing it tonight.</span></h1>
+    <p class="lead">Vocal Split takes a song apart with AI — the voice on one side, the music on the other, or all four parts — then turns it into a karaoke video with every word lighting up as it is sung, an MP3+G for karaoke players, or a whole karaoke party on your television. Everything happens on your own computer. Nothing is uploaded, ever.</p>
+    <div class="hero-cta">
+      <a class="btn" href="contact.html">Join the beta</a>
+      <a class="ghost-btn" href="#features">See every feature ↓</a>
+    </div>
+    <div class="status">Currently in testing · Release and pricing to be announced</div>
+
+    <figure class="hero-shot">
+      <img src="img/vocalsplit/app_splitter.jpg" alt="Vocal Split main window: a song loaded on a waveform with a selection marked, live VU meters and a 15-band analyser, the four extraction types, and a results column with Vocals, Instrumental, Drums and Bass stems ready to play and save" loading="eager">
+    </figure>
+
+    <div class="facts">
+      <div class="fact"><b>100% offline</b><span>Nothing uploaded</span></div>
+      <div class="fact"><b>2 or 4 stems</b><span>AI separation</span></div>
+      <div class="fact"><b>MP4 · MP3+G</b><span>Karaoke output</span></div>
+      <div class="fact"><b>4K · 9:16</b><span>TV to phone</span></div>
+    </div>
+
+    <div class="promise">
+      No uploads. No credits. No waiting in someone else's queue. As many songs as you like.
+      <span>The AI runs on your own processor, so your music — and your privacy — never leave the room.</span>
+    </div>
+  </div>
+</div>
+
+<div class="toc">
+  <div class="wrap toc-row">
+    <a class="chip" href="#how">How it works</a>
+    <a class="chip" href="#splitter">Splitter</a>
+    <a class="chip" href="#cleanup">Cleanup</a>
+    <a class="chip" href="#equalizer">Equalizer</a>
+    <a class="chip" href="#effects">Effects · Key &amp; tempo</a>
+    <a class="chip" href="#karaoke">Karaoke maker</a>
+    <a class="chip" href="#timing">Timing</a>
+    <a class="chip" href="#video">Video settings</a>
+    <a class="chip" href="#look">The look</a>
+    <a class="chip" href="#gallery">Video gallery</a>
+    <a class="chip" href="#mp3g">MP3+G</a>
+    <a class="chip" href="#party">Karaoke party</a>
+    <a class="chip" href="#batch">Batch</a>
+    <a class="chip" href="#history">History &amp; cutting</a>
+    <a class="chip" href="#settings">Settings</a>
+    <a class="chip" href="#editions">Editions</a>
+    <a class="chip" href="#requirements">Requirements</a>
+    <a class="chip" href="#faq">FAQ</a>
+  </div>
+</div>
+
+<!-- ======================================================== HOW IT WORKS -->
+<section id="how">
+  <div class="wrap">
+    <div class="sec-label">How it works</div>
+    <h2>From a song file to a karaoke night in four steps</h2>
+    <p class="intro">Vocal Split is one app for the whole journey. Every step keeps its result, so you never do the slow part twice.</p>
+    <div class="steps">
+      <div class="step"><i>01 · Separate</i><b>Take the song apart</b><p>Open an MP3, WAV, FLAC, M4A or OGG file. The AI pulls the vocal away from the music — or splits drums, bass and the rest as well.</p></div>
+      <div class="step"><i>02 · Time</i><b>Place the words</b><p>Paste the lyrics. Vocal Split finds when every line — and, with the aligner, every word — is sung. Drag anything that needs correcting.</p></div>
+      <div class="step"><i>03 · Make</i><b>Write the karaoke</b><p>An MP4 video for any TV, in 720p, 1080p, 4K or phone shape, or an MP3+G for karaoke players and hosts' software.</p></div>
+      <div class="step"><i>04 · Sing</i><b>Run the party</b><p>Queue your singers, put the words on the television, change the key for each person, and let the next song start by itself.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="features" style="padding-top:24px"></section>
+
+<!-- ============================================================ SPLITTER -->
+<section id="splitter">
+  <div class="wrap">
+    <div class="sec-label">Inside the app</div>
+    <div class="num">01 · Splitter</div>
+    <h2>Separate vocals and music with studio-grade AI</h2>
+    <p class="intro">The <strong>Splitter</strong> page is where every song starts. It uses <strong>Demucs</strong>, the open AI model that musicians and researchers use for source separation, running entirely on your computer and sped up with <strong>Intel OpenVINO</strong>.</p>
+
+    <figure class="shot"><img src="img/vocalsplit/app_splitter.jpg" alt="The Splitter page with a song loaded, a section from 1:20 to 1:50 selected on the waveform, the vocal stem playing with the VU needles and analyser moving, and four stems in the results column" loading="lazy"><figcaption>Splitter — a section selected, “All Four Parts” chosen, the vocal stem playing through the meters</figcaption></figure>
+
+    <h3>Choosing and auditioning the song</h3>
+    <ul class="controls">
+      <li><span class="ui">Choose file</span> Opens MP3, WAV, FLAC, M4A and OGG files. You can also drag a file onto the app or use Windows' “Open with”. The card shows the name, format, size and length.</li>
+      <li><b>Waveform</b> The whole song is drawn as a waveform. <strong>Click</strong> anywhere to jump there; <strong>drag across it</strong> to mark just the part you want to separate. The chosen stretch is highlighted and the times are shown underneath (for example “1:20 – 1:50 selected”).</li>
+      <li><span class="ui">▶ / ❚❚</span> <span class="ui">■</span> Every player in the app has the same pair: the round button plays and pauses (pausing keeps your place), the square button stops and goes back to the start of the selection.</li>
+      <li><span class="ui">Set start</span> <span class="ui">Set end</span> <span class="ui">Reset</span> Mark by ear instead of by eye: press <em>Set start</em> and <em>Set end</em> while the song plays to drop the edges exactly where you hear them; <em>Reset</em> goes back to the whole track.</li>
+    </ul>
+
+    <h3>The Output panel: VU meters and a 15-band analyser</h3>
+    <p>Below the player sits an <strong>Output</strong> panel modelled on classic studio hardware: a <strong>left and right VU needle</strong> and, between them, a <strong>15-column spectrum analyser</strong> with falling peaks. It shows what actually leaves the app — after the equalizer and effects — and it tells you what is playing (“Output · Vocals”).</p>
+    <ul class="controls">
+      <li><span class="ui">+</span> <span class="ui">−</span> above and below every column move that equalizer band by <strong>1.5 dB</strong>. Hold <kbd>Shift</kbd> to push it all the way; <strong>right-click</strong> a column to set it flat. For a moment after each press the analyser shows the whole curve you have set, so you see the shape rather than one band.</li>
+    </ul>
+
+    <h3>Four ways to separate</h3>
+    <div class="cols">
+      <ul class="controls">
+        <li><b>Vocals &amp; Instrumental</b> Both tracks, separated — the voice on its own and everything else together. The one you need for karaoke.</li>
+        <li><b>Vocals Only</b> Just the voice, for remixes, covers and a cappella.</li>
+      </ul>
+      <ul class="controls">
+        <li><b>Instrumental Only</b> Just the backing track.</li>
+        <li><b>All Four Parts</b> <span class="lim">Pro</span> Vocals, <strong>drums</strong>, <strong>bass</strong> and <strong>other</strong> — plus the instrumental — for musicians who want to play along, practise or remix.</li>
+      </ul>
+    </div>
+
+    <h3>Processing</h3>
+    <figure class="shot"><img src="img/vocalsplit/app_processing.jpg" alt="Separation in progress: the Start Processing button filling up as a progress bar, a progress ring at 96%, the estimated time left, a note saying the stems are being cleaned, and a Cancel button" loading="lazy"><figcaption>The Start Processing button becomes its own progress bar; the engine card shows the percentage, time left, the current step and Cancel</figcaption></figure>
+    <ul class="controls">
+      <li><span class="ui">Start Processing</span> Starts the separation of the marked part (or the whole song). While it works the button fills up like a progress bar.</li>
+      <li><b>Processing Engine</b> A ring with the percentage, the <strong>estimated time left</strong>, what is being done right now (“Separating audio into stems”, “Clearing the bleed and the noise left in the stems”) and a <span class="ui">Cancel</span> button that stops at once and leaves nothing half-written behind.</li>
+    </ul>
+
+    <h3>Results</h3>
+    <div class="split">
+      <div>
+        <p>Every stem arrives as its own card in its own colour — <strong style="color:#C084FC">purple</strong> for vocals, <strong style="color:var(--green)">green</strong> for the instrumental, <strong style="color:var(--rose)">rose</strong> for drums, <strong style="color:var(--amber)">amber</strong> for bass, <strong style="color:var(--sky)">sky blue</strong> for the rest and <strong style="color:#FB923C">orange</strong> for the trimmed original — so you can tell them apart at a glance. The header says how long the separation took.</p>
+        <ul class="controls">
+          <li><b>Player</b> Play, pause and stop each stem, with its own waveform and time.</li>
+          <li><span class="ui">Save</span> Writes the stem where you choose, with a sensible name like “Song (Vocals).mp3” — through your equalizer and effects if you want (see Settings).</li>
+          <li><span class="ui">⋮</span> <span class="ui">Save as…</span> pick another name or folder · <span class="ui">Show in folder</span> opens Explorer on the file · <span class="ui">Load as source</span> opens that stem on the Splitter so you can separate it again.</li>
+        </ul>
+      </div>
+      <figure class="shot"><img src="img/vocalsplit/app_splitter_menu.jpg" alt="The Results column with Vocals, Instrumental, Drums and Bass stem cards and the menu of the vocal stem open, offering Save as, Show in folder and Load as source" loading="lazy"><figcaption>Stem cards and the ⋮ menu</figcaption></figure>
+    </div>
+
+    <h3>The engine panel</h3>
+    <ul class="controls">
+      <li><span class="ui">AI Model</span> <strong>High Quality (Recommended)</strong> — the default Demucs model, included with the app and working without internet. <strong>Best Quality (slower)</strong> — a fine-tuned model with roughly four times the work for a small gain. <strong>Fast (quantised)</strong> — quicker and lighter, with a little more bleed. The last two download once, the first time you choose them.</li>
+      <li><b>Acceleration</b> The status card tells you what the separation runs on. On Intel and AMD processors Vocal Split uses <strong>OpenVINO</strong>, which in our measurements separates about <strong>1.4–1.5× faster</strong> than the standard engine with identical results.</li>
+      <li><span class="ui">Output Format</span> MP3 320 kbps or 192 kbps, WAV 16-bit or 24-bit, or lossless FLAC.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================================================= CLEANUP -->
+<section id="cleanup">
+  <div class="wrap">
+    <div class="num">02 · Cleanup</div>
+    <h2>A cleaner voice and a cleaner backing track</h2>
+    <p class="intro">Every AI separation leaves a little of the music in the vocal and a little of the voice in the music. Vocal Split adds its own <strong>cleanup pass</strong> after the model: it compares the two stems moment by moment and takes out the bleed and the hiss, while leaving everything the model was sure about alone.</p>
+    <ul class="controls">
+      <li><b>Light (recommended)</b> Removes the bleed and the fizz from both stems without touching what matters.</li>
+      <li><b>Strong</b> Judges each moment harder: cleaner silences, at the risk of thinning a quiet breath or a reverb tail.</li>
+      <li><b>Off</b> Writes the stems exactly as the model produced them.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- =========================================================== EQUALIZER -->
+<section id="equalizer">
+  <div class="wrap">
+    <div class="num">03 · Equalizer</div>
+    <h2>A 15-band equalizer with a live response curve</h2>
+    <p class="intro">Fifteen bands from <strong>25 Hz to 16 kHz</strong>, two thirds of an octave apart, each from <strong>−12 to +12 dB</strong>. Mud at 250 Hz, boxiness at 400 Hz, presence at 2.5 kHz and air at 10 kHz each get a fader of their own. The equalizer applies to everything the app plays — and, if you like, to everything it saves.</p>
+    <figure class="shot"><img src="img/vocalsplit/app_equalizer.jpg" alt="The Equalizer page with the Loudness preset: a smooth frequency response curve lifting the lows and highs, fifteen colour-coded faders from 25 Hz to 16 kHz with their values, and the preset card on the right" loading="lazy"><figcaption>Equalizer with the “Loudness” preset</figcaption></figure>
+    <ul class="controls">
+      <li><b>Frequency response</b> The curve on top is drawn from the very same maths as the filter, so what you see is exactly what you hear.</li>
+      <li><b>Faders</b> Drag a fader, turn the mouse wheel over it, <strong>double-click</strong> to return it to zero, and hold <kbd>Shift</kbd> for tenths of a decibel.</li>
+      <li><span class="ui">Equalizer</span> on/off switch — compare with and without in one click.</li>
+      <li><span class="ui">Preset</span> Nine ready curves: <strong>Flat, Vocal lift, Warm, Bright, Air, De-mud, Bass boost, Loudness, Podcast</strong> — plus any you save yourself.</li>
+      <li><span class="ui">Save preset</span> <span class="ui">Delete</span> <span class="ui">Reset all bands</span> Keep a curve under your own name, remove it, or start again from flat. Your presets and wherever the faders were left come back the next time you open the app.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================================================= EFFECTS -->
+<section id="effects">
+  <div class="wrap">
+    <div class="num">04 · Effects · Key &amp; tempo</div>
+    <h2>Space, width, fades — and any song in the singer's key</h2>
+    <p class="intro">The <strong>Effects</strong> rack runs after the equalizer, in the order shown by the lit <strong>signal path</strong> at the top: Equalizer → Gain → Width → Reverb → Fade. Stages that are doing nothing show “bypass”, so you always know what is active.</p>
+    <figure class="shot"><img src="img/vocalsplit/app_effects.jpg" alt="The Effects page with the Hall preset: signal path with Equalizer, Gain, Width and Reverb active, sliders for output gain, stereo width, reverb mix, room size, fade in and fade out, and a Key and tempo card with the key lowered by two semitones" loading="lazy"><figcaption>Effects with the “Hall” preset, and the key lowered two semitones for listening</figcaption></figure>
+    <div class="cols">
+      <ul class="controls">
+        <li><b>Output gain</b> Louder or quieter overall. A loud chain is limited cleanly at full scale rather than allowed to distort.</li>
+        <li><b>Stereo width</b> From mono to extra-wide. Above 100% pushes the sides out.</li>
+        <li><b>Reverb mix · Room size</b> From a small room to a cathedral.</li>
+      </ul>
+      <ul class="controls">
+        <li><b>Fade in · Fade out</b> Measured from the ends of the stem, so they land in the same place whether you are listening or saving.</li>
+        <li><span class="ui">Preset</span> <strong>Dry, Room, Plate, Hall, Cathedral, Wide, Mono, Vocal air, Instrumental bed, Top and tail</strong> — every preset sets every control, so nothing is left over from the last one.</li>
+        <li><span class="ui">Save preset</span> <span class="ui">Delete</span> <span class="ui">Reset effects</span> and the <span class="ui">Effects</span> on/off switch.</li>
+      </ul>
+    </div>
+    <h3>Key and tempo</h3>
+    <p>Move anything you listen to <strong>up to six semitones</strong> up or down and play it at <strong>80–120%</strong> of its speed, with a high-quality time-stretch that keeps voices natural. The <span class="ui">Original</span> button puts both back. This changes listening only; the karaoke page has its own key and tempo for the video (see below). A track takes a moment to move the first time, then every key you have tried is kept ready.</p>
+  </div>
+</section>
+
+<!-- ============================================================= KARAOKE -->
+<section id="karaoke">
+  <div class="wrap">
+    <div class="num">05 · Karaoke maker</div>
+    <h2>Turn any separation into a karaoke video</h2>
+    <p class="intro">The <strong>Karaoke</strong> page puts the words over the instrumental as a video for your television — every word lighting up as it is sung, with a countdown before each verse, the next line waiting underneath and a progress bar along the bottom. The result is a standard <strong>MP4 (H.264)</strong> that plays from a USB stick on practically any TV.</p>
+    <figure class="shot"><img src="img/vocalsplit/app_karaoke_words.jpg" alt="The Karaoke Maker page: a separation chosen, the song and artist boxes filled in, the words box with duet headings in brackets, the Latin letters menu, and the video settings on the right" loading="lazy"><figcaption>Karaoke Maker — the separation, the title card and the words (a duet, with singer headings)</figcaption></figure>
+    <h3>The song and its words</h3>
+    <ul class="controls">
+      <li><span class="ui">Which separation</span> Choose any separation from History that has both a vocal and an instrumental.</li>
+      <li><span class="ui">Song</span> <span class="ui">Artist</span> Guessed from the file name — track numbers, underscores and website tags are cleaned away — and shown on the title card at the start of the video. Correct them if the guess is wrong.</li>
+      <li><b>The words</b> Paste the lyrics, one line per line, exactly as they should appear on screen. The counter shows how many lines there are. <span class="ui">Import…</span> reads a <strong>.txt</strong> file, or an <strong>.lrc</strong> file which already carries its timing.</li>
+      <li><b>Duets</b> Put who sings on a line of its own before their lines — <code>[Anna]</code>, <code>[Mark]</code>, or <code>[Both]</code> for lines sung together. Headings like <code>Anna:</code> and <code>[Anna &amp; Mark]</code> are understood too, while <code>[Chorus]</code> or <code>[x2]</code> are simply ignored. Each singer gets a colour of their own in the video.</li>
+      <li><span class="ui">Latin letters under the words</span> <strong>Off, Automatic, Bulgarian, Serbian or Russian.</strong> Adds a smaller line in Latin letters under every Cyrillic line — perfect for friends and family abroad who speak the language but don't read the alphabet. It follows the official transliteration of each language (Щастие → Shtastie, Ђурђевдан → Đurđevdan) and lights up word by word together with the main line. <em>Automatic</em> recognises the language from the letters used.</li>
+      <li><b>Missing lines</b> If some lines in the box are never sung on the recording (a chorus written once too often, for example), Vocal Split tells you and leaves them out rather than showing them over the music. Your text is never changed.</li>
+    </ul>
+    <div class="note">Any language and any script works — the words are drawn by the same professional subtitle engine that video players use, so Arabic, Hebrew, Hindi or Thai are joined and ordered correctly.</div>
+  </div>
+</section>
+
+<!-- ============================================================== TIMING -->
+<section id="timing">
+  <div class="wrap">
+    <div class="num">06 · Timing</div>
+    <h2>Words that land exactly when they are sung</h2>
+    <figure class="shot"><img src="img/vocalsplit/app_karaoke_timing.jpg" alt="The timing card: the switches for matching the words to the voice and for stopping after the timing, the vocal waveform coloured by singer, a play button, a live preview of the video, and the Make Karaoke Video and Save as MP3+G buttons" loading="lazy"><figcaption>The timing is drawn on the vocal's own waveform — coloured by singer — with a live preview underneath</figcaption></figure>
+    <ul class="controls">
+      <li><span class="ui">Match the words to the voice</span> Uses a <strong>forced aligner</strong> — an AI that listens to the vocal and finds every word. It rarely needs correcting, and a verse typed once but sung five times is recognised everywhere it comes back, so the box only needs the words, not every repeat. It is a little slower, and needs a <strong>1.2 GB model</strong> the first time, downloaded once and kept. With it off, lines are placed on the singing by fast arithmetic.</li>
+      <li><span class="ui">Stop after the timing, to check it first</span> On: the big button finds the timing and stops, so you can check it before writing the video. Off: timing and video in one go. The choice is remembered.</li>
+      <li><b>The timeline</b> The vocal's waveform, coloured by who sings: the first singer purple, the second blue, both together green. <strong>Click</strong> a line to see it in the preview; <strong>drag a divider</strong> to move where a line starts; <strong>right-click</strong> a line to change who sings it (first → second → both). Corrections are kept with the song, so the next video starts from them.</li>
+      <li><span class="ui">▶</span> <span class="ui">■</span> Play the instrumental — with the guide vocal, key and tempo you chose — and the preview follows along.</li>
+      <li><b>Preview</b> A real frame of the finished video, in its real look and shape, redrawn instantly as you click or drag.</li>
+      <li><span class="ui">Make Karaoke Video</span> Asks where to save and writes the video. The button becomes a progress bar that says which step it is on (“Step 1 of 2: finding the timing”, “Step 2 of 2: writing the video”) and how long is left. Afterwards it offers to open the folder.</li>
+      <li><span class="ui">Save as MP3+G…</span> <span class="lim">Pro</span> Writes the same song as an .mp3 and a .cdg for karaoke players (see <a href="#mp3g">MP3+G</a>).</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================================================== VIDEO -->
+<section id="video">
+  <div class="wrap">
+    <div class="num">07 · Video settings</div>
+    <h2>Size, background, key and guide vocal</h2>
+    <p class="intro">The right-hand column of the Karaoke page holds everything about how the video comes out.</p>
+    <div class="cols">
+      <ul class="controls">
+        <li><span class="ui">Size</span> <strong>1080p</strong> (1920 × 1080) for any modern TV · <strong>4K</strong> (3840 × 2160) <span class="lim">Pro</span> for big screens and projectors, with the words drawn at full resolution · <strong>720p</strong> for older sets · <strong>Vertical</strong> (1080 × 1920) for TikTok, Reels and Shorts, with its own layout rather than a squashed landscape video.</li>
+        <li><span class="ui">Behind the words</span> Four calm gradient backgrounds — <strong>Midnight, Ink, Ember, Forest</strong>.</li>
+        <li><span class="ui">Use a picture…</span> Put a photo or the album artwork behind the words. Vocal Split can also use the sleeve already embedded in the music file. The picture is darkened <em>only where the words fall</em>, and only as much as that picture needs, so the lyrics stay readable over any image.</li>
+        <li><span class="ui">Count-in before each entry</span> A 3 – 2 – 1 countdown before a line that follows a long pause, so nobody has to guess when to come in.</li>
+      </ul>
+      <ul class="controls">
+        <li><span class="ui">Key</span> <span class="ui">Tempo</span> The singer's key (±6 semitones) and speed (80–120%) for this song. The music in the video is moved and the words keep up with it. Play above to hear it first; the choice is kept with the song.</li>
+        <li><span class="ui">Guide vocal</span> From <strong>Off</strong> up to −6 dB: the original voice left in quietly, for anyone who does not know the tune — just like the machines in karaoke bars.</li>
+        <li><span class="ui">Preset</span> <span class="ui">Save preset</span> <span class="ui">Delete</span> The size, count-in, guide vocal and look, kept together under a name for next time.</li>
+        <li><b>Encoder</b> A card showing which H.264 encoder your computer will use — graphics card (NVIDIA NVENC, Intel Quick Sync, AMD AMF) or Windows' own — tested on your machine, not just listed.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================== LOOK -->
+<section id="look">
+  <div class="wrap">
+    <div class="split flip">
+      <figure class="shot"><img src="img/vocalsplit/app_karaoke_look.jpg" alt="The Look card: look presets, typeface menu, colour buttons for sung, waiting, ground and second singer, a contrast readout, the bold switch, placement menu, size slider and the Add a logo button" loading="lazy"><figcaption>The look card</figcaption></figure>
+      <div>
+        <div class="num">08 · The look</div>
+        <h2>Make the video yours</h2>
+        <p class="intro">Choose a ready-made look, or design your own — the typeface, the colours, the weight, where the lines sit, how big they are, and your logo in a corner.</p>
+        <ul class="controls">
+          <li><span class="ui">Look</span> Six ready looks: <strong>Classic, Gold, Neon, Stage, Karaoke machine, Soft</strong>. Each sets the typeface, colours and weight, and leaves your placement, size and logo alone.</li>
+          <li><span class="ui">Typeface</span> <span class="lim">Pro</span> Any font installed on your computer — checked, so a video never silently falls back to another font.</li>
+          <li><span class="ui">Sung</span> <span class="ui">Waiting</span> <span class="ui">Ground</span> <span class="lim">Pro</span> The colour of words once sung, before they are sung, and the edge or box behind them. <span class="ui">Second singer, in a duet</span> sets the second voice's colour; both singers together get the two mixed.</li>
+          <li><b>Readability check</b> The card shows the contrast of your colours (for example “Reads at 5.4:1 sung and 16.9:1 waiting”) and warns you if a choice would be hard to read.</li>
+          <li><span class="ui">Bold</span> <span class="ui">Where the lines sit</span> <span class="ui">Size of the words</span> <span class="lim">Pro</span> Heavy or regular type; lines higher, in the middle or lower (to keep a face in the picture clear, or stay away from TV overlays); words from 80% to 130%.</li>
+          <li><span class="ui">Add a logo…</span> <span class="lim">Pro</span> Your bar's or channel's logo in any corner of every frame, with its size and transparency. A PNG with a transparent background looks best.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ GALLERY -->
+<section id="gallery">
+  <div class="wrap">
+    <div class="num">09 · What the videos look like</div>
+    <h2>Real frames, straight from Vocal Split</h2>
+    <p class="intro">Every picture below was written by the app itself. Songs, names and lyrics are invented for this page.</p>
+    <div class="gallery">
+      <figure><div class="shot"><img src="img/vocalsplit/video_countin.jpg" alt="Karaoke frame with a pink countdown number 2 above the first line of the song" loading="lazy"></div><figcaption>The count-in before a verse</figcaption></figure>
+      <figure><div class="shot"><img src="img/vocalsplit/video_classic.jpg" alt="Karaoke frame in the Classic look: the line being sung fills with pink from left to right, the next line waits underneath" loading="lazy"></div><figcaption>Classic look — the sweep follows the singing, word by word</figcaption></figure>
+      <figure><div class="shot"><img src="img/vocalsplit/video_duet_second.jpg" alt="Karaoke frame of a duet where the second singer's line fills with blue" loading="lazy"></div><figcaption>Duet — the second singer in their own colour</figcaption></figure>
+      <figure><div class="shot"><img src="img/vocalsplit/video_duet_both.jpg" alt="Karaoke frame of a duet where a line sung by both singers fills with a mixed violet colour" loading="lazy"></div><figcaption>Duet — a line sung together</figcaption></figure>
+      <figure><div class="shot"><img src="img/vocalsplit/video_latin.jpg" alt="Karaoke frame with a Bulgarian line in Cyrillic and the same line in Latin letters underneath, both filling with pink together" loading="lazy"></div><figcaption>Cyrillic with Latin letters underneath, swept together</figcaption></figure>
+      <figure><div class="shot"><img src="img/vocalsplit/video_picture_logo.jpg" alt="Karaoke frame over a night-city picture in the Gold look with a boxed ground behind the words and a logo in the top-right corner" loading="lazy"></div><figcaption>Gold look over a picture, with a logo in the corner</figcaption></figure>
+      <figure><div class="shot"><img src="img/vocalsplit/video_neon.jpg" alt="Karaoke frame in the Neon look with cyan sung words" loading="lazy"></div><figcaption>Neon look</figcaption></figure>
+      <figure><div class="shot"><img src="img/vocalsplit/video_stage.jpg" alt="Karaoke frame in the Stage look with red sung words in a condensed typeface on a dark red background" loading="lazy"></div><figcaption>Stage look on the Ember background</figcaption></figure>
+      <figure><div class="shot"><img src="img/vocalsplit/video_machine.jpg" alt="Karaoke frame in the Karaoke machine look with blue sung words" loading="lazy"></div><figcaption>Karaoke machine look on the Ink background</figcaption></figure>
+      <figure><div class="shot"><img src="img/vocalsplit/tv_title.jpg" alt="The title card at the start of a karaoke video with the song name and the artist" loading="lazy"></div><figcaption>The title card the video opens on</figcaption></figure>
+    </div>
+    <div class="tall-row">
+      <figure class="shot"><img src="img/vocalsplit/video_vertical.jpg" alt="A vertical 9:16 karaoke frame for phones with a two-row Cyrillic line and its Latin transliteration" loading="lazy"></figure>
+      <div>
+        <h3 style="margin-top:0">Vertical 9:16, laid out for a phone</h3>
+        <p>The phone format is a different picture, not a smaller one. Vocal Split writes it with its own layout: the words take nearly twice the share of the width, wrap sooner, and sit in the middle of the tall frame — ready for TikTok, Instagram Reels and YouTube Shorts.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== MP3G -->
+<section id="mp3g">
+  <div class="wrap">
+    <div class="split">
+      <div>
+        <div class="num">10 · MP3+G <span class="lim">Pro</span></div>
+        <h2>MP3+G for karaoke players and hosts</h2>
+        <p class="intro">MP3+G (CD+G) is the format of karaoke discs and of the software karaoke hosts use every night — software that can change the key live. Vocal Split writes a pair of files with the same name: <strong>Song.mp3</strong> and <strong>Song.cdg</strong>.</p>
+        <ul class="controls">
+          <li><b>Built for the format's limits</b> A CD+G screen is 300 × 216 pixels with 16 colours, redrawn a little at a time. Vocal Split keeps the two lines in fixed places and sends the colour sweep first, so words light up on time — measured at <strong>0.06 s</strong> late on average and <strong>0.14 s</strong> at worst across a whole song.</li>
+          <li><b>Duets and colours</b> Each singer's colour comes from your look.</li>
+          <li><b>In step to the sample</b> The MP3 is written with the encoder's usual silent lead-in removed, so the words never run early.</li>
+          <li><b>Same audio as the video</b> Guide vocal, key and tempo included.</li>
+        </ul>
+      </div>
+      <figure class="shot"><img src="img/vocalsplit/cdg_frame.jpg" alt="A CD+G karaoke screen with a duet line swept in the mixed colour and the next line waiting underneath, drawn in crisp pixel lettering" loading="lazy"><figcaption>An MP3+G frame, as a karaoke player shows it</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================== PARTY -->
+<section id="party">
+  <div class="wrap">
+    <div class="num">11 · Karaoke party</div>
+    <h2>A karaoke night on your television</h2>
+    <p class="intro">The <strong>Party</strong> page turns your laptop into a karaoke machine. Build a queue of singers and songs, put the words on the TV, and let Vocal Split move from one singer to the next.</p>
+    <figure class="shot"><img src="img/vocalsplit/app_party.jpg" alt="The Karaoke Party page: an Up next card with Restart, Stop, Skip and key buttons, the big Start button, a queue of four songs each with a singer name, key and move buttons, and the television settings on the right" loading="lazy"><figcaption>The Party page — four singers in the queue, each with their own key</figcaption></figure>
+
+    <h3>The queue</h3>
+    <ul class="controls">
+      <li><span class="ui">Add from History</span> Any separated song whose words are timed. It is drawn live on the TV in your Karaoke page look — with count-in, duet colours and Latin letters.</li>
+      <li><span class="ui">Add files…</span> Ready <strong>karaoke videos</strong> (MP4, MKV, MOV, AVI, WEBM, M4V) and <strong>MP3+G</strong> pairs from any library — pick either the .mp3 or the .cdg.</li>
+      <li><b>Every row</b> A box for <strong>who sings</strong>, the song and its kind, the singer's <strong>key</strong> with <span class="ui">−</span> <span class="ui">+</span>, <span class="ui">↑</span> <span class="ui">↓</span> to reorder, and <span class="ui">✕</span> to remove. Every kind of song can change key — even ready videos and MP3+G.</li>
+      <li><span class="ui">Remove all</span> Clears the queue. The queue is kept when you close the app, so a party set up in the afternoon is still there in the evening.</li>
+    </ul>
+
+    <h3>Now playing</h3>
+    <ul class="controls">
+      <li><b>Up next / Singing now</b> Who sings what, the progress through the song and the key. The next song is <strong>prepared in advance</strong> — key change included — so it starts the instant you press Start.</li>
+      <li><span class="ui">Start: <em>name</em></span> → <span class="ui">Pause</span> → <span class="ui">Resume</span> One big button for the whole night.</li>
+      <li><span class="ui">Restart</span> From the top · <span class="ui">Stop</span> ends the song and puts it back at the front, not sung · <span class="ui">Skip</span> moves on · <span class="ui">−</span> <span class="ui">+</span> changes the key while the song plays, without stopping.</li>
+      <li><b>Sung tonight</b> A running list of who sang what.</li>
+    </ul>
+
+    <h3>The television</h3>
+    <div class="gallery">
+      <figure><div class="shot"><img src="img/vocalsplit/tv_up_next.jpg" alt="Full-screen Up next card on the television showing the next singers, the song, who follows, and a Starting in countdown" loading="lazy"></div><figcaption>Between songs: who is up next, who follows, and the countdown</figcaption></figure>
+      <figure><div class="shot"><img src="img/vocalsplit/tv_countin.jpg" alt="Full-screen karaoke on the television with the count-in number before the first line" loading="lazy"></div><figcaption>The count-in, live on the TV</figcaption></figure>
+      <figure><div class="shot"><img src="img/vocalsplit/tv_second_singer.jpg" alt="Full-screen karaoke on the television with a line in the second singer's blue" loading="lazy"></div><figcaption>A duet's second singer</figcaption></figure>
+      <figure><div class="shot"><img src="img/vocalsplit/tv_both.jpg" alt="Full-screen karaoke on the television with a line sung by both singers" loading="lazy"></div><figcaption>Both singers together</figcaption></figure>
+    </div>
+    <ul class="controls" style="margin-top:18px">
+      <li><span class="ui">Screen</span> <span class="ui">Open the screen</span> Connect the TV as a <strong>second screen</strong> and the words fill it while the queue stays on your laptop. With <strong>one screen</strong>, the words cover it and the keyboard runs the party.</li>
+      <li><span class="ui">Between songs</span> <strong>Wait for Start</strong>, or start the next song by itself <strong>after 5, 10 or 20 seconds</strong>.</li>
+      <li><b>Smooth playback</b> The TV picture runs at a steady 25 frames per second in 1080p, drawn separately from the sound so a busy screen never interrupts the music.</li>
+    </ul>
+    <div class="table-wrap" style="max-width:560px">
+      <table>
+        <tr><th>Key</th><th>On the party screen</th></tr>
+        <tr><td><kbd>Space</kbd></td><td>Start the next song · pause · resume</td></tr>
+        <tr><td><kbd>→</kbd> or <kbd>N</kbd></td><td>Skip to the next singer</td></tr>
+        <tr><td><kbd>←</kbd> or <kbd>R</kbd></td><td>Restart the song</td></tr>
+        <tr><td><kbd>↑</kbd> <kbd>↓</kbd></td><td>Key up or down a semitone</td></tr>
+        <tr><td><kbd>Esc</kbd></td><td>Pause and close the screen</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================== BATCH -->
+<section id="batch">
+  <div class="wrap">
+    <div class="num">12 · Batch <span class="lim">Pro</span></div>
+    <h2>A whole folder of songs, done overnight</h2>
+    <p class="intro">The <strong>Batch</strong> page works through a queue of tracks one after another — separating each, and making the karaoke video and MP3+G for every song that has its words beside it. Start it in the evening and find a finished library in the morning.</p>
+    <figure class="shot"><img src="img/vocalsplit/app_batch.jpg" alt="The Batch page with four tracks: one separating at 17%, three waiting, two with lyrics files found beside them; on the right the batch settings with extraction, model, format, cleanup, output folder and switches for videos and MP3+G" loading="lazy"><figcaption>A batch at work — the button shows how many are finished and stops the batch when pressed</figcaption></figure>
+    <ul class="controls">
+      <li><span class="ui">Add tracks…</span> <span class="ui">Add a folder…</span> Single files, or a whole folder with all its subfolders. Files the app itself wrote are left out automatically, so a folder that contains the last batch's output is never fed back in.</li>
+      <li><b>Words by name</b> Put <strong>Song.txt</strong> or <strong>Song.lrc</strong> in the same folder as <strong>Song.mp3</strong>. Each row shows whether words were found (“words: Song.txt” or “no words beside it — stems only”).</li>
+      <li><b>Status</b> Every row says <strong>Waiting, Working, Done, Skipped, Failed</strong> or <strong>Stopped</strong>, with the current step, a progress bar and what came of it. Waiting rows can be removed with <span class="ui">✕</span>.</li>
+      <li><span class="ui">Clear finished</span> <span class="ui">Remove all</span> <span class="ui">Start Batch</span> / <span class="ui">Stop Batch</span> Stopping waits for a safe moment and leaves nothing half-written; Start then offers to try the stopped and failed tracks again. One failed song never stops the rest.</li>
+      <li><b>For the whole batch</b> Its own <strong>Extraction</strong> (including All four parts), <strong>AI model</strong>, <strong>Output format</strong> and <strong>Cleanup</strong>, kept apart from the Splitter's, plus the <span class="ui">Output folder</span> with <span class="ui">Choose…</span>.</li>
+      <li><span class="ui">Make karaoke videos</span> For every song with its words, using the Karaoke page's size, background, count-in, guide vocal and look.</li>
+      <li><span class="ui">Make MP3+G files</span> An .mp3 and a .cdg for every song with its words — with or without the videos.</li>
+      <li><span class="ui">Match the words to the voice</span> The forced aligner, as on the Karaoke page.</li>
+      <li><span class="ui">Name the files “Artist - Song”</span> For a library sorted by artist: “01-artist-song (www.site.com).mp3” becomes <strong>“Artist - Song”</strong>, and the folder, stems, video and MP3+G all take that name.</li>
+      <li><span class="ui">Skip tracks already done</span> Anything already in the output folder is left alone, so a stopped batch — or a folder with a few new songs — picks up where the last one finished.</li>
+    </ul>
+    <pre class="tree">Vocal Split batch\
+  Artist - Song\
+    Artist - Song - Vocals.mp3
+    Artist - Song - Instrumental.mp3
+    Artist - Song (karaoke).mp4
+    Artist - Song (karaoke).mp3
+    Artist - Song (karaoke).cdg</pre>
+    <p style="margin-top:10px">Every separated song also appears in History, and its timing is kept — so the Karaoke page opens it ready to adjust.</p>
+  </div>
+</section>
+
+<!-- ============================================================ HISTORY -->
+<section id="history">
+  <div class="wrap">
+    <div class="num">13 · History &amp; cutting</div>
+    <h2>Every separation kept — and cut to length</h2>
+    <p class="intro">The <strong>History</strong> page keeps your recent separations, so you can play and save their stems again without waiting for the AI a second time.</p>
+    <figure class="shot"><img src="img/vocalsplit/app_history.jpg" alt="The History page listing five separations with their date, type, length and processing time, each with Cut, menu and Open buttons, above the output meters" loading="lazy"><figcaption>History — date, separation type, length and how long each took</figcaption></figure>
+    <ul class="controls">
+      <li><span class="ui">Open</span> / <span class="ui">Close</span> Shows the stems of a run as cards, with play, stop, waveform, <span class="ui">Save</span> and their own ⋮ menu.</li>
+      <li><span class="ui">⋮</span> <span class="ui">Make karaoke video</span> opens the run on the Karaoke page · <span class="ui">Show in folder</span> · <span class="ui">Delete this run</span>.</li>
+      <li><span class="ui">Clear all</span> Deletes every kept run from this computer, after asking.</li>
+      <li><b>Output meters</b> The same VU needles and analyser as on the Splitter, with the +/− band buttons.</li>
+    </ul>
+    <h3>Cut</h3>
+    <figure class="shot"><img src="img/vocalsplit/app_cut.jpg" alt="The Cut panel: the song's waveform with a stretch from 0:13 to 3:14 selected, Set start, Set end and Reset buttons, a Keep only the selection menu, a Fade at the cut slider at 30 ms, a note that the new run will be 3:00 long, and Hear the result and Save as new run buttons" loading="lazy"><figcaption>Cutting a run: keep a stretch or take one out</figcaption></figure>
+    <ul class="controls">
+      <li><b>Mark a stretch</b> On the stems mixed back together — drag the waveform, or use <span class="ui">Set start</span> <span class="ui">Set end</span> while it plays; <span class="ui">Reset</span> starts again.</li>
+      <li><span class="ui">Keep only the selection</span> / <span class="ui">Take out the selection</span> Trim a long intro and outro, or remove a solo and join the two sides.</li>
+      <li><span class="ui">Fade at the cut</span> From none to 2 seconds — a gentle fade when a stretch is kept, an equal-power crossfade when one is taken out. The panel says how long the result will be.</li>
+      <li><span class="ui">Hear the result</span> <span class="ui">Save as new run</span> Listen first, then save. Every stem is cut at exactly the same sample, so vocal and instrumental stay in step for karaoke, and the original run is never touched.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- =========================================================== SETTINGS -->
+<section id="settings">
+  <div class="wrap">
+    <div class="num">14 · Settings</div>
+    <h2>Everything in one place</h2>
+    <figure class="shot"><img src="img/vocalsplit/app_settings.jpg" alt="The Settings page with Engine, Output, Storage and Karaoke cards" loading="lazy"><figcaption>Settings</figcaption></figure>
+    <div class="cols">
+      <ul class="controls">
+        <li><b>Engine</b> <span class="ui">AI model</span> with a note about each · <span class="ui">Processing device</span> · <span class="ui">Cleanup after separation</span> · and a line saying what the separation actually runs on.</li>
+        <li><b>Output</b> <span class="ui">Output format</span> · <span class="ui">Save to</span> with <span class="ui">Browse</span> · <span class="ui">Apply equalizer and effects on save</span> — off, Save writes the stem exactly as the AI produced it.</li>
+      </ul>
+      <ul class="controls">
+        <li><b>Storage</b> <span class="ui">Runs to keep</span> (4, 8, 12 or 24) · how many runs and megabytes are kept · <span class="ui">Open folder</span> · <span class="ui">Clear history</span>.</li>
+        <li><b>Karaoke</b> The default <span class="ui">Video size</span> and <span class="ui">Count-in before each entry</span>.</li>
+        <li><b>About</b> Version and edition, where settings and runs are kept, and <span class="ui">Third-party licences</span>.</li>
+      </ul>
+    </div>
+    <p style="margin-top:16px">Your settings, presets and the equalizer and effects you left come back exactly as they were the next time you open Vocal Split. The interface is in English.</p>
+  </div>
+</section>
+
+<!-- =========================================================== EDITIONS -->
+<section id="editions">
+  <div class="wrap">
+    <div class="sec-label">Editions</div>
+    <h2>Free, Personal and Pro</h2>
+    <p class="intro">Try the whole app for free on a minute of any song. Personal is the complete karaoke maker for your home; Pro adds what you need to make karaoke for a living. <strong>Pricing will be announced at launch — one-time licences, no subscription.</strong></p>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Feature</th><th>Free</th><th>Personal</th><th>Pro</th></tr>
+        <tr><td>Vocal &amp; instrumental separation</td><td class="lim">First 60 s · 3 songs a day</td><td class="yes">Whole songs, unlimited</td><td class="yes">Whole songs, unlimited</td></tr>
+        <tr><td>Vocals only / instrumental only</td><td class="lim">First 60 s</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>All four parts (drums, bass, other)</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
+        <tr><td>Cleanup pass · three AI models · MP3 / WAV / FLAC</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>15-band equalizer, effects, VU meters</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Key &amp; tempo (listening and videos)</td><td class="no">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Karaoke videos — automatic &amp; AI word timing, manual correction</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Duets in colour · Latin letters under Cyrillic</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Ready-made looks, backgrounds, pictures, count-in, guide vocal</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Video sizes</td><td>720p · 1080p</td><td>720p · 1080p · Vertical 9:16</td><td>720p · 1080p · Vertical · <strong>4K</strong></td></tr>
+        <tr><td>Custom typeface, colours, placement, size · logo</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
+        <tr><td>MP3+G export</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
+        <tr><td>Karaoke party on the TV</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>History · cutting a run</td><td>History</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Batch processing · “Artist - Song” file names</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
+        <tr><td>Use</td><td>Personal</td><td>Personal</td><td><strong>Commercial</strong> — bars, hosts, channels</td></tr>
+      </table>
+    </div>
+    <div class="note">A Pro licence covers commercial use of the software. The rights to the songs you process remain your responsibility — please only process music you are allowed to use.</div>
+  </div>
+</section>
+
+<!-- ======================================================= UNDER THE HOOD -->
+<section id="tech">
+  <div class="wrap">
+    <div class="sec-label">Under the hood</div>
+    <h2>Built carefully, measured honestly</h2>
+    <div class="cols">
+      <ul class="controls">
+        <li><b>Demucs AI</b> The hybrid-transformer separation model (htdemucs), included with the app so it works on the first run with no download.</li>
+        <li><b>OpenVINO acceleration</b> On Intel and AMD processors, 1.4–1.5× faster than the standard engine, with identical output.</li>
+        <li><b>Forced alignment</b> A speech model with a commercial-friendly licence finds each word in the vocal; its thresholds were tuned on real Bulgarian and Serbian songs.</li>
+        <li><b>High-quality time-stretch</b> Signalsmith Stretch moves key and tempo while keeping voices natural.</li>
+      </ul>
+      <ul class="controls">
+        <li><b>Professional text rendering</b> Lyrics are drawn by libass with HarfBuzz and FriBidi — correct for right-to-left and complex scripts.</li>
+        <li><b>Hardware video encoding</b> H.264 through your graphics card or Windows itself, in colours labelled BT.709 so TVs show exactly what you chose.</li>
+        <li><b>Fast writing</b> A 4-minute 1080p video is written in about 1 minute 20 seconds on a two-core laptop; 4K takes about three times as long.</li>
+        <li><b>Protected, native code</b> The app's own code is compiled to native modules.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================== REQUIREMENTS -->
+<section id="requirements">
+  <div class="wrap narrow">
+    <div class="sec-label">Requirements &amp; privacy</div>
+    <h2>What you need</h2>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Item</th><th>Requirement</th></tr>
+        <tr><td>System</td><td>Windows 10 or Windows 11, 64-bit</td></tr>
+        <tr><td>Processor</td><td>Any modern 64-bit Intel or AMD processor. Separation runs on the processor: on a modest two-core laptop a 4-minute song takes around 14 minutes; faster processors take proportionally less. The 60-second free preview takes about a minute.</td></tr>
+        <tr><td>Memory</td><td>8 GB recommended</td></tr>
+        <tr><td>Disk</td><td>About 800 MB for the app, plus room for your separations (a 4-minute song is about 20 MB of MP3 stems). The optional word aligner is a one-time 1.2 GB download.</td></tr>
+        <tr><td>Video</td><td>Any graphics card that encodes H.264 (NVIDIA, Intel, AMD) — or Windows' own encoder; a software encoder is included as a fallback</td></tr>
+        <tr><td>Party</td><td>A TV or projector connected as a second screen (recommended), or a single screen with the keyboard</td></tr>
+        <tr><td>Internet</td><td>Not needed to separate, make videos or run a party. Only for the optional extra AI models and the word aligner, downloaded once.</td></tr>
+      </table>
+    </div>
+
+    <h3>Your music stays on your computer</h3>
+    <p>Vocal Split never uploads your audio, your lyrics or anything about what you do. Separations, settings and presets are kept in your own Windows profile, and Settings has a button that deletes all of it. The only time the app reaches the internet is to download an optional model you asked for, or when you click a link to this website.</p>
+  </div>
+</section>
+
+<!-- ================================================================ FAQ -->
+<section id="faq">
+  <div class="wrap narrow">
+    <div class="sec-label">FAQ</div>
+    <h2>Frequently asked questions</h2>
+
+    <details><summary>Does Vocal Split work without an internet connection?</summary>
+      <p>Yes. Separation with the default model, karaoke videos, MP3+G, the party and everything else work offline. Only the two optional AI models and the word aligner are downloaded — once, when you first choose them.</p></details>
+
+    <details><summary>Is my music uploaded anywhere?</summary>
+      <p>No. Everything happens on your own computer. There is no account, no cloud processing and no tracking of what you separate.</p></details>
+
+    <details><summary>Which files can I open?</summary>
+      <p>MP3, WAV, FLAC, M4A and OGG for separation. The Party page also plays karaoke videos (MP4, MKV, MOV, AVI, WEBM, M4V) and MP3+G files.</p></details>
+
+    <details><summary>How good is the separation?</summary>
+      <p>Vocal Split uses Demucs, one of the best open separation models available, followed by its own cleanup pass that removes most of the bleed between voice and music. Results depend on the recording — heavily reverberant or very dense mixes are always harder — but for karaoke the instrumental is usually clean enough that nobody notices anything is missing.</p></details>
+
+    <details><summary>Where do the lyrics come from?</summary>
+      <p>You paste them — or import a .txt or .lrc file. Vocal Split deliberately does not download lyrics from the internet: you stay in control of the words and of the rights to use them.</p></details>
+
+    <details><summary>What if the timing is wrong in places?</summary>
+      <p>Drag the dividers on the vocal's waveform to move where a line starts, right-click to change the singer, and watch the preview update instantly. Turn on “Stop after the timing” to check everything before the video is written. Your corrections are kept with the song.</p></details>
+
+    <details><summary>Will the video play on my TV?</summary>
+      <p>Videos are standard MP4 files with H.264 video and AAC sound — the combination practically every TV, media player and USB stick setup accepts. Choose 720p for very old sets, 1080p for most, and 4K for big screens and projectors.</p></details>
+
+    <details><summary>Can I make karaoke in languages other than English?</summary>
+      <p>Yes — any language and any alphabet. For Bulgarian, Serbian and Russian, Vocal Split can also add the lyrics in Latin letters under the Cyrillic line.</p></details>
+
+    <details><summary>How do duets work?</summary>
+      <p>Write who sings on a line of its own before their lines — for example [Anna], [Mark] or [Both]. Each singer's words light up in their own colour, and lines sung together in a mix of both. You can also right-click any line on the timeline to change who sings it.</p></details>
+
+    <details><summary>What is MP3+G and do I need it?</summary>
+      <p>MP3+G is the classic karaoke format used by karaoke discs, players and hosts' software (which can often change the key live). If you only play karaoke at home from a USB stick, the MP4 video is all you need. If you run karaoke nights with dedicated software, MP3+G (in Pro) fits straight into your library.</p></details>
+
+    <details><summary>Can I use Vocal Split for my karaoke business or YouTube channel?</summary>
+      <p>Commercial use needs the Pro licence. Please note that the licence covers the software; the rights to the music you process are your own responsibility.</p></details>
+
+    <details><summary>How does the karaoke party work with one screen?</summary>
+      <p>The words fill the whole screen and the keyboard runs the party: Space starts and pauses, → skips, ← restarts, ↑ ↓ change the key, and Esc brings you back to the app. With a TV connected as a second screen, the words go to the TV while you manage the queue on the laptop.</p></details>
+
+    <details><summary>How long does separation take?</summary>
+      <p>It depends on your processor. On a modest two-core laptop a 4-minute song takes around 14 minutes; faster processors take proportionally less. You can mark just the part you need, and a batch can run overnight.</p></details>
+
+    <details><summary>What does the free edition include?</summary>
+      <p>The whole app on the first 60 seconds of any song, up to three songs a day — including karaoke videos and the party — so you can judge the quality for yourself before buying.</p></details>
+
+    <details><summary>Is Vocal Split available for Mac or Linux?</summary>
+      <p>Not at the moment — Vocal Split is made for Windows 10 and 11.</p></details>
+
+    <details><summary>What language is the app in?</summary>
+      <p>The interface is in English. The installer is available in fourteen languages.</p></details>
+  </div>
+</section>
+
+<!-- ================================================================ CTA -->
+<section class="cta-band">
+  <div class="wrap">
+    <div class="cta-card">
+      <h2>Vocal Split is <span class="grad">coming soon</span></h2>
+      <p>We are testing Vocal Split with people who live and breathe karaoke and audio. If you host karaoke nights, run a karaoke channel or work with vocals and stems, get in touch to join the beta.</p>
+      <a class="btn" href="contact.html">Join the beta</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot-row">
+    <div>
+      <a href="index.html">TI Apps</a>
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <div class="foot-mono">© 2026 Todor Ilinov · TI Apps</div>
+  </div>
+</footer>
+
 </body>
 </html>
