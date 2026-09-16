@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vocal Split Beta Programme | TI Apps</title>
+<meta name="description" content="Vocal Split for Windows is in internal testing. Karaoke hosts, creators, musicians and audio engineers can apply for the beta programme here.">
+<link rel="canonical" href="https://tiapps.dev/vocalsplit-beta.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="TI Apps">
+<meta property="og:url" content="https://tiapps.dev/vocalsplit-beta.html">
+<meta property="og:title" content="Vocal Split — apply for the beta">
+<meta property="og:description" content="Internal testing is under way. Apply to test Vocal Split before release.">
+<meta property="og:image" content="https://tiapps.dev/img/vocalsplit/app_splitter.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0E16;
+    --card:#111726;
+    --card-hi:#161D30;
+    --card-edge:#1C2436;
+    --field:#0D1320;
+    --cyan:#19A0EA;
+    --orange:#F5821A;
+    --violet:#8B5CF6;
+    --lilac:#A78BFA;
+    --pink:#EC4899;
+    --green:#34D399;
+    --amber:#FBBF24;
+    --red:#F87171;
+    --text:#E9EDF5;
+    --muted:#8A93A8;
+    --faint:#5A6280;
+    --mono:'IBM Plex Mono',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:'Archivo',sans-serif;line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit}
+  .wrap{max-width:1060px;margin:0 auto;padding:0 24px}
+
+  header{padding:28px 0;border-bottom:1px solid var(--card-edge)}
+  .header-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .logo{font-weight:900;font-variation-settings:'wdth' 125;font-size:1.35rem;letter-spacing:.02em;text-decoration:none}
+  .logo .ti{color:var(--cyan)}
+  .logo .apps{color:var(--orange)}
+  nav a{text-decoration:none;color:var(--muted);font-size:.92rem;margin-left:28px;transition:color .2s}
+  nav a:first-child{margin-left:0}
+  nav a:hover,nav a:focus-visible{color:var(--text)}
+  @media(max-width:640px){nav a{margin-left:16px;font-size:.86rem}}
+
+  main{max-width:760px;margin:0 auto;padding:56px 24px 72px}
+  .eyebrow{font-family:var(--mono);font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;color:var(--pink);margin-bottom:14px}
+  h1{font-weight:900;font-variation-settings:'wdth' 118;font-size:clamp(2rem,5vw,3rem);line-height:1.08}
+  .grad{
+    background:linear-gradient(90deg,var(--violet),var(--pink));
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+  }
+  .lead{color:var(--muted);font-size:1.08rem;margin-top:16px}
+
+  .status{
+    margin-top:28px;border-radius:16px;padding:20px 22px;
+    border:1px solid rgba(251,191,36,.35);background:rgba(251,191,36,.06);
+  }
+  .status h2{font-size:1.02rem;font-weight:800;display:flex;align-items:center;gap:10px}
+  .status h2 .dot{width:10px;height:10px;border-radius:50%;background:var(--amber);box-shadow:0 0 0 4px rgba(251,191,36,.18)}
+  .status ol{margin:12px 0 0 20px;color:var(--muted);font-size:.95rem}
+  .status li{padding:3px 0}
+  .status li strong{color:var(--text)}
+  .status li.now strong{color:var(--amber)}
+
+  .who{margin-top:28px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:640px){.who{grid-template-columns:1fr}}
+  .who div{background:var(--card);border:1px solid var(--card-edge);border-radius:14px;padding:14px 16px;font-size:.93rem;color:var(--muted)}
+  .who b{display:block;color:var(--text);font-size:.98rem;margin-bottom:2px}
+
+  form{
+    margin-top:34px;background:var(--card);border:1px solid var(--card-edge);
+    border-radius:18px;padding:28px 26px;
+  }
+  @media(max-width:520px){form{padding:22px 16px}}
+  fieldset{border:none;margin:0 0 26px}
+  legend{
+    font-family:var(--mono);font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--lilac);margin-bottom:14px;
+  }
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:600px){.row{grid-template-columns:1fr}}
+  .field{margin-bottom:16px}
+  label.title{display:block;font-weight:700;font-size:.95rem;margin-bottom:6px}
+  .req{color:var(--pink)}
+  .hint{display:block;color:var(--faint);font-size:.82rem;margin-top:5px}
+  input[type=text],input[type=email],input[type=url],select,textarea{
+    width:100%;background:var(--field);color:var(--text);
+    border:1px solid var(--card-edge);border-radius:10px;
+    padding:11px 13px;font:inherit;font-size:.95rem;
+  }
+  textarea{min-height:110px;resize:vertical}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--lilac);box-shadow:0 0 0 3px rgba(167,139,250,.18)}
+  select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+    background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:34px}
+  .choices{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  @media(max-width:600px){.choices{grid-template-columns:1fr}}
+  .choice{
+    display:flex;align-items:flex-start;gap:10px;cursor:pointer;
+    background:var(--field);border:1px solid var(--card-edge);border-radius:10px;
+    padding:10px 12px;font-size:.92rem;color:var(--muted);
+  }
+  .choice:hover{border-color:#2A3550}
+  .choice input{margin-top:4px;accent-color:var(--violet);flex-shrink:0}
+  .choice:has(input:checked){border-color:var(--violet);color:var(--text);background:rgba(139,92,246,.08)}
+  .agree{display:flex;gap:10px;align-items:flex-start;font-size:.92rem;color:var(--muted);margin-bottom:10px;cursor:pointer}
+  .agree input{margin-top:5px;accent-color:var(--violet);flex-shrink:0}
+  .agree a{color:var(--lilac)}
+  .submit{
+    display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;
+    border:none;cursor:pointer;margin-top:10px;
+    background:linear-gradient(90deg,var(--violet),var(--pink));color:#fff;
+    font:inherit;font-weight:800;font-size:1rem;padding:15px 22px;border-radius:12px;
+    transition:opacity .2s;
+  }
+  .submit:hover{opacity:.9}
+  .submit:disabled{opacity:.55;cursor:wait}
+  .submit:focus-visible{outline:2px solid var(--lilac);outline-offset:3px}
+  .form-status{margin-top:16px;font-size:.95rem;border-radius:12px;display:none}
+  .form-status.ok{display:block;padding:18px 20px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.35);color:var(--text)}
+  .form-status.err{display:block;padding:14px 16px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.35);color:var(--red)}
+  .form-status b{color:var(--green)}
+  .small{color:var(--faint);font-size:.82rem;margin-top:14px;text-align:center}
+  .small a{color:var(--muted)}
+  .error-text{color:var(--red);font-size:.82rem;margin-top:5px;display:none}
+  .invalid .error-text{display:block}
+  .invalid input,.invalid select,.invalid textarea,.invalid .choices{border-color:var(--red)}
+
+  footer{border-top:1px solid var(--card-edge);padding:36px 0 44px;color:var(--muted);font-size:.88rem}
+  .foot-row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px}
+  footer a{color:var(--muted);text-decoration:none;margin-right:22px}
+  footer a:hover{color:var(--text)}
+  .foot-mono{font-family:var(--mono);font-size:.78rem}
+  .hidden{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap header-row">
+    <a class="logo" href="index.html"><span class="ti">TI</span>&hairsp;<span class="apps">APPS</span></a>
+    <nav>
+      <a href="index.html#apps">Apps</a>
+      <a href="VocalSplit.html">Vocal Split</a>
+      <a href="vocalsplit-faq.html">FAQ</a>
+      <a href="contact.html?app=vocalsplit">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="eyebrow">Vocal Split · Beta programme</div>
+  <h1>Coming soon. <span class="grad">Help us test it first.</span></h1>
+  <p class="lead">Vocal Split — the AI vocal remover, karaoke video maker and karaoke party for Windows — is almost ready. Before it goes on sale, a small group of people who work with karaoke and audio every day will put it through its paces.</p>
+
+  <div class="status" role="status">
+    <h2><span class="dot" aria-hidden="true"></span>Where things stand</h2>
+    <ol>
+      <li><strong>Internal testing</strong> — every feature is being tested on our own machines.</li>
+      <li class="now"><strong>Now: waiting for a certified code signature.</strong> The installer will be signed, so Windows knows who published it and SmartScreen does not warn about an unknown app. We do not hand out unsigned builds.</li>
+      <li><strong>Beta</strong> — accepted testers receive the signed installer and a <strong>Pro Edition beta key</strong> that unlocks everything for the test period.</li>
+      <li><strong>Release</strong> — with the bugs you found fixed.</li>
+    </ol>
+  </div>
+
+  <div class="who">
+    <div><b>Karaoke hosts &amp; venues</b>You run karaoke nights and know your players, formats and libraries.</div>
+    <div><b>Karaoke &amp; cover creators</b>You publish karaoke or cover videos on YouTube, TikTok or elsewhere.</div>
+    <div><b>Musicians &amp; producers</b>You practise, remix or produce with stems and multitracks.</div>
+    <div><b>Audio engineers</b>You mix, master or restore audio and can hear what a separation leaves behind.</div>
+  </div>
+
+  <form id="betaForm" novalidate>
+    <!-- A trap for bots: people never see it, so it stays empty. -->
+    <div class="hidden" aria-hidden="true">
+      <label>Leave this empty <input type="text" name="website_url" tabindex="-1" autocomplete="off"></label>
+    </div>
+
+    <fieldset>
+      <legend>1 · About you</legend>
+      <div class="row">
+        <div class="field">
+          <label class="title" for="name">Name or nickname</label>
+          <input id="name" name="name" type="text" maxlength="80" autocomplete="name">
+        </div>
+        <div class="field" data-need="email">
+          <label class="title" for="email">Email <span class="req">*</span></label>
+          <input id="email" name="email" type="email" maxlength="160" autocomplete="email" required>
+          <span class="hint">Where we send the installer and your beta key.</span>
+          <span class="error-text">Enter an email address we can reach you at.</span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label class="title" for="country">Country</label>
+          <input id="country" name="country" type="text" maxlength="60" autocomplete="country-name">
+        </div>
+        <div class="field">
+          <label class="title" for="link">Your channel, venue or portfolio</label>
+          <input id="link" name="link" type="url" maxlength="200" placeholder="https://">
+          <span class="hint">Optional, but it helps us choose.</span>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>2 · Your experience</legend>
+      <div class="field" data-need="role">
+        <label class="title" for="role">What do you mainly do with audio? <span class="req">*</span></label>
+        <select id="role" name="role" required>
+          <option value="" selected disabled>Choose one…</option>
+          <option>I host karaoke nights (KJ) or run a karaoke venue</option>
+          <option>I make karaoke or cover videos for a channel</option>
+          <option>I'm a musician, producer or DJ working with stems</option>
+          <option>I'm an audio or mixing engineer</option>
+          <option>I'm a singer or vocal coach</option>
+          <option>Something else with audio (tell us below)</option>
+        </select>
+        <span class="error-text">Choose the closest one.</span>
+      </div>
+      <div class="field" data-need="years">
+        <label class="title" for="years">For how long? <span class="req">*</span></label>
+        <select id="years" name="years" required>
+          <option value="" selected disabled>Choose one…</option>
+          <option>Less than a year</option>
+          <option>1–3 years</option>
+          <option>3–10 years</option>
+          <option>More than 10 years</option>
+        </select>
+        <span class="error-text">Choose one.</span>
+      </div>
+      <div class="field" data-need="tools">
+        <span class="title" style="display:block;font-weight:700;font-size:.95rem;margin-bottom:6px">Which tools have you used? <span class="req">*</span></span>
+        <div class="choices" id="tools">
+          <label class="choice"><input type="checkbox" name="tools" value="Vocal removers (UVR, Demucs, Spleeter…)">Vocal removers — UVR, Demucs, Spleeter…</label>
+          <label class="choice"><input type="checkbox" name="tools" value="Online separation (LALAL.AI, Moises…)">Online separation — LALAL.AI, Moises…</label>
+          <label class="choice"><input type="checkbox" name="tools" value="Karaoke hosting software">Karaoke hosting software</label>
+          <label class="choice"><input type="checkbox" name="tools" value="Karaoke video makers / lyric timing tools">Karaoke video makers or lyric timing tools</label>
+          <label class="choice"><input type="checkbox" name="tools" value="A DAW (Reaper, Ableton, FL Studio, Logic, Cubase…)">A DAW — Reaper, Ableton, FL Studio, Logic…</label>
+          <label class="choice"><input type="checkbox" name="tools" value="Audio repair (iZotope RX or similar)">Audio repair — iZotope RX or similar</label>
+          <label class="choice"><input type="checkbox" name="tools" value="Video editors">Video editors</label>
+          <label class="choice"><input type="checkbox" name="tools" value="None of these yet">None of these yet</label>
+        </div>
+        <span class="error-text">Tick at least one — “None of these yet” counts.</span>
+      </div>
+      <div class="field">
+        <span class="title" style="display:block;font-weight:700;font-size:.95rem;margin-bottom:6px">Which of these do you work with?</span>
+        <div class="choices">
+          <label class="choice"><input type="checkbox" name="formats" value="MP4 karaoke videos">MP4 karaoke videos</label>
+          <label class="choice"><input type="checkbox" name="formats" value="MP3+G / CD+G">MP3+G / CD+G</label>
+          <label class="choice"><input type="checkbox" name="formats" value="Stems / multitracks">Stems and multitracks</label>
+          <label class="choice"><input type="checkbox" name="formats" value="LRC / timed lyrics">LRC or timed lyrics</label>
+          <label class="choice"><input type="checkbox" name="formats" value="Non-Latin lyrics (Cyrillic etc.)">Lyrics in Cyrillic or another script</label>
+          <label class="choice"><input type="checkbox" name="formats" value="Duets">Duets</label>
+        </div>
+      </div>
+      <div class="field" data-need="test">
+        <label class="title" for="test">What would you test first, and what would make Vocal Split worth using for you? <span class="req">*</span></label>
+        <textarea id="test" name="test" maxlength="1500" required placeholder="For example: separating live recordings for my Friday nights, timing Bulgarian lyrics, MP3+G for my player, 4K videos for the channel…"></textarea>
+        <span class="hint">A few sentences in your own words — at least 40 characters.</span>
+        <span class="error-text">Tell us a little more — at least 40 characters.</span>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>3 · Your computer</legend>
+      <div class="row">
+        <div class="field" data-need="windows">
+          <label class="title" for="windows">Windows <span class="req">*</span></label>
+          <select id="windows" name="windows" required>
+            <option value="" selected disabled>Choose one…</option>
+            <option>Windows 11</option>
+            <option>Windows 10</option>
+            <option>I don't use Windows</option>
+          </select>
+          <span class="error-text">Choose one.</span>
+        </div>
+        <div class="field">
+          <label class="title" for="ram">Memory</label>
+          <select id="ram" name="ram">
+            <option value="" selected>Not sure</option>
+            <option>4 GB</option>
+            <option>8 GB</option>
+            <option>16 GB</option>
+            <option>32 GB or more</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label class="title" for="cpu">Processor</label>
+          <input id="cpu" name="cpu" type="text" maxlength="100" placeholder="e.g. Intel Core i5-8250U, Ryzen 7 5800X">
+        </div>
+        <div class="field">
+          <label class="title" for="tv">A TV or projector for karaoke?</label>
+          <select id="tv" name="tv">
+            <option value="" selected>—</option>
+            <option>Yes, as a second screen</option>
+            <option>Yes, from a USB stick</option>
+            <option>No</option>
+          </select>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset style="margin-bottom:6px">
+      <legend>4 · As a tester</legend>
+      <label class="agree" data-need="hours"><input type="checkbox" name="hours" required><span>I can spend <strong>a few hours over two weeks</strong> using Vocal Split on my own songs, and send back what I find — bugs, rough edges and ideas. <span class="req">*</span></span></label>
+      <label class="agree" data-need="private"><input type="checkbox" name="private" required><span>I will keep the beta installer and my key to myself, and I understand beta software can have bugs. <span class="req">*</span></span></label>
+      <label class="agree" data-need="contact"><input type="checkbox" name="contact" required><span>You may email me about the Vocal Split beta. My answers are kept only for choosing testers and contacting them, as the <a href="privacy.html#beta" target="_blank" rel="noopener">privacy policy</a> describes, and deleted on request. <span class="req">*</span></span></label>
+      <label class="agree"><input type="checkbox" name="news"><span>Also tell me when Vocal Split is released.</span></label>
+      <div class="error-text" id="agreeError" style="margin-bottom:8px">Please confirm the three marked boxes.</div>
+    </fieldset>
+
+    <button type="submit" class="submit" id="submitBtn">Apply for the beta</button>
+    <div class="form-status" id="formStatus" role="alert"></div>
+    <p class="small">Places are limited. We read every application and write to the people chosen when the signed build is ready. Questions? <a href="vocalsplit-faq.html">Read the FAQ</a> or <a href="contact.html?app=vocalsplit">contact us</a>.</p>
+  </form>
+</main>
+
+<footer>
+  <div class="wrap foot-row">
+    <div>
+      <a href="index.html">TI Apps</a>
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <div class="foot-mono">© 2026 Todor Ilinov · TI Apps</div>
+  </div>
+</footer>
+
+<script type="module">
+/* Applications go to two places. The Realtime Database of Vocal Split's own
+   Firebase project keeps the list we pick testers from and write to later:
+   anyone may add an application, nobody but the admin account may read one
+   (see the database rules). Web3Forms, which the contact form already uses,
+   sends a copy to the inbox as it arrives. If either works the application is
+   safe, so the visitor is told it went. */
+const firebaseConfig = {
+  apiKey: "AIzaSyCbQVhk1HjE5gk0KiVrnC04dnce_8PSeF8",
+  authDomain: "vocal-split.firebaseapp.com",
+  databaseURL: "https://vocal-split-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "vocal-split",
+  storageBucket: "vocal-split.firebasestorage.app",
+  messagingSenderId: "463756465240",
+  appId: "1:463756465240:web:207afb6b3b84164698e62d"
+};
+const WEB3FORMS_KEY = "6267a966-dd45-4fde-94b5-96fac4ab4a48";
+const NODE = "vocalsplit_beta";
+
+const form = document.getElementById("betaForm");
+const statusEl = document.getElementById("formStatus");
+const button = document.getElementById("submitBtn");
+
+function values() {
+  const data = new FormData(form);
+  const text = key => String(data.get(key) || "").trim();
+  return {
+    name: text("name"),
+    email: text("email").toLowerCase(),
+    country: text("country"),
+    link: text("link"),
+    role: text("role"),
+    years: text("years"),
+    tools: data.getAll("tools").join("; "),
+    formats: data.getAll("formats").join("; "),
+    test: text("test"),
+    windows: text("windows"),
+    ram: text("ram"),
+    cpu: text("cpu"),
+    tv: text("tv"),
+    news: data.get("news") === "on",
+  };
+}
+
+function check(entry) {
+  const problems = {
+    email: !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(entry.email),
+    role: !entry.role,
+    years: !entry.years,
+    tools: !entry.tools,
+    test: entry.test.length < 40,
+    windows: !entry.windows,
+    hours: !form.hours.checked,
+    private: !form.private.checked,
+    contact: !form.contact.checked,
+  };
+  let first = null;
+  for (const [key, bad] of Object.entries(problems)) {
+    const holder = form.querySelector(`[data-need="${key}"]`);
+    if (holder) holder.classList.toggle("invalid", bad);
+    if (bad && !first) first = holder;
+  }
+  const agreeBad = problems.hours || problems.private || problems.contact;
+  document.getElementById("agreeError").style.display = agreeBad ? "block" : "none";
+  if (first) first.scrollIntoView({ behavior: "smooth", block: "center" });
+  return !first;
+}
+
+async function toDatabase(entry) {
+  const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
+  const { getDatabase, ref, push, serverTimestamp } =
+    await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js");
+  const db = getDatabase(initializeApp(firebaseConfig));
+  await push(ref(db, NODE), { ...entry, submitted: serverTimestamp(), contacted: false });
+}
+
+async function toInbox(entry) {
+  const lines = Object.entries(entry).map(([key, value]) => `${key}: ${value}`).join("\n");
+  const response = await fetch("https://api.web3forms.com/submit", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      access_key: WEB3FORMS_KEY,
+      subject: `Vocal Split beta application — ${entry.role}`,
+      from_name: "Vocal Split beta form",
+      replyto: entry.email,
+      email: entry.email,
+      name: entry.name || entry.email,
+      message: lines,
+    }),
+  });
+  const answer = await response.json();
+  if (!answer.success) throw new Error(answer.message || "not sent");
+}
+
+form.addEventListener("submit", async event => {
+  event.preventDefault();
+  statusEl.className = "form-status";
+  statusEl.textContent = "";
+  if (form.website_url.value) return;          // a bot filled the trap
+  const entry = values();
+  if (!check(entry)) return;
+
+  button.disabled = true;
+  button.textContent = "Sending…";
+  const results = await Promise.allSettled([toDatabase(entry), toInbox(entry)]);
+  results.forEach((result, index) => {
+    if (result.status === "rejected") console.warn(index ? "inbox" : "database", result.reason);
+  });
+  if (results.some(result => result.status === "fulfilled")) {
+    statusEl.className = "form-status ok";
+    statusEl.innerHTML = "<b>Thank you — your application is in.</b><br>" +
+      "We will write to <strong></strong> when the signed beta is ready and places are chosen.";
+    statusEl.querySelector("strong").textContent = entry.email;
+    form.querySelectorAll("input, select, textarea, button").forEach(el => el.disabled = true);
+    button.textContent = "Application sent";
+    statusEl.scrollIntoView({ behavior: "smooth", block: "center" });
+  } else {
+    statusEl.className = "form-status err";
+    statusEl.textContent = "Your application could not be sent. Please try again in a moment, " +
+      "or email tvdspcenter@gmail.com with the subject “Vocal Split beta”.";
+    button.disabled = false;
+    button.textContent = "Apply for the beta";
+  }
+});
+</script>
+</body>
+</html>

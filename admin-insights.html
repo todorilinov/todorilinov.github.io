@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>TV DSP Center — Countries &amp; Devices</title>
+<script src="admin-nav.js" defer></script>
 <style>
   :root{
     --bg:#0d1117; --card:#14181d; --line:#2a3038;
@@ -129,9 +130,8 @@
     <div style="display:flex;justify-content:space-between;align-items:flex-start;
                 gap:12px;flex-wrap:wrap;margin-bottom:22px">
       <div>
-        <h1>Countries &amp; Devices</h1>
-        <div class="sub"><a href="admin.html">&larr; Back to trial dashboard</a><span
-             id="who" style="color:var(--faint)"></span></div>
+        <h1 data-admin-nav>TV DSP Center — Countries &amp; Devices</h1>
+        <div class="sub"><span id="who" style="color:var(--faint)"></span></div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="ghost" onclick="load()">Refresh</button>
@@ -257,7 +257,7 @@ onAuthStateChanged(auth, user => {
     fbSignOut(auth); return;
   }
   login.style.display = "none"; appEl.style.display = "block";
-  document.getElementById("who").textContent = ` · ${user.email}`;
+  document.getElementById("who").textContent = `Signed in as ${user.email}`;
   load();
 });
 

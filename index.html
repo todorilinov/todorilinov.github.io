@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TI Apps — Android Audio Apps &amp; Tools by Todor Ilinov</title>
-<meta name="description" content="TI Apps builds Android apps: TV DSP Center — a 10-band equalizer & DSP for phones and Android TV — World Radio, free live internet radio, and Fake Location, a mock GPS tool.">
+<meta name="description" content="TI Apps builds Android and Windows apps: TV DSP Center — a 10-band equalizer & DSP for phones and Android TV — World Radio, free live internet radio, Fake Location, a mock GPS tool, and Vocal Split, an AI vocal remover and karaoke maker for Windows.">
 <meta name="keywords" content="TI Apps, Todor Ilinov, Android apps, Android audio apps, TV DSP Center, World Radio, Fake Location, equalizer app, DSP, Android TV equalizer, internet radio, live radio stations, free radio app, mock GPS, fake GPS location">
 <meta name="author" content="Todor Ilinov">
 <meta name="robots" content="index, follow">
@@ -33,7 +33,7 @@
   "name": "TI Apps",
   "url": "https://tiapps.dev/",
   "founder": { "@type": "Person", "name": "Todor Ilinov" },
-  "description": "Independent studio building Android apps: TV DSP Center, World Radio and Fake Location.",
+  "description": "Independent studio building Android and Windows apps: TV DSP Center, World Radio, Fake Location and Vocal Split.",
   "email": "tvdspcenter@gmail.com"
 }
 </script>
@@ -71,6 +71,18 @@
   "description": "Sets a simulated GPS position on your own Android device: pick a place on the map, save your favourite spots, import and export them as JSON. No root required.",
   "url": "https://play.google.com/store/apps/details?id=com.fakelocation.app",
   "softwareVersion": "1.0.0",
+  "author": { "@type": "Person", "name": "Todor Ilinov" }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Vocal Split",
+  "operatingSystem": "Windows 10, Windows 11",
+  "applicationCategory": "MultimediaApplication",
+  "description": "AI vocal remover and karaoke maker for Windows: separates songs into vocals and music or four parts, writes karaoke videos and MP3+G, and runs a karaoke party on a TV, all on your own computer.",
+  "url": "https://tiapps.dev/VocalSplit.html",
   "author": { "@type": "Person", "name": "Todor Ilinov" }
 }
 </script>
@@ -205,6 +217,20 @@
   .card-dsp ul li::before{background:linear-gradient(90deg,var(--cyan),var(--orange))}
   .card-radio ul li::before{background:var(--cyan)}
   .card-fake ul li::before{background:linear-gradient(90deg,var(--violet),var(--cyan))}
+  .card-vocal ul li::before{background:linear-gradient(90deg,#8B5CF6,#EC4899)}
+  /* Vocal Split is not out yet: its first button leads to the beta
+     application, in the app's own purple-to-pink rather than the store white. */
+  .soon-btn{
+    display:inline-flex;align-items:center;gap:10px;
+    background:linear-gradient(90deg,#8B5CF6,#EC4899);color:#fff;
+    text-decoration:none;font-weight:700;font-size:.95rem;
+    padding:13px 22px;border-radius:12px;transition:opacity .2s;
+  }
+  .soon-btn:hover{opacity:.88}
+  .soon-btn:focus-visible{outline:2px solid #A78BFA;outline-offset:3px}
+  .soon-btn svg{width:18px;height:18px}
+  .more-btn.vocal{color:#A78BFA;border-color:#A78BFA}
+  .more-btn.vocal:hover{background:#A78BFA;color:#0B0F18}
   /* A section with a single app keeps the two-column grid, so the card stays
      the same width as the audio ones instead of stretching across the page. */
   .apps-grid.solo{grid-template-columns:1fr 1fr}
@@ -299,7 +325,7 @@
   <div class="wrap">
     <div class="eyebrow">Android · Audio &amp; Tools</div>
     <h1>Sound, tuned <span class="grad">from MIN to MAX.</span></h1>
-    <p>Independent Android apps focused on one thing: making audio sound better — on your phone, and on your TV. Plus the odd small tool that does its own job just as well.</p>
+    <p>Independent apps focused on one thing: making audio sound better — on your phone, on your TV and, soon, on your Windows PC. Plus the odd small tool that does its own job just as well.</p>
     <div class="hero-visual">
       <img src="img/hero_banner.jpg" alt="World Radio — microphone, headphones and a glowing audio spectrum around the globe" loading="eager">
     </div>
@@ -382,6 +408,42 @@
             Learn More
           </a>
           <a class="more-btn" href="worldradio-faq.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="10"/></svg>
+            FAQ
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="sec-label" style="margin-top:64px">Windows apps</div>
+    <div class="apps-grid solo">
+
+      <div class="app-card card-vocal">
+        <div class="app-head">
+          <div class="app-icon">
+            <img src="img/vocalsplit/icon.png" alt="Vocal Split app icon" width="64" height="64" style="width:100%;height:100%;border-radius:15px;display:block">
+          </div>
+          <div>
+            <h2>Vocal Split</h2>
+            <div class="cat">AI VOCAL REMOVER · KARAOKE MAKER</div>
+          </div>
+        </div>
+        <ul>
+          <li>Split any song into vocals and music — or all four parts — with AI</li>
+          <li>Karaoke videos in 1080p, 4K or phone shape, MP3+G and a karaoke party on your TV</li>
+          <li>Runs entirely on your Windows PC — nothing is uploaded</li>
+        </ul>
+        <div class="btn-row">
+          <a class="soon-btn" href="vocalsplit-beta.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+            Coming soon · Join the beta
+          </a>
+          <a class="more-btn vocal" href="VocalSplit.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+            Learn More
+          </a>
+          <a class="more-btn vocal" href="vocalsplit-faq.html">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="10"/></svg>
             FAQ
           </a>
