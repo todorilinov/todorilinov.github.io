@@ -309,7 +309,7 @@
       <img class="cover-art" src="img/vocalsplit/vocalsplit_banner.svg" alt="Vocal Split cover — neon microphone, headphones, audio waveforms and AI separated vocal and instrumental stems" loading="eager">
     </figure>
     <h1>Split any song. <span class="grad">Sing it tonight.</span></h1>
-    <p class="lead">Vocal Split takes a song apart with AI — the voice on one side, the music on the other, or all four parts — then turns it into a karaoke video with every word lighting up as it is sung, an MP3+G for karaoke players, or a whole karaoke party on your television. Everything happens on your own computer. Nothing is uploaded, ever.</p>
+    <p class="lead">Vocal Split takes a song apart with AI — the voice on one side, the music on the other, or all four parts — then turns it into a karaoke video with every word lighting up as it is sung, an MP3+G for karaoke players, a mix of its parts with your own recordings, or a whole karaoke party on your television. Everything happens on your own computer. Nothing is uploaded, ever.</p>
     <div class="hero-cta">
       <a class="btn" href="contact.html">Join the beta</a>
       <a class="ghost-btn" href="#features">See every feature ↓</a>
@@ -345,6 +345,7 @@
     <a class="chip" href="#mp3g">MP3+G</a>
     <a class="chip" href="#party">Karaoke party</a>
     <a class="chip" href="#batch">Batch</a>
+    <a class="chip" href="#mixer">Mixer</a>
     <a class="chip" href="#history">History &amp; cutting</a>
     <a class="chip" href="#settings">Settings</a>
     <a class="chip" href="#editions">Editions</a>
@@ -700,16 +701,78 @@
   </div>
 </section>
 
+<!-- ============================================================== MIXER -->
+<section id="mixer">
+  <div class="wrap">
+    <div class="num">13 · Mixer <span class="lim">Pro</span></div>
+    <h2>Mix the parts — and your own recordings — back together</h2>
+    <p class="intro">The <strong>Mixer</strong> page puts every part of a separation on its own line, with a level, a place between the speakers, a mute and a solo. Add a track of your own — a take you sang, a backing track from another source, a guide — and Vocal Split <strong>lines it up with the song by listening to it</strong>: where it starts, its speed and its key. Everything is heard as you set it, and the result is saved as one file.</p>
+    <figure class="shot"><img src="img/vocalsplit/app_mixer.jpg" alt="The Mixer page: Paper Planes chosen, the song's waveform with the playhead at 1:12, the Vocals line muted, the Instrumental at −4.5 dB, an added live band backing track, the quick mixes and the card for the added track with its nudge buttons, and the Save the Mix button" loading="lazy"><figcaption>Mixer — the vocal muted, the instrumental turned down, and a live band backing lined up with the song</figcaption></figure>
+
+    <h3>The song and the transport</h3>
+    <ul class="controls">
+      <li><span class="ui">Which separation</span> Any separation in History — vocals and instrumental, a single part, or all four parts. For a four-part separation the lines are Vocals, Drums, Bass and Other; the instrumental is left out, since it is those three added together.</li>
+      <li><span class="ui">▶ / ❚❚</span> <span class="ui">■</span> Play, pause and stop the mix. The waveform above the tracks is the mix as it is set — click anywhere on it, or on any track's own waveform, to jump there.</li>
+      <li><b>Live</b> Nothing is mixed ahead of time: a mute, a level or a nudge is heard within a fortieth of a second, without the song stopping, and a change of level is ramped so a mute never clicks. The mix plays through the equalizer and effects, at the song's own key and speed.</li>
+    </ul>
+
+    <h3>Every track</h3>
+    <figure class="shot"><img src="img/vocalsplit/app_mixer_tracks.jpg" alt="Two added tracks in the mixer: a live band backing that starts 1.454 seconds before the song and was sped up 3.1%, and a sung take that starts 12 seconds into the song, each with level and pan sliders, S, M and remove buttons, and a waveform placed on the song's timeline" loading="lazy"><figcaption>Added tracks, each with what was done to line it up written under its name</figcaption></figure>
+    <div class="cols">
+      <ul class="controls">
+        <li><span class="ui">Level</span> From off up to +6 dB, in half-decibel steps, with the value beside it. Drag it to the bottom for off; double-click to put it back to 0 dB.</li>
+        <li><span class="ui">Pan</span> From left to right, with the position shown as L, C or R and a number. Double-click for the middle.</li>
+        <li><b>Waveform</b> Each track drawn on the song's own timeline, all to one scale — so you see where an added take starts, and how loud each part is next to the others.</li>
+      </ul>
+      <ul class="controls">
+        <li><span class="ui">M</span> Mute — the track stays in the list but is silent. A muted track is drawn dimmer, sliders and all.</li>
+        <li><span class="ui">S</span> Solo — only the tracks marked S play. Several can be soloed at once.</li>
+        <li><span class="ui">✕</span> Takes an added track out of the mix. The file you added is never touched.</li>
+      </ul>
+    </div>
+
+    <h3>Quick mixes</h3>
+    <ul class="controls">
+      <li><span class="ui">Everything</span> <span class="ui">No vocals</span> <span class="ui">Vocals only</span> <span class="ui">No drums</span> <span class="ui">No bass</span> <span class="ui">Drums and bass</span> <span class="ui">No other</span> Which parts play, in one press — offered according to the parts the separation has. Levels and your own tracks are left as they are. Practise the bass line with the bass taken out, sing over the band, or hear just the rhythm section.</li>
+      <li><span class="ui">Reset levels</span> Every track back to 0 dB, in the middle, unmuted and not soloed.</li>
+    </ul>
+
+    <h3>Your own tracks, lined up automatically</h3>
+    <p><span class="ui">Add a track…</span> takes MP3, WAV, FLAC, M4A, AAC, OGG, Opus, WMA and AIFF files, at any sample rate — several at once if you like. Each is compared with the song and with every one of its parts, and placed against the one it agrees with most: a sung take against the vocal, a backing track against the instrumental. It works in the background, and the track shows <em>Lining it up with the song…</em> until it is done.</p>
+    <ul class="controls">
+      <li><b>Where it starts</b> A longer intro, a count-in, a track that begins in the middle of the song — found to the millisecond. In our tests the error was under 4 ms.</li>
+      <li><b>Its speed</b> A version played faster or slower — from about 16% slower to 19% faster — is brought to the song's speed.</li>
+      <li><b>Its key</b> Sped up the way a tape runs, key and all, or made in another key — up to six semitones away, which is how backing tracks are often made for a singer — and it is brought back to the song's key.</li>
+      <li><b>Sure or not</b> The rhythm proposes where it goes, and the notes decide: two unrelated songs at the same tempo line their beats up, but not their notes. A track that does not sound like the song is left at the start, with a note saying so, for you to place by ear.</li>
+      <li><b>What was done</b> Written under the track's name — for example “its first 1.454 s come before the song · sped up 3.1%” — and in full on the <strong>Your track</strong> card, with the part it was matched against.</li>
+    </ul>
+
+    <h3>The Your track card</h3>
+    <ul class="controls">
+      <li><b>Choose a track</b> Click an added track in the list to bring it to the card.</li>
+      <li><span class="ui">−100 ms</span> <span class="ui">−10 ms</span> <span class="ui">+10 ms</span> <span class="ui">+100 ms</span> Move it earlier or later by hand, heard at once — the card says how far it has been moved.</li>
+      <li><span class="ui">Line it up again</span> Forgets the hand moves and listens once more.</li>
+    </ul>
+
+    <h3>Saving and keeping</h3>
+    <ul class="controls">
+      <li><span class="ui">Save the Mix</span> Everything that is switched on, at its levels and places, as one file — MP3, WAV or FLAC, in the format chosen in Settings, and through the equalizer and effects when Settings says so. A mix that would clip is brought down as a whole rather than distorted. The line under the button says what is in the mix.</li>
+      <li><b>Kept with the song</b> The levels, mutes and added tracks are remembered with the separation, so the mix is as you left it next time. The lined-up copy of an added track is kept in the separation's folder and removed with it.</li>
+      <li><b>From History</b> A separation's <span class="ui">⋮</span> menu has <span class="ui">Open in the mixer</span>.</li>
+    </ul>
+  </div>
+</section>
+
 <!-- ============================================================ HISTORY -->
 <section id="history">
   <div class="wrap">
-    <div class="num">13 · History &amp; cutting</div>
+    <div class="num">14 · History &amp; cutting</div>
     <h2>Every separation kept — and cut to length</h2>
     <p class="intro">The <strong>History</strong> page keeps your recent separations, so you can play and save their stems again without waiting for the AI a second time.</p>
     <figure class="shot"><img src="img/vocalsplit/app_history.jpg" alt="The History page listing five separations with their date, type, length and processing time, each with Cut, menu and Open buttons, above the output meters" loading="lazy"><figcaption>History — date, separation type, length and how long each took</figcaption></figure>
     <ul class="controls">
       <li><span class="ui">Open</span> / <span class="ui">Close</span> Shows the stems of a run as cards, with play, stop, waveform, <span class="ui">Save</span> and their own ⋮ menu.</li>
-      <li><span class="ui">⋮</span> <span class="ui">Make karaoke video</span> opens the run on the Karaoke page · <span class="ui">Show in folder</span> · <span class="ui">Delete this run</span>.</li>
+      <li><span class="ui">⋮</span> <span class="ui">Make karaoke video</span> opens the run on the Karaoke page · <span class="ui">Open in the mixer</span> <span class="lim">Pro</span> · <span class="ui">Show in folder</span> · <span class="ui">Delete this run</span>.</li>
       <li><span class="ui">Clear all</span> Deletes every kept run from this computer, after asking.</li>
       <li><b>Output meters</b> The same VU needles and analyser as on the Splitter, with the +/− band buttons.</li>
     </ul>
@@ -727,7 +790,7 @@
 <!-- =========================================================== SETTINGS -->
 <section id="settings">
   <div class="wrap">
-    <div class="num">14 · Settings</div>
+    <div class="num">15 · Settings</div>
     <h2>Everything in one place</h2>
     <figure class="shot"><img src="img/vocalsplit/app_settings.jpg" alt="The Settings page with Engine, Output, Storage and Karaoke cards" loading="lazy"><figcaption>Settings</figcaption></figure>
     <div class="cols">
@@ -768,6 +831,7 @@
         <tr><td>MP3+G export</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
         <tr><td>Karaoke party on the TV</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
         <tr><td>History · cutting a run</td><td>History</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Mixer — levels, pan, mute &amp; solo for every part, your own tracks lined up automatically</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
         <tr><td>Batch processing · “Artist - Song” file names</td><td class="no">—</td><td class="no">—</td><td class="yes">✓</td></tr>
         <tr><td>Use</td><td>Personal use</td><td>Personal use</td><td><strong>Commercial</strong> — bars, hosts, channels</td></tr>
       </table>
@@ -787,11 +851,13 @@
         <li><b>OpenVINO acceleration</b> On Intel and AMD processors, 1.4–1.5× faster than the standard engine, with identical output.</li>
         <li><b>Forced alignment</b> A speech model with a commercial-friendly licence finds each word in the vocal; its thresholds were tuned on real Bulgarian and Serbian songs.</li>
         <li><b>High-quality time-stretch</b> Signalsmith Stretch moves key and tempo while keeping voices natural.</li>
+        <li><b>Automatic track alignment</b> Onsets and notes compared at every speed in range: an added track's start, speed and key are found without being asked for.</li>
       </ul>
       <ul class="controls">
         <li><b>Professional text rendering</b> Lyrics are drawn by libass with HarfBuzz and FriBidi — correct for right-to-left and complex scripts.</li>
         <li><b>Hardware video encoding</b> H.264 through your graphics card or Windows itself, in colours labelled BT.709 so TVs show exactly what you chose.</li>
         <li><b>Fast writing</b> A 4-minute 1080p video is written in about 1 minute 20 seconds on a two-core laptop; 4K takes about three times as long.</li>
+        <li><b>Any audio file</b> Formats the audio library does not read, such as M4A, are decoded by the FFmpeg built into the app.</li>
         <li><b>Protected, native code</b> The app's own code is compiled to native modules.</li>
       </ul>
     </div>
@@ -834,7 +900,10 @@
       <p>No. Everything happens on your own computer. There is no account, no cloud processing and no tracking of what you separate.</p></details>
 
     <details><summary>Which files can I open?</summary>
-      <p>MP3, WAV, FLAC, M4A and OGG for separation. The Party page also plays karaoke videos (MP4, MKV, MOV, AVI, WEBM, M4V) and MP3+G files.</p></details>
+      <p>MP3, WAV, FLAC, M4A and OGG for separation. The Party page also plays karaoke videos (MP4, MKV, MOV, AVI, WEBM, M4V) and MP3+G files, and the Mixer (Pro) also takes AAC, Opus, WMA and AIFF tracks.</p></details>
+
+    <details><summary>Can I add my own recording to a separated song?</summary>
+      <p>Yes, in the Pro Edition's Mixer. Add a take you sang, a backing track or a guide, and it is lined up with the song automatically — its start, its speed and its key — then mixed with the parts you choose and saved as one file. If it does not sound enough like the song to be placed with confidence, it is left at the start for you to move by hand in 10 or 100 ms steps.</p></details>
 
     <details><summary>How good is the separation?</summary>
       <p>Vocal Split uses Demucs, one of the best open separation models available, followed by its own cleanup pass that removes most of the bleed between voice and music. Results depend on the recording — heavily reverberant or very dense mixes are always harder — but for karaoke the instrumental is usually clean enough that nobody notices anything is missing.</p></details>
