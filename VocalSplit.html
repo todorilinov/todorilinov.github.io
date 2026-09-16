@@ -114,11 +114,12 @@
     color:var(--amber);letter-spacing:.06em;
   }
   .hero-shot{
-    margin:48px auto 0;border-radius:18px;overflow:hidden;
-    border:1px solid var(--card-edge);
+    position:relative;isolation:isolate;aspect-ratio:16/9;
+    max-width:920px;margin:0 auto 34px;border-radius:20px;overflow:hidden;
+    border:1px solid var(--card-edge);background:#090b17;
     box-shadow:0 30px 80px -30px rgba(139,92,246,.55);
   }
-  .hero-shot img{display:block;width:100%;height:auto}
+  .hero-shot .cover-art{position:absolute;inset:0;display:block;width:100%;height:100%}
 
   .facts{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:40px auto 0}
   @media(max-width:760px){.facts{grid-template-columns:repeat(2,1fr)}}
@@ -304,6 +305,9 @@
 <div class="page-hero">
   <div class="wrap">
     <div class="eyebrow">Windows · AI vocal remover · Karaoke maker</div>
+    <figure class="hero-shot">
+      <img class="cover-art" src="img/vocalsplit/vocalsplit_banner.svg" alt="Vocal Split cover — neon microphone, headphones, audio waveforms and AI separated vocal and instrumental stems" loading="eager">
+    </figure>
     <h1>Split any song. <span class="grad">Sing it tonight.</span></h1>
     <p class="lead">Vocal Split takes a song apart with AI — the voice on one side, the music on the other, or all four parts — then turns it into a karaoke video with every word lighting up as it is sung, an MP3+G for karaoke players, or a whole karaoke party on your television. Everything happens on your own computer. Nothing is uploaded, ever.</p>
     <div class="hero-cta">
@@ -311,10 +315,6 @@
       <a class="ghost-btn" href="#features">See every feature ↓</a>
     </div>
     <div class="status">Currently in testing · Release and pricing to be announced</div>
-
-    <figure class="hero-shot">
-      <img src="img/vocalsplit/app_splitter.jpg" alt="Vocal Split main window: a song loaded on a waveform with a selection marked, live VU meters and a 15-band analyser, the four extraction types, and a results column with Vocals, Instrumental, Drums and Bass stems ready to play and save" loading="eager">
-    </figure>
 
     <div class="facts">
       <div class="fact"><b>100% offline</b><span>Nothing uploaded</span></div>
