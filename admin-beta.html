@@ -40,7 +40,18 @@
   .spacer{flex:1}
   .list{display:grid;gap:10px}
   .app{padding:14px 16px}
-  .app.done{opacity:.6}
+  .app.s-not_suitable{opacity:.55}
+  .app.s-chosen{border-color:rgba(0,255,153,.35)}
+  .app.s-contacted{border-color:rgba(0,204,255,.3)}
+  .status{background:var(--card);color:var(--txt);border:1px solid var(--line);border-radius:8px;
+          padding:5px 8px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+  .status.s-new{color:var(--accent);border-color:rgba(167,139,250,.45)}
+  .status.s-chosen{color:var(--ok);border-color:rgba(0,255,153,.4)}
+  .status.s-not_suitable{color:var(--bad);border-color:rgba(255,92,92,.4)}
+  .status.s-contacted{color:#00CCFF;border-color:rgba(0,204,255,.4)}
+  .stat.pick{cursor:pointer}
+  .stat.pick:hover{border-color:var(--faint)}
+  .stat.on{border-color:var(--accent);box-shadow:0 0 0 3px rgba(167,139,250,.1)}
   .top{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
   .who{flex:1;min-width:220px}
   .who .em{font-weight:600;word-break:break-all}
@@ -90,19 +101,22 @@
     <div id="err"></div>
 
     <div class="stats">
-      <div class="card stat"><div class="n" id="sAll">–</div><div class="l">Applications</div></div>
-      <div class="card stat"><div class="n" id="sWeek">–</div><div class="l">In the last 7 days</div></div>
-      <div class="card stat"><div class="n" id="sOpen">–</div><div class="l">Not contacted yet</div></div>
-      <div class="card stat"><div class="n" id="sKj">–</div><div class="l">Karaoke hosts &amp; creators</div></div>
+      <div class="card stat pick" data-show=""><div class="n" id="sAll">–</div><div class="l">Applications · <span id="sWeek">–</span> this week</div></div>
+      <div class="card stat pick" data-show="new"><div class="n" id="s-new" style="color:var(--accent)">–</div><div class="l">New — not decided</div></div>
+      <div class="card stat pick" data-show="chosen"><div class="n" id="s-chosen" style="color:var(--ok)">–</div><div class="l">Chosen</div></div>
+      <div class="card stat pick" data-show="contacted"><div class="n" id="s-contacted" style="color:#00CCFF">–</div><div class="l">Contacted</div></div>
+      <div class="card stat pick" data-show="not_suitable"><div class="n" id="s-not_suitable" style="color:var(--bad)">–</div><div class="l">Not suitable</div></div>
     </div>
 
     <div class="controls">
       <input type="search" id="q" placeholder="Search email, name, tools, answer…" oninput="render()">
       <select id="fRole" onchange="render()"><option value="">Every role</option></select>
       <select id="fState" onchange="render()">
-        <option value="">Contacted or not</option>
-        <option value="open">Not contacted</option>
-        <option value="done">Contacted</option>
+        <option value="">Every status</option>
+        <option value="new">New</option>
+        <option value="chosen">Chosen</option>
+        <option value="contacted">Contacted</option>
+        <option value="not_suitable">Not suitable</option>
       </select>
       <div class="spacer"></div>
       <button class="ghost" onclick="copyEmails()">Copy emails shown</button>
@@ -190,13 +204,33 @@ window.load = async () => {
   }
 };
 
+/* Where an application is in choosing testers. New ones are undecided;
+   Chosen are to be written to; Contacted have been; Not suitable are kept
+   until the beta is over, so the same person is not weighed up twice.
+   Applications from before the statuses had only a "contacted" flag. */
+const STATUSES = [
+  ["new", "New"], ["chosen", "Chosen"], ["contacted", "Contacted"], ["not_suitable", "Not suitable"],
+];
+const statusOf = r => STATUSES.some(([key]) => key === r.status) ? r.status
+  : (r.contacted ? "contacted" : "new");
+
 function stats() {
   const now = Date.now();
   document.getElementById("sAll").textContent = rows.length;
   document.getElementById("sWeek").textContent = rows.filter(r => now - (r.submitted || 0) < 7 * DAY_MS).length;
-  document.getElementById("sOpen").textContent = rows.filter(r => !r.contacted).length;
-  document.getElementById("sKj").textContent = rows.filter(r => /karaoke/i.test(r.role || "")).length;
+  for (const [key] of STATUSES) {
+    document.getElementById(`s-${key}`).textContent = rows.filter(r => statusOf(r) === key).length;
+  }
+  const state = document.getElementById("fState").value;
+  document.querySelectorAll(".stat.pick").forEach(card =>
+    card.classList.toggle("on", card.dataset.show === state));
 }
+
+// A count is also a filter: pressing it shows those applications.
+document.querySelectorAll(".stat.pick").forEach(card => card.addEventListener("click", () => {
+  document.getElementById("fState").value = card.dataset.show;
+  stats(); render();
+}));
 
 function shown() {
   const q = document.getElementById("q").value.trim().toLowerCase();
@@ -204,11 +238,12 @@ function shown() {
   const state = document.getElementById("fState").value;
   return rows.filter(r =>
     (!role || r.role === role) &&
-    (!state || (state === "done") === !!r.contacted) &&
+    (!state || statusOf(r) === state) &&
     (!q || Object.values(r).join(" ").toLowerCase().includes(q)));
 }
 
 window.render = () => {
+  stats();
   const list = document.getElementById("list");
   const items = shown();
   if (!items.length) {
@@ -225,7 +260,10 @@ window.render = () => {
       ["TV", esc(r.tv)], ["Country", esc(r.country)], ["Link", link],
       ["Release news", r.news ? "yes" : "no"],
     ].filter(([, v]) => v);
-    return `<div class="card app ${r.contacted ? "done" : ""}">
+    const status = statusOf(r);
+    const options = STATUSES.map(([key, label]) =>
+      `<option value="${key}" ${key === status ? "selected" : ""}>${label}</option>`).join("");
+    return `<div class="card app s-${status}">
       <div class="top">
         <div class="who">
           <div class="em">${esc(r.email)}</div>
@@ -234,8 +272,7 @@ window.render = () => {
         </div>
         <div class="acts">
           <span class="when">${esc(when)}</span>
-          <label class="tick"><input type="checkbox" data-mark="${esc(r.id)}"
-            ${r.contacted ? "checked" : ""}> contacted</label>
+          <select class="status s-${status}" data-mark="${esc(r.id)}" aria-label="Status">${options}</select>
           <button class="danger" data-drop="${esc(r.id)}">Delete</button>
         </div>
       </div>
@@ -249,19 +286,20 @@ window.render = () => {
 // application's key comes from whoever sent it, and has no business inside code.
 document.getElementById("list").addEventListener("change", event => {
   const id = event.target.dataset && event.target.dataset.mark;
-  if (id) mark(id, event.target.checked);
+  if (id) mark(id, event.target.value);
 });
 document.getElementById("list").addEventListener("click", event => {
   const id = event.target.dataset && event.target.dataset.drop;
   if (id) drop(id);
 });
 
-async function mark(id, done) {
+async function mark(id, status) {
   try {
-    await update(ref(db, `${NODE}/${id}`), { contacted: done });
+    // The old flag goes as the status takes its place.
+    await update(ref(db, `${NODE}/${id}`), { status, contacted: null });
     const row = rows.find(r => r.id === id);
-    if (row) row.contacted = done;
-    stats(); render();
+    if (row) { row.status = status; delete row.contacted; }
+    render();
   } catch (e) { toast("Could not save: " + e.message); load(); }
 }
 
@@ -283,10 +321,11 @@ window.copyEmails = async () => {
 
 window.downloadCsv = () => {
   const columns = ["submitted", "email", "name", "country", "role", "years", "tools", "formats",
-                   "test", "windows", "ram", "cpu", "tv", "link", "news", "contacted"];
+                   "test", "windows", "ram", "cpu", "tv", "link", "news", "status"];
   const cell = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const lines = [columns.join(",")].concat(shown().map(r => columns.map(c =>
-    cell(c === "submitted" && r.submitted ? new Date(r.submitted).toISOString() : r[c])).join(",")));
+    cell(c === "submitted" && r.submitted ? new Date(r.submitted).toISOString()
+         : c === "status" ? statusOf(r) : r[c])).join(",")));
   const blob = new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
