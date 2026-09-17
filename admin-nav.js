@@ -43,6 +43,9 @@
   function build(title) {
     const select = document.createElement("select");
     select.setAttribute("aria-label", "Admin page");
+    // Otherwise the browser puts back the last choice when the page is
+    // returned to, and the menu names a page other than the one showing.
+    select.autocomplete = "off";
     for (const { app, pages } of PAGES) {
       const group = document.createElement("optgroup");
       group.label = app;
@@ -66,6 +69,14 @@
   function start() {
     document.querySelectorAll("[data-admin-nav]").forEach(build);
   }
+
+  /* Going Back to an admin page can bring it out of the browser's page cache
+     exactly as it was left: its figures as old as that visit, and the menu on
+     the page that was picked from it. A page that holds live figures is loaded
+     again instead. */
+  addEventListener("pageshow", event => {
+    if (event.persisted) location.reload();
+  });
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
   else start();
 })();
