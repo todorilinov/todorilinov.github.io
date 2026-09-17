@@ -391,7 +391,7 @@
     </ul>
 
     <h3>The Output panel: VU meters and a 15-band analyser</h3>
-    <p>Below the player sits an <strong>Output</strong> panel modelled on classic studio hardware: a <strong>left and right VU needle</strong> and, between them, a <strong>15-column spectrum analyser</strong> with falling peaks. It shows what actually leaves the app — after the equalizer and effects — and it tells you what is playing (“Output · Vocals”).</p>
+    <p>Below the player sits an <strong>Output</strong> panel modelled on classic studio hardware: a <strong>left and right VU needle</strong>, each with a green lamp that lights while the needle is in the normal range and a red one that lights when it reaches the red, and, between them, a <strong>15-column spectrum analyser</strong> with falling peaks. It shows what actually leaves the app — after the equalizer and effects — and it tells you what is playing (“Output · Vocals”).</p>
     <ul class="controls">
       <li><span class="ui">+</span> <span class="ui">−</span> above and below every column move that equalizer band by <strong>1.5 dB</strong>. Hold <kbd>Shift</kbd> to push it all the way; <strong>right-click</strong> a column to set it flat. For a moment after each press the analyser shows the whole curve you have set, so you see the shape rather than one band.</li>
     </ul>
@@ -472,9 +472,9 @@
 <section id="effects">
   <div class="wrap">
     <div class="num">04 · Effects · Key &amp; tempo</div>
-    <h2>Space, width, fades — and any song in the singer's key</h2>
-    <p class="intro">The <strong>Effects</strong> rack runs after the equalizer, in the order shown by the lit <strong>signal path</strong> at the top: Equalizer → Gain → Width → Reverb → Fade. Stages that are doing nothing show “bypass”, so you always know what is active.</p>
-    <figure class="shot"><img src="img/vocalsplit/app_effects.jpg" alt="The Effects page with the Hall preset: signal path with Equalizer, Gain, Width and Reverb active, sliders for output gain, stereo width, reverb mix, room size, fade in and fade out, and a Key and tempo card with the key lowered by two semitones" loading="lazy"><figcaption>Effects with the “Hall” preset, and the key lowered two semitones for listening</figcaption></figure>
+    <h2>Bass you can hear on a laptop, space, width, fades — and any song in the singer's key</h2>
+    <p class="intro">The <strong>Effects</strong> rack runs after the equalizer, in the order shown by the lit <strong>signal path</strong> at the top: Equalizer → Bass → Gain → Width → Reverb → Fade. Stages that are doing nothing show “bypass”, so you always know what is active.</p>
+    <figure class="shot"><img src="img/vocalsplit/app_effects.jpg" alt="The Effects page with the Small speakers preset: signal path with Equalizer, Bass and Width active, sliders for output gain, stereo width, reverb mix, room size, fade in and fade out, a Bass on small speakers slider at 70 percent, and a Key and tempo card with the key lowered by two semitones" loading="lazy"><figcaption>Effects with the “Small speakers” preset, and the key lowered two semitones for listening</figcaption></figure>
     <div class="cols">
       <ul class="controls">
         <li><b>Output gain</b> Louder or quieter overall. A loud chain is limited cleanly at full scale rather than allowed to distort.</li>
@@ -483,10 +483,18 @@
       </ul>
       <ul class="controls">
         <li><b>Fade in · Fade out</b> Measured from the ends of the stem, so they land in the same place whether you are listening or saving.</li>
-        <li><span class="ui">Preset</span> <strong>Dry, Room, Plate, Hall, Cathedral, Wide, Mono, Vocal air, Instrumental bed, Top and tail</strong> — every preset sets every control, so nothing is left over from the last one.</li>
+        <li><span class="ui">Preset</span> <strong>Dry, Room, Plate, Hall, Cathedral, Wide, Mono, Vocal air, Instrumental bed, Top and tail, Small speakers</strong> — every preset sets every control, so nothing is left over from the last one.</li>
         <li><span class="ui">Save preset</span> <span class="ui">Delete</span> <span class="ui">Reset effects</span> and the <span class="ui">Effects</span> on/off switch.</li>
       </ul>
     </div>
+    <h3>Bass on small speakers</h3>
+    <p>A laptop, a phone or a television's own speakers play almost nothing below 150–200 Hz — and that is where nearly all of a bass line lives. Separate the bass on a laptop and it can seem to be silent, even though the meters show it moving. <span class="ui">Bass on small speakers</span> fixes what you hear rather than what is recorded:</p>
+    <ul class="controls">
+      <li><b>Harmonics the speaker can play</b> The bass below 130 Hz is turned into its harmonics between 150 and 600 Hz. The ear fills in the missing low note from them — the same trick phones and TVs use — so the bass line is heard on speakers that cannot reproduce it.</li>
+      <li><b>From off to 100%</b> The slider sets how strongly the harmonics come through. They follow the bass up and down rather than growing faster than it, so they do not turn into distortion, and a loud master is softly limited instead of clipping.</li>
+      <li><b>The real bass stays</b> Nothing is taken away: on headphones or proper speakers you still hear the original bass, with the harmonics on top. The effect is timed to the sample, so a saved stem still lines up with the others.</li>
+      <li><span class="ui">Small speakers</span> preset — the bass at 70% and the stereo image opened slightly, for listening on a laptop.</li>
+    </ul>
     <h3>Key and tempo</h3>
     <p>Move anything you listen to <strong>up to six semitones</strong> up or down and play it at <strong>80–120%</strong> of its speed, with a high-quality time-stretch that keeps voices natural. The <span class="ui">Original</span> button puts both back. This changes listening only; the karaoke page has its own key and tempo for the video (see below). A track takes a moment to move the first time, then every key you have tried is kept ready.</p>
   </div>
@@ -852,6 +860,7 @@
         <li><b>OpenVINO acceleration</b> On Intel and AMD processors, 1.4–1.5× faster than the standard engine, with identical output.</li>
         <li><b>Forced alignment</b> A speech model with a commercial-friendly licence finds each word in the vocal; its thresholds were tuned on real Bulgarian and Serbian songs.</li>
         <li><b>High-quality time-stretch</b> Signalsmith Stretch moves key and tempo while keeping voices natural.</li>
+        <li><b>Psychoacoustic bass</b> Harmonics generated at a steady level from the bass, so small speakers suggest the notes they cannot play.</li>
         <li><b>Automatic track alignment</b> Onsets and notes compared at every speed in range: an added track's start, speed and key are found without being asked for.</li>
       </ul>
       <ul class="controls">
@@ -905,6 +914,9 @@
 
     <details><summary>Can I add my own recording to a separated song?</summary>
       <p>Yes, in the Pro Edition's Mixer. Add a take you sang, a backing track or a guide, and it is lined up with the song automatically — its start, its speed and its key — then mixed with the parts you choose and saved as one file. If it does not sound enough like the song to be placed with confidence, it is left at the start for you to move by hand in 10 or 100 ms steps.</p></details>
+
+    <details><summary>Why can't I hear the separated bass on my laptop?</summary>
+      <p>Because nearly all of a bass line is below 150–200 Hz, where laptop, phone and TV speakers play almost nothing — the meters show it moving, but the speakers cannot reproduce it. Listen on headphones, or turn on <strong>Bass on small speakers</strong> on the Effects page (or pick the “Small speakers” preset): it adds the bass's harmonics, which small speakers can play, so you hear the bass line.</p></details>
 
     <details><summary>How good is the separation?</summary>
       <p>Vocal Split uses Demucs, one of the best open separation models available, followed by its own cleanup pass that removes most of the bleed between voice and music. Results depend on the recording — heavily reverberant or very dense mixes are always harder — but for karaoke the instrumental is usually clean enough that nobody notices anything is missing.</p></details>
