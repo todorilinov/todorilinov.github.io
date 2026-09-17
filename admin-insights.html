@@ -99,13 +99,24 @@
             border-radius:4px;padding:0 4px;margin-left:5px}
   /* Each account is its own line with the date pushed to the right, so the
      dates form a column instead of trailing off the end of the addresses. */
-  .who .acc{display:flex;justify-content:space-between;align-items:baseline;
-            gap:14px;padding:1px 0;max-width:520px}
+  .who .acc{display:grid;grid-template-columns:minmax(0,1fr) auto auto;
+            align-items:baseline;gap:4px 18px;padding:2px 0;max-width:760px}
+  /* Where each account came from: IP country, then the device locale. The same
+     box answering from one place with one language is the tell to look for. */
+  .who .geo{font-size:11.5px;color:var(--dim);white-space:nowrap;text-align:right}
+  .who .geo .k{color:var(--faint);margin-right:4px}
+  .who .geo .cc{color:var(--faint);font-size:10.5px;margin-left:3px}
+  .who .geo .miss{color:var(--faint)}
+  .who .geo .off{color:var(--warn)}
+  @media (max-width:640px){
+    .who .acc{grid-template-columns:minmax(0,1fr) auto}
+    .who .geo{grid-column:1 / -1;text-align:left}
+  }
   .who .when{color:var(--faint);font-size:11.5px;white-space:nowrap;
              font-variant-numeric:tabular-nums}
   .dvrow .span{font-size:11.5px;color:var(--warn);display:block;margin-top:7px;
                padding-top:7px;border-top:1px solid var(--line);line-height:1.5;
-               max-width:520px}
+               max-width:760px}
 
   .empty{padding:30px;text-align:center;color:var(--faint);font-size:13px}
   .err{background:rgba(255,92,92,.1);border:1px solid rgba(255,92,92,.35);
@@ -499,9 +510,21 @@ function drawDevices(){
     : (b.total - a.total) || (b.last - a.last));
 
   const emailOf = new Map(data.map(d => [d.uid, d.email || d.uid]));
+  const rowOf   = new Map(data.map(d => [d.uid, d]));
   const name = uid => esc(emailOf.get(uid) || uid.slice(0, 16) + "…");
-  const acc = (who, ms, tag) =>
-    `<span class="acc"><span>${who}${tag || ""}</span>` +
+  // Same two fields as the hover card on admin.html. The locale is flagged when
+  // it names a different country than the IP — a VPN, or a box set elsewhere.
+  const cc = (code, cls) => code
+    ? `<span${cls ? ` class="${cls}"` : ""}>${esc(regionName(code))}</span><span class="cc">${esc(code)}</span>`
+    : `<span class="miss">—</span>`;
+  const geo = uid => {
+    const d = rowOf.get(uid) || {};
+    const off = d.ccIp && d.ccDev && d.ccIp !== d.ccDev;
+    return `<span class="geo"><span class="k">IP</span>${cc(d.ccIp)}` +
+      ` &nbsp;·&nbsp; <span class="k">Locale</span>${cc(d.ccDev, off ? "off" : "")}</span>`;
+  };
+  const acc = (uid, who, ms, tag) =>
+    `<span class="acc"><span>${who}${tag || ""}</span>${geo(uid)}` +
     `<span class="when">${esc(day(ms))}</span></span>`;
 
   document.getElementById("dvList").innerHTML = rows.map(r => {
@@ -517,12 +540,12 @@ function drawDevices(){
         <span class="n"><b>${r.total}</b> account${r.total === 1 ? "" : "s"}</span>
       </div>
       <div class="who">${r.owner
-          ? acc(`<span class="own">${name(r.owner)}</span>`, r.ownerWhen,
+          ? acc(r.owner, `<span class="own">${name(r.owner)}</span>`, r.ownerWhen,
                 `<span class="tag">first</span>`)
           : `<span style="color:var(--faint)">device record missing</span>`}
         ${r.seen.filter(([u]) => u !== r.owner)
             .sort((a, b) => Number(a[1]) - Number(b[1]))
-            .map(([u, w]) => acc(name(u), w)).join("")}
+            .map(([u, w]) => acc(u, name(u), w)).join("")}
         ${tight ? `<span class="span">All ${r.total} within ${hours <= 1
             ? "the hour" : hours + " hours"} — unrelated people rarely meet the
             same box inside a day, so this looks more like several boxes
