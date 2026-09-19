@@ -61,8 +61,13 @@
              text-overflow:ellipsis;white-space:nowrap}
   .ccrow .nm .code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
                    font-size:10.5px;color:var(--faint);margin-left:6px}
-  .ccrow .tr{background:var(--line);border-radius:3px;height:9px;overflow:hidden}
-  .ccrow .fl{background:var(--ok);height:100%;border-radius:3px}
+  .ccrow .tr{display:block;background:var(--line);border-radius:3px;height:9px;
+             overflow:hidden}
+  /* display:block because .fl is a span: an inline box ignores height, which is
+     why the track used to read as an empty grey pill. The floor width keeps a
+     <1% country from drawing as nothing at all. */
+  .ccrow .fl{display:block;background:var(--ok);height:100%;border-radius:3px;
+             min-width:3px}
   .ccrow .vl{font-size:12.5px;color:var(--dim);text-align:right;
              font-variant-numeric:tabular-nums}
   .ccrow .pc{font-size:12px;color:var(--faint);text-align:right;
@@ -71,16 +76,6 @@
     .ccrow{grid-template-columns:22px 1fr 40px 42px}
     .ccrow .tr{display:none}
   }
-
-  /* One 100%-wide strip: how concentrated the user base is, at a glance. The
-     rows below answer "which countries"; this answers "how spread out". Only a
-     handful of segments are drawn — past about seven, neighbouring shades stop
-     being tellable apart, so the tail folds into a single grey Other. */
-  .ccstrip{display:flex;gap:2px;height:10px;margin:2px 0 16px;
-           border-radius:5px;overflow:hidden}
-  .ccstrip span{height:100%}
-  .ccstrip span:first-child{border-radius:5px 0 0 5px}
-  .ccstrip span:last-child{border-radius:0 5px 5px 0}
 
   /* ── Device gate observations ── */
   .dvsum{font-size:12.5px;color:var(--dim);margin:0 0 14px;line-height:1.65}
@@ -343,30 +338,6 @@ const day = ms => ms ? new Date(Number(ms)).toLocaleDateString([],
 window.render = () => { drawCountries(); drawDevices(); };
 
 /**
- * A single 100%-wide bar, biggest share first. Six segments at most: they are
- * steps of one hue rather than six identities, because more than a handful of
- * shades side by side stop being distinguishable — and the countries beyond the
- * sixth are exactly the ones a slice would render as an unreadable sliver.
- * Everything past that becomes one grey Other, which is honest and readable;
- * the full list is right underneath, so nothing is actually lost.
- */
-function shareStrip(ranked, known){
-  const SHOWN = 6;
-  const head  = ranked.slice(0, SHOWN);
-  const tailN = ranked.slice(SHOWN).reduce((sum, [, n]) => sum + n, 0);
-  const COUNTRY = "var(--ok)";
-
-  const seg = (label, n, colour) =>
-    `<span title="${esc(label)}: ${n} (${Math.round(n / known * 100)}%)"
-           style="width:${(n / known * 100).toFixed(2)}%;background:${colour}"></span>`;
-
-  return `<div class="ccstrip">
-    ${head.map(([cc, n]) => seg(`${regionName(cc)} (${cc})`, n, COUNTRY)).join("")}
-    ${tailN ? seg(`Other (${ranked.length - SHOWN} more countries)`, tailN, "var(--line)") : ""}
-  </div>`;
-}
-
-/**
  * Every country, in full — no top-N cut anywhere.
  *
  * The search box filters which ROWS are drawn, never how the shares are
@@ -390,7 +361,6 @@ function drawCountries(){
 
   const ranked = [...tally.entries()].sort((a, b) => b[1] - a[1]);
   const known  = ranked.reduce((sum, [, n]) => sum + n, 0);
-  const max    = ranked.length ? ranked[0][1] : 1;
 
   // Percentages are of the records that HAVE a country, never of every row.
   // While most trials predate the field, a share of all rows would read far
@@ -412,12 +382,11 @@ function drawCountries(){
     : 0);
 
   document.getElementById("ccList").innerHTML =
-    (known ? shareStrip(ranked, known) : "") +
     (shown.map(([cc, n]) => `
       <div class="ccrow">
         <span class="rk">${rank.get(cc)}</span>
         <span class="nm" title="${esc(regionName(cc))} (${esc(cc)})">${esc(regionName(cc))}<span class="code">${esc(cc)}</span></span>
-        <span class="tr"><span class="fl" style="width:${(n / max * 100).toFixed(1)}%"></span></span>
+        <span class="tr" title="${fmtPct(n)} of trials with a country"><span class="fl" style="width:${(known ? n / known * 100 : 0).toFixed(2)}%"></span></span>
         <span class="vl">${n}</span>
         <span class="pc">${fmtPct(n)}</span>
       </div>`).join("") ||
