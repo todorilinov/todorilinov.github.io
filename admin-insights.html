@@ -112,6 +112,13 @@
   .dvrow .span{font-size:11.5px;color:var(--warn);display:block;margin-top:7px;
                padding-top:7px;border-top:1px solid var(--line);line-height:1.5;
                max-width:760px}
+  .dvrow.is-blocked{opacity:.6}
+  .dvhead .blk{font-size:10.5px;color:var(--bad);border:1px solid var(--bad);
+               border-radius:4px;padding:0 5px;margin-left:8px}
+  .dvhead .blockBtn{background:transparent;border:1px solid var(--line);color:var(--dim);
+               font-size:11px;padding:3px 9px;border-radius:6px;margin-left:10px}
+  .dvhead .blockBtn:hover{color:var(--txt);border-color:var(--faint)}
+  .dvhead .blockBtn.on{color:var(--bad);border-color:var(--bad)}
 
   .empty{padding:30px;text-align:center;color:var(--faint);font-size:13px}
   .err{background:rgba(255,92,92,.1);border:1px solid rgba(255,92,92,.35);
@@ -190,6 +197,11 @@
           <option value="recent">Most recently seen first</option>
           <option value="tight">Tightest time cluster first</option>
         </select>
+        <select id="dvBlocked" onchange="render()">
+          <option value="all">All devices</option>
+          <option value="blocked">Blocked only</option>
+          <option value="unblocked">Not blocked</option>
+        </select>
         <label class="chk"><input type="checkbox" id="dvMine" onchange="render()">
           Include my own test devices</label>
       </div>
@@ -207,7 +219,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut,
          onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, get, set, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 /* ── CONFIG ─────────────────────────────────────────────────────────
    The same project and the same admin gate as admin.html. Safe to expose:
@@ -272,12 +284,13 @@ window.load = async () => {
   const errEl = document.getElementById("err");
   errEl.innerHTML = "";
   try {
-    const [tSnap, dSnap, oSnap] = await Promise.all([
+    const [tSnap, dSnap, oSnap, bSnap] = await Promise.all([
       get(ref(db, "trials")),
       // Either device branch may be missing or unreadable; that must not take
       // the country list down with it, so they resolve to null instead of throwing.
       get(ref(db, "devices")).catch(e => (console.warn("devices unavailable", e), null)),
       get(ref(db, "gate_observations")).catch(e => (console.warn("observations unavailable", e), null)),
+      get(ref(db, "device_blocks")).catch(e => (console.warn("device_blocks unavailable", e), null)),
     ]);
 
     const raw = tSnap.val() || {};
@@ -298,7 +311,7 @@ window.load = async () => {
                cc, country: cc ? regionName(cc) : "", ccIp, ccDev };
     });
 
-    devices = buildDevices((dSnap && dSnap.val()) || {}, (oSnap && oSnap.val()) || {});
+    devices = buildDevices((dSnap && dSnap.val()) || {}, (oSnap && oSnap.val()) || {}, (bSnap && bSnap.val()) || {});
     render();
     document.getElementById("updated").textContent =
       "Last refreshed " + new Date().toLocaleString();
@@ -416,7 +429,7 @@ function drawCountries(){
  * boxes shipped with the same device id, and switching the gate to enforce
  * would lock out every one of those people.
  */
-function buildDevices(devs, observations){
+function buildDevices(devs, observations, blocks){
   const emailOf = new Map(data.map(d => [d.uid, d.email || d.uid]));
   const mine = uid => OWN_ACCOUNTS.includes(emailOf.get(uid));
 
@@ -437,7 +450,8 @@ function buildDevices(devs, observations){
     return { hash, owner, seen, total: everyone.size, spread,
              last: stamps.length ? Math.max(...stamps) : 0,
              ownerWhen: dev && dev.trialStart,
-             ours: [...everyone].every(mine) };
+             ours: [...everyone].every(mine),
+             blocked: !!(blocks && blocks[hash]) };
   }).filter(r => r.total > 1);
 }
 
@@ -445,11 +459,13 @@ function drawDevices(){
   const min      = Number(document.getElementById("dvMin").value);
   const sort     = document.getElementById("dvSort").value;
   const showMine = document.getElementById("dvMine").checked;
+  const blockFor = document.getElementById("dvBlocked").value;
 
   // A device where every account is yours is your own testing, so it stays out
   // of the way by default — but it is still real data, so the box brings it back.
   const visible = devices.filter(r => showMine || !r.ours);
   const ourOwn  = devices.filter(r => r.ours).length;
+  const blockedCount = visible.filter(r => r.blocked).length;
 
   // The thresholds come from your own note in the rules: a duplicated device id
   // shows up as DOZENS of accounts on one hash. A handful is far more likely to
@@ -467,13 +483,16 @@ function drawDevices(){
   if (many) line.push(`<b>${many}</b> with ten or more — this is the shape of a batch
     of boxes shipped with the same device id. Enforce would lock out every one of
     those people, and none of them did anything wrong.`);
+  if (blockedCount) line.push(`<b>${blockedCount}</b> already marked as blocked.`);
   if (ourOwn && !showMine) line.push(`<span style="color:var(--faint)">${ourOwn}
     device${ourOwn === 1 ? "" : "s"} of your own hidden.</span>`);
   if (!visible.length) line.push(`<span style="color:var(--faint)">No device has been
     met by a second account. That is what a healthy install looks like.</span>`);
   document.getElementById("dvSum").innerHTML = line.join("<br>");
 
-  const rows = visible.filter(r => r.total >= min).sort((a, b) =>
+  const rows = visible.filter(r => r.total >= min)
+    .filter(r => blockFor === "blocked" ? r.blocked : blockFor === "unblocked" ? !r.blocked : true)
+    .sort((a, b) =>
       sort === "recent" ? b.last - a.last
     : sort === "tight"  ? (a.spread - b.spread) || (b.total - a.total)
     : (b.total - a.total) || (b.last - a.last));
@@ -503,10 +522,14 @@ function drawDevices(){
     // is not, because the people are not in the same room.
     const tight = r.total >= 3 && hours <= 24;
     return `
-    <div class="dvrow">
+    <div class="dvrow${r.blocked ? " is-blocked" : ""}">
       <div class="dvhead">
         <span class="hash">${esc(r.hash)}</span>
-        <span class="n"><b>${r.total}</b> account${r.total === 1 ? "" : "s"}</span>
+        <span class="n"><b>${r.total}</b> account${r.total === 1 ? "" : "s"}
+          ${r.blocked ? `<span class="blk">blocked</span>` : ""}
+          <button class="blockBtn${r.blocked ? " on" : ""}" data-hash="${esc(r.hash)}"
+                  data-blocked="${r.blocked ? "1" : "0"}">${r.blocked ? "Unblock" : "Block"}</button>
+        </span>
       </div>
       <div class="who">${r.owner
           ? acc(r.owner, `<span class="own">${name(r.owner)}</span>`, r.ownerWhen,
@@ -526,6 +549,34 @@ function drawDevices(){
   document.getElementById("dvNote").textContent = !visible.length ? ""
     : rows.length === visible.length ? `${rows.length} in total`
     : `${rows.length} of ${visible.length} shown`;
+}
+
+/* ── BLOCK / UNBLOCK ──
+   Written under its own top-level node (/device_blocks/<hash>) rather than
+   inside /devices, so blocking never touches the record that decides who owns
+   the trial — it is purely a note-to-self overlay on top of what the gate
+   already reports. Requires the Realtime Database rules to grant this UID
+   write access on /device_blocks, in addition to the existing read access. */
+document.getElementById("dvList").addEventListener("click", e => {
+  const btn = e.target.closest(".blockBtn");
+  if (!btn) return;
+  toggleBlock(btn.dataset.hash, btn.dataset.blocked === "1");
+});
+
+async function toggleBlock(hash, wasBlocked){
+  const errEl = document.getElementById("err");
+  try {
+    if (wasBlocked) await remove(ref(db, `device_blocks/${hash}`));
+    else await set(ref(db, `device_blocks/${hash}`),
+      { at: Date.now(), by: (auth.currentUser && auth.currentUser.email) || "" });
+    const row = devices.find(d => d.hash === hash);
+    if (row) row.blocked = !wasBlocked;
+    render();
+  } catch (err) {
+    errEl.innerHTML = `<div class="err"><b>Could not ${wasBlocked ? "unblock" : "block"} that device.</b><br>
+      ${esc(err.message)}<br><span style="font-size:11.5px;opacity:.8">Check that the Realtime Database
+      rules grant write access on <code>/device_blocks</code> to this UID.</span></div>`;
+  }
 }
 
 /* ── EXPORT ──
