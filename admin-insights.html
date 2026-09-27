@@ -118,7 +118,6 @@
   .dvhead .blockBtn{background:transparent;border:1px solid var(--line);color:var(--dim);
                font-size:11px;padding:3px 9px;border-radius:6px;margin-left:10px}
   .dvhead .blockBtn:hover{color:var(--txt);border-color:var(--faint)}
-  .dvhead .blockBtn.on{color:var(--bad);border-color:var(--bad)}
 
   .empty{padding:30px;text-align:center;color:var(--faint);font-size:13px}
   .err{background:rgba(255,92,92,.1);border:1px solid rgba(255,92,92,.35);
@@ -205,6 +204,11 @@
         <label class="chk"><input type="checkbox" id="dvMine" onchange="render()">
           Include my own test devices</label>
       </div>
+      <div style="font-size:11.5px;color:var(--faint);margin:-6px 0 14px">
+        The blocklist is read-only here — add or remove a hash by hand in the
+        Firebase console (Realtime Database → Data → device_blocklist). “Copy hash”
+        just puts the id on your clipboard for that.
+      </div>
       <div id="dvList"></div>
     </div>
 
@@ -219,7 +223,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut,
          onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getDatabase, ref, get, set, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 /* ── CONFIG ─────────────────────────────────────────────────────────
    The same project and the same admin gate as admin.html. Safe to expose:
@@ -290,7 +294,7 @@ window.load = async () => {
       // the country list down with it, so they resolve to null instead of throwing.
       get(ref(db, "devices")).catch(e => (console.warn("devices unavailable", e), null)),
       get(ref(db, "gate_observations")).catch(e => (console.warn("observations unavailable", e), null)),
-      get(ref(db, "device_blocks")).catch(e => (console.warn("device_blocks unavailable", e), null)),
+      get(ref(db, "device_blocklist")).catch(e => (console.warn("device_blocklist unavailable", e), null)),
     ]);
 
     const raw = tSnap.val() || {};
@@ -527,8 +531,7 @@ function drawDevices(){
         <span class="hash">${esc(r.hash)}</span>
         <span class="n"><b>${r.total}</b> account${r.total === 1 ? "" : "s"}
           ${r.blocked ? `<span class="blk">blocked</span>` : ""}
-          <button class="blockBtn${r.blocked ? " on" : ""}" data-hash="${esc(r.hash)}"
-                  data-blocked="${r.blocked ? "1" : "0"}">${r.blocked ? "Unblock" : "Block"}</button>
+          <button class="blockBtn" data-hash="${esc(r.hash)}">Copy hash</button>
         </span>
       </div>
       <div class="who">${r.owner
@@ -551,33 +554,25 @@ function drawDevices(){
     : `${rows.length} of ${visible.length} shown`;
 }
 
-/* ── BLOCK / UNBLOCK ──
-   Written under its own top-level node (/device_blocks/<hash>) rather than
-   inside /devices, so blocking never touches the record that decides who owns
-   the trial — it is purely a note-to-self overlay on top of what the gate
-   already reports. Requires the Realtime Database rules to grant this UID
-   write access on /device_blocks, in addition to the existing read access. */
-document.getElementById("dvList").addEventListener("click", e => {
+/* ── BLOCKLIST ──
+   /device_blocklist is deliberately ".write": false in the database rules —
+   every device checks its own hash at startup, so the list has to stay public
+   read and console-only write, or a blocked client could just delete its own
+   entry. This page can therefore only ever show which hashes are already
+   blocked, never toggle one: adding or removing a hash happens by hand in the
+   Firebase console (Realtime Database → Data → device_blocklist), setting the
+   hash's value to `true`. The button below only copies the hash so that trip
+   doesn't need retyping it. */
+document.getElementById("dvList").addEventListener("click", async e => {
   const btn = e.target.closest(".blockBtn");
   if (!btn) return;
-  toggleBlock(btn.dataset.hash, btn.dataset.blocked === "1");
-});
-
-async function toggleBlock(hash, wasBlocked){
-  const errEl = document.getElementById("err");
   try {
-    if (wasBlocked) await remove(ref(db, `device_blocks/${hash}`));
-    else await set(ref(db, `device_blocks/${hash}`),
-      { at: Date.now(), by: (auth.currentUser && auth.currentUser.email) || "" });
-    const row = devices.find(d => d.hash === hash);
-    if (row) row.blocked = !wasBlocked;
-    render();
-  } catch (err) {
-    errEl.innerHTML = `<div class="err"><b>Could not ${wasBlocked ? "unblock" : "block"} that device.</b><br>
-      ${esc(err.message)}<br><span style="font-size:11.5px;opacity:.8">Check that the Realtime Database
-      rules grant write access on <code>/device_blocks</code> to this UID.</span></div>`;
-  }
-}
+    await navigator.clipboard.writeText(btn.dataset.hash);
+    const was = btn.textContent;
+    btn.textContent = "Copied";
+    setTimeout(() => { btn.textContent = was; }, 1200);
+  } catch { /* clipboard denied; nothing to fall back to on a hash this long */ }
+});
 
 /* ── EXPORT ──
    The country tally, not the trial rows — admin.html already exports those.
