@@ -114,6 +114,13 @@
   td.cc.guess{color:var(--dim)}
   td.cc .src{font-size:10.5px;color:var(--faint);border:1px solid var(--line);
              border-radius:4px;padding:0 4px;margin-left:6px}
+  /* A country whose first-ever trial is still within NEW_COUNTRY_DAYS. Every
+     row from that country carries the badge, not just the first one, so it
+     stays visible while you're scanning the table rather than only on a row
+     that may have scrolled past. */
+  td.cc .new{font-size:10.5px;font-weight:700;color:var(--accent);
+             border:1px solid var(--accent);border-radius:4px;
+             padding:0 4px;margin-left:6px}
 
   /* The way through to the full country and device lists. Both of those grow
      without a ceiling — every country there has ever been a trial in, every
@@ -286,6 +293,7 @@ const OWN_ACCOUNTS = [
 const ADMIN_UID   = "dQYQkefbgjRxaZdQpClWqhA8Ipm2";
 const TRIAL_DAYS  = 7;
 const DAY_MS      = 86400000;
+const NEW_COUNTRY_DAYS = 7;   // how long the "New" country badge stays up
 
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -293,6 +301,7 @@ const db   = getDatabase(app);
 
 let data = [];                                  // normalised rows
 let sort = { key: "start", dir: -1 };           // newest first
+let firstSeenByCc = new Map();                  // cc -> earliest trialStart seen
 
 /* ── AUTH ── */
 window.signIn = async () => {
@@ -349,6 +358,17 @@ window.load = async () => {
     // Reveal the country column and card only once something actually carries
     // a country; until the app writes the field the page is unchanged.
     document.body.classList.toggle("has-cc", data.some(d => d.cc));
+
+    // Earliest trial per country, so the "New" badge can tell a country that
+    // just started showing up from one that has been there all along. Trials
+    // with no trialStart (start === 0) don't count as evidence of when the
+    // country first appeared.
+    firstSeenByCc = new Map();
+    data.forEach(d => {
+      if (!d.cc || !d.start) return;
+      const prev = firstSeenByCc.get(d.cc);
+      if (prev === undefined || d.start < prev) firstSeenByCc.set(d.cc, d.start);
+    });
 
     // Read separately from the trials node and with its own catch: if either
     // branch is missing or unreadable, the dashboard must still work and the
@@ -482,6 +502,11 @@ function fillCountryFilter(){
 /* ── SORT / FILTER / RENDER ── */
 window.sortBy = k => { sort = { key:k, dir: sort.key===k ? -sort.dir : 1 }; render(); };
 
+const isNewCountry = (cc, now) => {
+  const first = firstSeenByCc.get(cc);
+  return first !== undefined && now - first <= NEW_COUNTRY_DAYS * DAY_MS;
+};
+
 window.render = () => {
   const q     = document.getElementById("q").value.trim().toLowerCase();
   const fS    = document.getElementById("fStatus").value;
@@ -527,7 +552,8 @@ window.render = () => {
       <td class="hide-s">${d.start ? esc(fmt(d.end)) : "—"}</td>
       <td class="cc col-cc${d.cc && !d.ccIp ? " guess" : ""}">${d.cc
         ? `${esc(d.country)}<span class="code">${esc(d.cc)}</span>${d.ccIp ? ""
-            : `<span class="src">locale</span>`}`
+            : `<span class="src">locale</span>`}${isNewCountry(d.cc, now)
+            ? `<span class="new">New</span>` : ""}`
         : "—"}</td>
       <td>${d.status === "expired" ? "0" : d.days}</td>
       <td><span class="pill ${cls}">${txt}</span></td>
