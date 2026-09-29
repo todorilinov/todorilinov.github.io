@@ -192,9 +192,9 @@ const SLOTS = {
                 types: ["video", "image"] },
 };
 const KINDS = {
-  image: { label: "Image (PNG / WebP / JPEG)", accept: "image/png,image/webp,image/jpeg", max: 300 * 1024 },
-  gif:   { label: "GIF",                       accept: "image/gif",                       max: 500 * 1024 },
-  html5: { label: "HTML5 (single .html file)", accept: "text/html,.html,.htm",            max: 200 * 1024 },
+  image: { label: "Image (PNG / WebP / JPEG)", accept: "image/png,image/webp,image/jpeg", max: 1024 * 1024 },
+  gif:   { label: "GIF",                       accept: "image/gif",                       max: 2 * 1024 * 1024 },
+  html5: { label: "HTML5 (single .html file)", accept: "text/html,.html,.htm",            max: 500 * 1024 },
   video: { label: "Video (MP4, up to 15 s)",   accept: "video/mp4",                       max: 6 * 1024 * 1024 },
 };
 const MAX_VIDEO_S = 15;
