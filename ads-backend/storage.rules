@@ -9,11 +9,13 @@ service firebase.storage {
     }
 
     // Files from the public form: anyone may add, nobody but the admin reads.
-    // Images up to 300 KB, video up to 6 MB.
+    // Images up to 300 KB, GIFs up to 500 KB, video up to 6 MB.
     match /submissions/{allPaths=**} {
       allow read: if request.auth != null && request.auth.uid == '5bCbdUU29cPtffTXwNJw5DzigSd2';
       allow create: if (request.resource.contentType.matches('image/(webp|png|jpeg)')
                         && request.resource.size <= 300 * 1024)
+                    || (request.resource.contentType == 'image/gif'
+                        && request.resource.size <= 500 * 1024)
                     || (request.resource.contentType == 'video/mp4'
                         && request.resource.size <= 6 * 1024 * 1024);
     }
