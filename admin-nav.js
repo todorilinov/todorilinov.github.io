@@ -17,6 +17,9 @@
     { app: "Vocal Split", pages: [
       ["admin-beta.html", "Beta applications"],
     ] },
+    { app: "Ads", pages: [
+      ["admin-ads.html", "Campaigns"],
+    ] },
   ];
 
   const style = document.createElement("style");
