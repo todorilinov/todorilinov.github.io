@@ -5,13 +5,13 @@ service firebase.storage {
     // Approved creatives: the apps and the pages read them, only the admin writes.
     match /creatives/{allPaths=**} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == 'REPLACE_WITH_ADMIN_UID';
+      allow write: if request.auth != null && request.auth.uid == '5bCbdUU29cPtffTXwNJw5DzigSd2';
     }
 
     // Files from the public form: anyone may add, nobody but the admin reads.
     // Images up to 300 KB, video up to 6 MB.
     match /submissions/{allPaths=**} {
-      allow read: if request.auth != null && request.auth.uid == 'REPLACE_WITH_ADMIN_UID';
+      allow read: if request.auth != null && request.auth.uid == '5bCbdUU29cPtffTXwNJw5DzigSd2';
       allow create: if (request.resource.contentType.matches('image/(webp|png|jpeg)')
                         && request.resource.size <= 300 * 1024)
                     || (request.resource.contentType == 'video/mp4'

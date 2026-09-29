@@ -4,21 +4,21 @@
     ".write": false,
 
     "campaigns": {
-      ".read": "auth != null && auth.uid === 'REPLACE_WITH_ADMIN_UID'",
-      ".write": "auth != null && auth.uid === 'REPLACE_WITH_ADMIN_UID'"
+      ".read": "auth != null && auth.uid === '5bCbdUU29cPtffTXwNJw5DzigSd2'",
+      ".write": "auth != null && auth.uid === '5bCbdUU29cPtffTXwNJw5DzigSd2'"
     },
 
     "feed": {
       "$app": {
         ".read": true,
-        ".write": "auth != null && auth.uid === 'REPLACE_WITH_ADMIN_UID' && ($app === 'worldradio' || $app === 'tvdsp' || $app === 'fakelocation')"
+        ".write": "auth != null && auth.uid === '5bCbdUU29cPtffTXwNJw5DzigSd2' && ($app === 'worldradio' || $app === 'tvdsp' || $app === 'fakelocation')"
       }
     },
 
     "submissions": {
-      ".read": "auth != null && auth.uid === 'REPLACE_WITH_ADMIN_UID'",
+      ".read": "auth != null && auth.uid === '5bCbdUU29cPtffTXwNJw5DzigSd2'",
       "$id": {
-        ".write": "auth != null && auth.uid === 'REPLACE_WITH_ADMIN_UID' || !data.exists()",
+        ".write": "auth != null && auth.uid === '5bCbdUU29cPtffTXwNJw5DzigSd2' || !data.exists()",
         ".validate": "newData.hasChildren(['name','email','title','link','apps','createdAt'])",
         "name":        { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80" },
         "email":       { ".validate": "newData.isString() && newData.val().length <= 120 && newData.val().matches(/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/)" },
@@ -39,7 +39,7 @@
     },
 
     "stats": {
-      ".read": "auth != null && auth.uid === 'REPLACE_WITH_ADMIN_UID'"
+      ".read": "auth != null && auth.uid === '5bCbdUU29cPtffTXwNJw5DzigSd2'"
     }
   }
 }

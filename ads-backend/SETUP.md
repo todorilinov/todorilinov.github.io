@@ -2,7 +2,7 @@
 
 Проектът се създава в конзолата на Firebase; от тук не мога да го направя.
 Папката съдържа готовите правила: `database.rules.json`, `storage.rules`,
-`firebase.json`. В тях има `REPLACE_WITH_ADMIN_UID` — вижте стъпка 5.
+`firebase.json`. UID-ът на админа (`5bCbdUU29cPtffTXwNJw5DzigSd2`) е вече попълнен; остава правилата да се публикуват в конзолата (стъпка 6).
 
 1. **Нов проект.** console.firebase.google.com → Add project → име `tiapps-ads`
    (Google Analytics не е нужен).
