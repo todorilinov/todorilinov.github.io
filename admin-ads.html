@@ -79,21 +79,26 @@
   label.f input,label.f select{width:100%}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .hint{color:var(--faint);font-size:12px;margin-top:4px}
-  .apps{display:flex;gap:16px;flex-wrap:wrap;margin:4px 0 6px}
-  .apps label{display:flex;align-items:center;gap:7px;cursor:pointer}
-  .slotbox{border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:12px 0;background:#0f1319}
-  .slotbox h3{margin:0 0 3px;font-size:14px}
-  .slotbox .req{color:var(--faint);font-size:12px;margin-bottom:10px}
-  .slotbox .body{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
-  .slotbox .ctl{flex:1;min-width:230px}
-  .slotbox .msg{font-size:12.5px;margin-top:8px}
-  .slotbox .msg.bad{color:var(--bad)}
-  .slotbox .msg.ok{color:var(--ok)}
+  .appcard{border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:12px 0;background:#0f1319}
+  .appcard.off{opacity:.62}
+  .appcard.off:hover{opacity:1}
+  .apphead{display:flex;align-items:center;gap:9px;cursor:pointer;margin-bottom:12px;font-size:14px}
+  .cells{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
+  .cell{width:max-content;max-width:100%}
+  .cap{font-size:12.5px;margin-top:7px}
+  .req{color:var(--faint);font-size:11.5px;margin-top:2px;line-height:1.45}
+  .msg{font-size:12.5px;margin-top:6px;max-width:330px}
+  .msg.bad{color:var(--bad)}
+  .msg.ok{color:var(--ok)}
+  .cell .warnbox{max-width:330px}
   .pv{position:relative;overflow:hidden;background:#000;border:1px solid var(--line);border-radius:6px;flex:none}
   .pv>*{position:absolute;left:0;top:0;transform-origin:0 0;border:0;display:block}
-  .pv.none{display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:12px;
-           background:repeating-linear-gradient(45deg,#11161d,#11161d 8px,#0d1117 8px,#0d1117 16px)}
-  .pvlab{font-size:11.5px;color:var(--faint);margin-top:5px}
+  .pv>.hit{width:100%;height:100%;transform:none;cursor:pointer;z-index:2;outline-offset:-2px}
+  .pv>.hit:focus-visible{outline:2px solid var(--accent)}
+  .pv.none{display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:12.5px;
+           border:1.5px dashed #3b4653;background:#0d1117}
+  .pv.none:hover,.pv.drag{border-color:var(--accent);color:var(--accent);background:rgba(0,204,255,.06)}
+  .pv.none>.hit{position:absolute}
   .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;align-items:center}
   #saveMsg{color:var(--dim);font-size:13px}
 </style>
@@ -376,7 +381,8 @@ async function deleteFolder(path) {
 /* ── Editor ───────────────────────────────────────────────────────────────── */
 function openEditor(id) {
   const c = id ? campaigns[id] : null;
-  editing = { id, slots: c ? clean(c.slots || {}) : {}, pending: {} };
+  editing = { id, slots: c ? clean(c.slots || {}) : {}, pending: {},
+              apps: new Set(c && c.apps ? Object.keys(c.apps).filter(a => c.apps[a] && APPS[a]) : []) };
   const today = fmtDay(Date.now());
   $("editor").innerHTML = `
     <h2>${id ? "Edit ad" : "New ad"}</h2>
@@ -414,11 +420,8 @@ function openEditor(id) {
       </div>
     </div>
 
-    <h2 style="margin-top:8px">Apps</h2>
-    <div class="apps" id="eApps">${Object.entries(APPS).map(([k, a]) =>
-      `<label><input type="checkbox" value="${k}" ${c && c.apps && c.apps[k] ? "checked" : ""}> ${esc(a.name)}</label>`).join("")}</div>
-    <div class="hint">TV DSP Center ads are for phone/tablet only, never the TV app.</div>
-
+    <h2 style="margin-top:8px">Where it shows</h2>
+    <div class="hint" style="margin:-6px 0 8px">Add a file to a box to switch that app on; the box shows how it will look. TV DSP Center ads are for phone/tablet only, never the TV app.</div>
     <div id="slotBoxes"></div>
 
     <div id="formErr"></div>
@@ -432,7 +435,6 @@ function openEditor(id) {
     $("eStatus").value = c.status || "draft";
     $("eCapPer").value = c.cap ? c.cap.per : "hour";
   }
-  $("eApps").onchange = renderSlotBoxes;
   $("cancelBtn").onclick = closeEditor;
   $("saveBtn").onclick = save;
   $("editor").style.display = "block";
@@ -445,7 +447,7 @@ function closeEditor() {
   $("editor").style.display = "none";
   $("editor").innerHTML = "";
 }
-const checkedApps = () => [...document.querySelectorAll("#eApps input:checked")].map(i => i.value);
+const checkedApps = () => Object.keys(APPS).filter(a => editing.apps.has(a));
 
 /* A scaled, non-interactive rendering of a creative in its real pixel size. */
 function previewEl(cr, slotKey) {
@@ -455,7 +457,7 @@ function previewEl(cr, slotKey) {
     box.className = "pv none";
     box.style.width = Math.round(slot.w * slot.scale) + "px";
     box.style.height = Math.round(slot.h * slot.scale) + "px";
-    box.textContent = "no file";
+    box.textContent = "+ Add file";
     return box;
   }
   const w = cr.w || slot.w, h = cr.h || slot.h;
@@ -485,55 +487,83 @@ function previewEl(cr, slotKey) {
 function renderSlotBoxes() {
   const holder = $("slotBoxes");
   holder.innerHTML = "";
-  for (const appKey of checkedApps()) {
-    for (const slotKey of APPS[appKey].slots) {
+  for (const [appKey, appInfo] of Object.entries(APPS)) {
+    const card = document.createElement("div");
+    card.className = "appcard" + (editing.apps.has(appKey) ? "" : " off");
+    card.innerHTML = `<label class="apphead"><input type="checkbox" class="appck" ${editing.apps.has(appKey) ? "checked" : ""}>
+        <b>${esc(appInfo.name)}</b>${appKey === "tvdsp" ? '<span class="hint" style="margin:0 0 0 8px">phone / tablet</span>' : ""}</label>
+      <div class="cells"></div>`;
+    card.querySelector(".appck").onchange = ev => {
+      if (ev.target.checked) editing.apps.add(appKey); else editing.apps.delete(appKey);
+      card.classList.toggle("off", !ev.target.checked);
+    };
+    const cells = card.querySelector(".cells");
+
+    for (const slotKey of appInfo.slots) {
       const slot = SLOTS[slotKey], key = appKey + "/" + slotKey;
       const pend = editing.pending[key];
       const existing = editing.slots[appKey] && editing.slots[appKey][slotKey];
       const shown = pend ? { type: pend.kind, url: pend.blobUrl, w: pend.w, h: pend.h } : existing;
       const size = slot.ratio ? "9:16, e.g. 720×1280" : `${slot.w}×${slot.h}`;
-      const div = document.createElement("div");
-      div.className = "slotbox";
-      div.innerHTML = `
-        <h3>${esc(APPS[appKey].name)} · ${esc(slot.label)}</h3>
-        <div class="req">${esc(size)} px · ${slot.types.map(t => esc(KINDS[t].label) + ", up to " + kb(KINDS[t].max)).join(" · ")}</div>
-        <div class="body"><div class="pvwrap"></div><div class="ctl">
-          <input type="file" accept="${esc(slot.types.map(t => KINDS[t].accept).join(","))}">
-          <div class="msg"></div>
-          ${shown ? `<div style="margin-top:10px"><button type="button" class="ghost small">Remove this file</button></div>` : ""}
-        </div></div>`;
-      div.querySelector(".pvwrap").appendChild(previewEl(shown, slotKey));
-      const msg = div.querySelector(".msg");
+
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      cell.innerHTML = `<div class="zonewrap"></div>
+        <div class="cap"><b>${esc(slot.label)}</b> · ${esc(size)} px</div>
+        <div class="req">${slot.types.map(t => esc(KINDS[t].label) + " ≤ " + kb(KINDS[t].max)).join("<br>")}</div>
+        <div class="msg"></div>
+        <input type="file" hidden accept="${esc(slot.types.map(t => KINDS[t].accept).join(","))}">`;
+      const wrap = cell.querySelector(".zonewrap"), fileIn = cell.querySelector("input"), msg = cell.querySelector(".msg");
+      const zone = previewEl(shown, slotKey);
+      zone.classList.add("zone");
+      // A transparent layer on top: an iframe or video would otherwise swallow the click and the drop.
+      const hit = document.createElement("div");
+      hit.className = "hit"; hit.tabIndex = 0; hit.title = shown ? "Replace the file" : "Add a file";
+      zone.appendChild(hit);
+      wrap.appendChild(zone);
+
       if (pend) {
         msg.className = "msg ok";
         msg.textContent = `${KINDS[pend.kind].label} · ${pend.w}×${pend.h} · ${kb(pend.file.size)} · uploads on Save`;
         if (pend.warn) msg.insertAdjacentHTML("afterend", `<div class="warnbox">${esc(pend.warn)}</div>`);
       } else if (existing) {
         msg.className = "msg ok";
-        msg.textContent = `${KINDS[existing.type] ? KINDS[existing.type].label : existing.type} · ${existing.w}×${existing.h} · ${existing.bytes ? kb(existing.bytes) : ""}`;
+        msg.textContent = `${KINDS[existing.type] ? KINDS[existing.type].label : existing.type} · ${existing.w}×${existing.h}${existing.bytes ? " · " + kb(existing.bytes) : ""}`;
       }
-      div.querySelector("input[type=file]").onchange = async ev => {
-        const file = ev.target.files[0];
+      if (shown) {
+        const rm = document.createElement("button");
+        rm.type = "button"; rm.className = "ghost small"; rm.style.marginTop = "8px"; rm.textContent = "Remove";
+        rm.onclick = () => {
+          if (editing.pending[key]) { URL.revokeObjectURL(editing.pending[key].blobUrl); delete editing.pending[key]; }
+          if (editing.slots[appKey]) delete editing.slots[appKey][slotKey];
+          renderSlotBoxes();
+        };
+        cell.appendChild(rm);
+      }
+
+      const take = async file => {
         if (!file) return;
         try {
           const info = await inspect(file, slotKey);
           if (editing.pending[key]) URL.revokeObjectURL(editing.pending[key].blobUrl);
           editing.pending[key] = info;
+          editing.apps.add(appKey);
         } catch (e) {
-          ev.target.value = "";
+          fileIn.value = "";
           msg.className = "msg bad"; msg.textContent = e.message;
           return;
         }
         renderSlotBoxes();
       };
-      const rm = div.querySelector("button");
-      if (rm) rm.onclick = () => {
-        if (editing.pending[key]) { URL.revokeObjectURL(editing.pending[key].blobUrl); delete editing.pending[key]; }
-        if (editing.slots[appKey]) delete editing.slots[appKey][slotKey];
-        renderSlotBoxes();
-      };
-      holder.appendChild(div);
+      hit.onclick = () => fileIn.click();
+      hit.onkeydown = ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); fileIn.click(); } };
+      fileIn.onchange = () => take(fileIn.files[0]);
+      hit.ondragover = ev => { ev.preventDefault(); zone.classList.add("drag"); };
+      hit.ondragleave = () => zone.classList.remove("drag");
+      hit.ondrop = ev => { ev.preventDefault(); zone.classList.remove("drag"); take(ev.dataTransfer.files[0]); };
+      cells.appendChild(cell);
     }
+    holder.appendChild(card);
   }
 }
 
