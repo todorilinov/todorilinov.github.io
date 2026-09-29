@@ -1,0 +1,45 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "campaigns": {
+      ".read": "auth != null && auth.uid === 'REPLACE_WITH_ADMIN_UID'",
+      ".write": "auth != null && auth.uid === 'REPLACE_WITH_ADMIN_UID'"
+    },
+
+    "feed": {
+      "$app": {
+        ".read": true,
+        ".write": "auth != null && auth.uid === 'REPLACE_WITH_ADMIN_UID' && ($app === 'worldradio' || $app === 'tvdsp' || $app === 'fakelocation')"
+      }
+    },
+
+    "submissions": {
+      ".read": "auth != null && auth.uid === 'REPLACE_WITH_ADMIN_UID'",
+      "$id": {
+        ".write": "auth != null && auth.uid === 'REPLACE_WITH_ADMIN_UID' || !data.exists()",
+        ".validate": "newData.hasChildren(['name','email','title','link','apps','createdAt'])",
+        "name":        { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80" },
+        "email":       { ".validate": "newData.isString() && newData.val().length <= 120 && newData.val().matches(/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/)" },
+        "title":       { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 60" },
+        "description": { ".validate": "newData.isString() && newData.val().length <= 300" },
+        "link":        { ".validate": "newData.isString() && newData.val().length <= 300 && newData.val().matches(/^https:\\/\\/.+/)" },
+        "apps": {
+          "worldradio":   { ".validate": "newData.isBoolean()" },
+          "tvdsp":        { ".validate": "newData.isBoolean()" },
+          "fakelocation": { ".validate": "newData.isBoolean()" },
+          "$other":       { ".validate": false }
+        },
+        "files":     { ".validate": "newData.hasChildren() || !newData.exists()" },
+        "createdAt": { ".validate": "newData.isNumber()" },
+        "status":    { ".validate": "newData.val() === 'pending' || !newData.exists()" },
+        "$other":    { ".validate": false }
+      }
+    },
+
+    "stats": {
+      ".read": "auth != null && auth.uid === 'REPLACE_WITH_ADMIN_UID'"
+    }
+  }
+}

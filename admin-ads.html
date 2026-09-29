@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Ads — Campaigns</title>
+<script src="admin-nav.js?v=3" defer></script>
+<style>
+  :root{
+    --bg:#0d1117; --card:#14181d; --line:#2a3038;
+    --txt:#e6edf3; --dim:#9aa4af; --faint:#7a828b;
+    --accent:#00CCFF; --ok:#00FF99; --warn:#ffb020; --bad:#ff5c5c;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+       font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:1100px;margin:0 auto;padding:24px 18px 60px}
+  h1{font-size:20px;margin:0 0 4px;font-weight:600}
+  .sub{color:var(--dim);font-size:13px;margin-bottom:22px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px}
+  button{font:inherit;cursor:pointer;border:none;border-radius:8px}
+  .primary{background:var(--accent);color:#002733;padding:12px 22px;font-weight:600}
+  .primary:hover{filter:brightness(1.08)}
+  .ghost{background:transparent;color:var(--dim);border:1px solid var(--line);padding:8px 14px}
+  .ghost:hover{color:var(--txt);border-color:var(--faint)}
+  #login{padding:40px 28px;text-align:center;max-width:400px;margin:60px auto}
+  #login p{color:var(--dim);margin:0 0 22px}
+  .err{background:rgba(255,92,92,.1);border:1px solid rgba(255,92,92,.4);color:#ffb3b3;
+       border-radius:8px;padding:10px 14px;font-size:13px}
+  .head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+  #setup{padding:22px 24px;margin-top:8px}
+  #setup h2{font-size:16px;margin:0 0 8px}
+  #setup p{color:var(--dim);margin:0 0 12px}
+  .uid{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .uid code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;
+            background:#0b0f14;border:1px solid var(--line);border-radius:8px;
+            padding:9px 12px;word-break:break-all;user-select:all}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="login" class="card">
+    <h1>Ads</h1>
+    <p>Sign in with the admin Google account.</p>
+    <button class="primary" onclick="signIn()">Sign in with Google</button>
+    <div id="loginErr"></div>
+  </div>
+
+  <div id="app" style="display:none">
+    <div class="head">
+      <div>
+        <h1 data-admin-nav>Ads — Campaigns</h1>
+        <div class="sub" id="who"></div>
+      </div>
+      <button class="ghost" onclick="signOut()">Sign out</button>
+    </div>
+
+    <div id="setup" class="card" style="display:none">
+      <h2>One more step: authorise this account</h2>
+      <p>The database rules only let one account in. Put this UID into
+         <code>database.rules.json</code> and <code>storage.rules</code>
+         (in place of <code>REPLACE_WITH_ADMIN_UID</code>), publish the rules,
+         then set <code>ADMIN_UID</code> in <code>admin-ads.html</code> to it.</p>
+      <div class="uid">
+        <code id="uidBox"></code>
+        <button class="ghost" id="copyBtn" onclick="copyUid()">Copy</button>
+      </div>
+    </div>
+
+    <div id="main" style="display:none">
+      <div class="card" style="padding:22px 24px;margin-top:8px">
+        <p style="margin:0;color:var(--dim)">Signed in as the admin. The campaign list and the form for
+           adding ads come next.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut,
+         onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+/* Safe to expose: these identify the project, they don't grant access.
+   Access is controlled by the database and storage rules, which only let
+   ADMIN_UID in. */
+const firebaseConfig = {
+  apiKey: "AIzaSyAV7LkuxHUt9HtERzGijsQodjm7-mfaXZU",
+  authDomain: "tiapps-ads.firebaseapp.com",
+  databaseURL: "https://tiapps-ads-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "tiapps-ads",
+  storageBucket: "tiapps-ads.firebasestorage.app",
+  messagingSenderId: "664823611213",
+  appId: "1:664823611213:web:ecea2626c1a506d1a24104"
+};
+
+/* Filled in after the first sign-in, from the UID this page shows. */
+const ADMIN_UID = "";
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+const esc = s => String(s).replace(/[&<>"']/g,
+  c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+
+window.signIn = async () => {
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch (e) { document.getElementById("loginErr").innerHTML =
+    `<div class="err" style="margin-top:16px">Sign-in failed: ${esc(e.code || e.message)}</div>`; }
+};
+window.signOut = () => fbSignOut(auth);
+window.copyUid = async () => {
+  const uid = document.getElementById("uidBox").textContent;
+  try { await navigator.clipboard.writeText(uid); document.getElementById("copyBtn").textContent = "Copied"; }
+  catch { /* the code box is select-all, copy by hand */ }
+};
+
+onAuthStateChanged(auth, user => {
+  const login = document.getElementById("login"), appEl = document.getElementById("app");
+  if (!user) { login.style.display = "block"; appEl.style.display = "none"; return; }
+  login.style.display = "none"; appEl.style.display = "block";
+  document.getElementById("who").textContent = `Signed in as ${user.email}`;
+
+  if (!ADMIN_UID) {
+    // First run: nothing is authorised yet, so show the UID to authorise.
+    document.getElementById("uidBox").textContent = user.uid;
+    document.getElementById("setup").style.display = "block";
+    document.getElementById("main").style.display = "none";
+    return;
+  }
+  document.getElementById("setup").style.display = "none";
+  if (user.uid !== ADMIN_UID) {
+    login.style.display = "block"; appEl.style.display = "none";
+    document.getElementById("loginErr").innerHTML =
+      `<div class="err" style="margin-top:16px">This account is not authorised.<br>
+       <span style="font-size:11.5px;opacity:.75">${esc(user.email || "")}</span></div>`;
+    fbSignOut(auth); return;
+  }
+  document.getElementById("main").style.display = "block";
+});
+</script>
+</body>
+</html>
