@@ -17,25 +17,85 @@
        font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
   .wrap{max-width:1100px;margin:0 auto;padding:24px 18px 60px}
   h1{font-size:20px;margin:0 0 4px;font-weight:600}
+  h2{font-size:16px;margin:0 0 12px;font-weight:600}
   .sub{color:var(--dim);font-size:13px;margin-bottom:22px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:12px}
   button{font:inherit;cursor:pointer;border:none;border-radius:8px}
-  .primary{background:var(--accent);color:#002733;padding:12px 22px;font-weight:600}
-  .primary:hover{filter:brightness(1.08)}
+  button:disabled{opacity:.5;cursor:default}
+  .primary{background:var(--accent);color:#002733;padding:10px 18px;font-weight:600}
+  .primary:hover:not(:disabled){filter:brightness(1.08)}
   .ghost{background:transparent;color:var(--dim);border:1px solid var(--line);padding:8px 14px}
-  .ghost:hover{color:var(--txt);border-color:var(--faint)}
+  .ghost:hover:not(:disabled){color:var(--txt);border-color:var(--faint)}
+  .danger{background:transparent;color:var(--bad);border:1px solid rgba(255,92,92,.4);padding:8px 14px}
+  .danger:hover:not(:disabled){background:rgba(255,92,92,.1)}
+  .small{padding:5px 10px;font-size:12.5px}
   #login{padding:40px 28px;text-align:center;max-width:400px;margin:60px auto}
   #login p{color:var(--dim);margin:0 0 22px}
   .err{background:rgba(255,92,92,.1);border:1px solid rgba(255,92,92,.4);color:#ffb3b3;
        border-radius:8px;padding:10px 14px;font-size:13px}
+  .warnbox{background:rgba(255,176,32,.09);border:1px solid rgba(255,176,32,.4);color:#ffd591;
+       border-radius:8px;padding:8px 12px;font-size:12.5px;margin-top:8px}
   .head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+
   #setup{padding:22px 24px;margin-top:8px}
-  #setup h2{font-size:16px;margin:0 0 8px}
   #setup p{color:var(--dim);margin:0 0 12px}
   .uid{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
   .uid code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;
             background:#0b0f14;border:1px solid var(--line);border-radius:8px;
             padding:9px 12px;word-break:break-all;user-select:all}
+
+  /* toolbar + list */
+  .bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:8px 0 14px}
+  .spacer{flex:1}
+  select,input[type=text],input[type=url],input[type=number],input[type=date],textarea{
+    background:#0b0f14;border:1px solid var(--line);color:var(--txt);
+    padding:9px 11px;border-radius:8px;font:inherit;max-width:100%}
+  textarea{width:100%;min-height:64px;resize:vertical}
+  select:focus,input:focus,textarea:focus{outline:none;border-color:var(--accent)}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--line);font-size:13px;vertical-align:middle}
+  th{color:var(--dim);font-weight:500;white-space:nowrap}
+  tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:rgba(255,255,255,.02)}
+  td.acts{white-space:nowrap;text-align:right}
+  td.acts button{margin-left:6px}
+  .empty{padding:34px 20px;text-align:center;color:var(--dim)}
+  .pill{display:inline-block;padding:3px 9px;border-radius:11px;font-size:11.5px;font-weight:600}
+  .pill.active{background:rgba(0,255,153,.12);color:var(--ok)}
+  .pill.paused{background:rgba(255,176,32,.13);color:var(--warn)}
+  .pill.draft{background:rgba(154,164,175,.15);color:var(--dim)}
+  .chip{display:inline-block;padding:2px 8px;border:1px solid var(--line);border-radius:6px;
+        font-size:11.5px;color:var(--dim);margin:0 4px 3px 0;white-space:nowrap}
+  .ttl{font-weight:600}
+  .ttl small{display:block;font-weight:400;color:var(--faint);font-size:12px;max-width:340px;
+             overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #feedInfo{font-size:12.5px;color:var(--dim)}
+
+  /* editor */
+  #editor{padding:22px 24px;margin-top:8px;display:none}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px 18px;margin-bottom:16px}
+  label.f{display:block;font-size:12.5px;color:var(--dim)}
+  label.f>span{display:block;margin-bottom:5px}
+  label.f input,label.f select{width:100%}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .hint{color:var(--faint);font-size:12px;margin-top:4px}
+  .apps{display:flex;gap:16px;flex-wrap:wrap;margin:4px 0 6px}
+  .apps label{display:flex;align-items:center;gap:7px;cursor:pointer}
+  .slotbox{border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:12px 0;background:#0f1319}
+  .slotbox h3{margin:0 0 3px;font-size:14px}
+  .slotbox .req{color:var(--faint);font-size:12px;margin-bottom:10px}
+  .slotbox .body{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+  .slotbox .ctl{flex:1;min-width:230px}
+  .slotbox .msg{font-size:12.5px;margin-top:8px}
+  .slotbox .msg.bad{color:var(--bad)}
+  .slotbox .msg.ok{color:var(--ok)}
+  .pv{position:relative;overflow:hidden;background:#000;border:1px solid var(--line);border-radius:6px;flex:none}
+  .pv>*{position:absolute;left:0;top:0;transform-origin:0 0;border:0;display:block}
+  .pv.none{display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:12px;
+           background:repeating-linear-gradient(45deg,#11161d,#11161d 8px,#0d1117 8px,#0d1117 16px)}
+  .pvlab{font-size:11.5px;color:var(--faint);margin-top:5px}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;align-items:center}
+  #saveMsg{color:var(--dim);font-size:13px}
 </style>
 </head>
 <body>
@@ -59,10 +119,7 @@
 
     <div id="setup" class="card" style="display:none">
       <h2>One more step: authorise this account</h2>
-      <p>The database rules only let one account in. Put this UID into
-         <code>database.rules.json</code> and <code>storage.rules</code>
-         (in place of <code>REPLACE_WITH_ADMIN_UID</code>), publish the rules,
-         then set <code>ADMIN_UID</code> in <code>admin-ads.html</code> to it.</p>
+      <p>Set <code>ADMIN_UID</code> in <code>admin-ads.html</code> and in the database and storage rules to:</p>
       <div class="uid">
         <code id="uidBox"></code>
         <button class="ghost" id="copyBtn" onclick="copyUid()">Copy</button>
@@ -70,10 +127,25 @@
     </div>
 
     <div id="main" style="display:none">
-      <div class="card" style="padding:22px 24px;margin-top:8px">
-        <p style="margin:0;color:var(--dim)">Signed in as the admin. The campaign list and the form for
-           adding ads come next.</p>
+      <div class="bar">
+        <button class="primary" id="newBtn">New ad</button>
+        <select id="fStatus" aria-label="Status">
+          <option value="">All statuses</option>
+          <option value="active">Active</option>
+          <option value="paused">Paused</option>
+          <option value="draft">Draft</option>
+        </select>
+        <select id="fApp" aria-label="App">
+          <option value="">All apps</option>
+        </select>
+        <span class="spacer"></span>
+        <span id="feedInfo"></span>
+        <button class="ghost" id="repubBtn" title="Rebuild what the apps download from all active ads">Republish feed</button>
       </div>
+      <div id="err"></div>
+
+      <div id="editor" class="card"></div>
+      <div id="list" class="card" style="margin-top:14px"></div>
     </div>
   </div>
 </div>
@@ -82,6 +154,9 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut,
          onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getDatabase, ref, get, set, remove, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getStorage, ref as sRef, uploadBytes, getDownloadURL, listAll,
+         deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
 /* Safe to expose: these identify the project, they don't grant access.
    Access is controlled by the database and storage rules, which only let
@@ -95,51 +170,518 @@ const firebaseConfig = {
   messagingSenderId: "664823611213",
   appId: "1:664823611213:web:ecea2626c1a506d1a24104"
 };
-
-/* Filled in after the first sign-in, from the UID this page shows. */
 const ADMIN_UID = "5bCbdUU29cPtffTXwNJw5DzigSd2";
+
+/* ── What can be sold ─────────────────────────────────────────────────────── */
+const APPS = {
+  worldradio:   { name: "WorldRadio",    slots: ["banner", "mrec", "fullscreen"] },
+  tvdsp:        { name: "TV DSP Center", slots: ["banner"] },   // phone/tablet only
+  fakelocation: { name: "FakeLocation",  slots: ["banner"] },
+};
+const SLOTS = {
+  banner:     { label: "Banner",           w: 640,  h: 100,  scale: .5,
+                types: ["image", "gif", "html5"] },
+  mrec:       { label: "Medium rectangle", w: 600,  h: 500,  scale: .5,
+                types: ["image", "gif", "html5"] },
+  fullscreen: { label: "Full screen",      w: 720,  h: 1280, scale: .28, ratio: 9 / 16,
+                types: ["video", "image"] },
+};
+const KINDS = {
+  image: { label: "Image (PNG / WebP / JPEG)", accept: "image/png,image/webp,image/jpeg", max: 300 * 1024 },
+  gif:   { label: "GIF",                       accept: "image/gif",                       max: 500 * 1024 },
+  html5: { label: "HTML5 (single .html file)", accept: "text/html,.html,.htm",            max: 200 * 1024 },
+  video: { label: "Video (MP4, up to 15 s)",   accept: "video/mp4",                       max: 6 * 1024 * 1024 },
+};
+const MAX_VIDEO_S = 15;
 
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db   = getDatabase(app);
+const storage = getStorage(app);
 
-const esc = s => String(s).replace(/[&<>"']/g,
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g,
   c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+const kb = n => n < 1024 ? n + " B" : n < 1024 * 1024 ? Math.round(n / 1024) + " KB" : (n / 1048576).toFixed(0) + " MB";
 
+/* ── Auth ─────────────────────────────────────────────────────────────────── */
 window.signIn = async () => {
   try { await signInWithPopup(auth, new GoogleAuthProvider()); }
-  catch (e) { document.getElementById("loginErr").innerHTML =
+  catch (e) { $("loginErr").innerHTML =
     `<div class="err" style="margin-top:16px">Sign-in failed: ${esc(e.code || e.message)}</div>`; }
 };
 window.signOut = () => fbSignOut(auth);
 window.copyUid = async () => {
-  const uid = document.getElementById("uidBox").textContent;
-  try { await navigator.clipboard.writeText(uid); document.getElementById("copyBtn").textContent = "Copied"; }
+  try { await navigator.clipboard.writeText($("uidBox").textContent); $("copyBtn").textContent = "Copied"; }
   catch { /* the code box is select-all, copy by hand */ }
 };
 
 onAuthStateChanged(auth, user => {
-  const login = document.getElementById("login"), appEl = document.getElementById("app");
+  const login = $("login"), appEl = $("app");
   if (!user) { login.style.display = "block"; appEl.style.display = "none"; return; }
   login.style.display = "none"; appEl.style.display = "block";
-  document.getElementById("who").textContent = `Signed in as ${user.email}`;
+  $("who").textContent = `Signed in as ${user.email}`;
 
   if (!ADMIN_UID) {
-    // First run: nothing is authorised yet, so show the UID to authorise.
-    document.getElementById("uidBox").textContent = user.uid;
-    document.getElementById("setup").style.display = "block";
-    document.getElementById("main").style.display = "none";
+    $("uidBox").textContent = user.uid;
+    $("setup").style.display = "block";
+    $("main").style.display = "none";
     return;
   }
-  document.getElementById("setup").style.display = "none";
+  $("setup").style.display = "none";
   if (user.uid !== ADMIN_UID) {
     login.style.display = "block"; appEl.style.display = "none";
-    document.getElementById("loginErr").innerHTML =
+    $("loginErr").innerHTML =
       `<div class="err" style="margin-top:16px">This account is not authorised.<br>
        <span style="font-size:11.5px;opacity:.75">${esc(user.email || "")}</span></div>`;
     fbSignOut(auth); return;
   }
-  document.getElementById("main").style.display = "block";
+  $("main").style.display = "block";
+  init();
 });
+
+/* ── State ────────────────────────────────────────────────────────────────── */
+let campaigns = {};              // id -> record, as stored under /campaigns
+let editing = null;              // { id|null, slots: {app:{slot:creative}}, pending: {"app/slot": {...}} }
+
+const showErr = html => { $("err").innerHTML = html ? `<div class="err" style="margin-bottom:12px">${html}</div>` : ""; };
+
+let inited = false;
+function init() {
+  if (inited) return; inited = true;
+  $("fApp").insertAdjacentHTML("beforeend",
+    Object.entries(APPS).map(([k, a]) => `<option value="${k}">${esc(a.name)}</option>`).join(""));
+  $("fStatus").onchange = $("fApp").onchange = renderList;
+  $("newBtn").onclick = () => openEditor(null);
+  $("repubBtn").onclick = async () => {
+    $("repubBtn").disabled = true;
+    try { await publishFeed(); } catch (e) { showErr("Could not publish the feed: " + esc(e.message)); }
+    $("repubBtn").disabled = false;
+  };
+  load();
+}
+
+async function load() {
+  showErr("");
+  try {
+    const snap = await get(ref(db, "campaigns"));
+    campaigns = snap.val() || {};
+  } catch (e) {
+    showErr("Could not load the campaigns: " + esc(e.code || e.message));
+    campaigns = {};
+  }
+  renderList();
+  renderFeedInfo();
+}
+
+/* ── Feed: what the apps download ─────────────────────────────────────────── */
+function buildFeed(appKey) {
+  const out = {};
+  for (const [id, c] of Object.entries(campaigns)) {
+    if (c.status !== "active" || !c.apps || !c.apps[appKey]) continue;
+    const src = (c.slots && c.slots[appKey]) || {};
+    const slots = {};
+    for (const [s, cr] of Object.entries(src))
+      if (cr && cr.url) slots[s] = { type: cr.type, url: cr.url, w: cr.w, h: cr.h };
+    if (!Object.keys(slots).length) continue;
+    out[id] = {
+      kind: c.kind || "house", weight: c.weight || 10,
+      from: c.from || null, to: c.to || null,
+      countries: c.countries || [],
+      cap: c.cap || { n: 3, per: "hour" },
+      clickUrl: c.clickUrl, title: c.title || "", slots,
+    };
+  }
+  return { v: 1, updatedAt: Date.now(), campaigns: out };
+}
+const clean = o => JSON.parse(JSON.stringify(o));
+
+async function publishFeed() {
+  await Promise.all(Object.keys(APPS).map(a => set(ref(db, "feed/" + a), clean(buildFeed(a)))));
+  renderFeedInfo();
+}
+function renderFeedInfo() {
+  $("feedInfo").textContent = Object.entries(APPS).map(([k, a]) =>
+    `${a.name}: ${Object.keys(buildFeed(k).campaigns).length}`).join(" · ") + " live";
+}
+
+/* ── List ─────────────────────────────────────────────────────────────────── */
+const fmtDay = ms => ms ? new Date(ms).toISOString().slice(0, 10) : null;
+function period(c) {
+  const f = fmtDay(c.from), t = fmtDay(c.to);
+  if (!f && !t) return "always";
+  return `${f || "…"} → ${t || "…"}`;
+}
+function renderList() {
+  const st = $("fStatus").value, ap = $("fApp").value;
+  const rows = Object.entries(campaigns)
+    .filter(([, c]) => (!st || c.status === st) && (!ap || (c.apps && c.apps[ap])))
+    .sort((a, b) => (b[1].updatedAt || 0) - (a[1].updatedAt || 0));
+  if (!rows.length) {
+    $("list").innerHTML = `<div class="empty">${Object.keys(campaigns).length
+      ? "No ads match the filter." : "No ads yet. Press <b>New ad</b> to add the first one."}</div>`;
+    return;
+  }
+  $("list").innerHTML = `<table><thead><tr>
+      <th>Ad</th><th>Apps</th><th>Limit</th><th>Countries</th><th>Period</th><th>Status</th><th></th>
+    </tr></thead><tbody>${rows.map(([id, c]) => {
+      const chips = Object.keys(c.apps || {}).filter(a => c.apps[a] && APPS[a]).map(a => {
+        const n = Object.keys((c.slots && c.slots[a]) || {}).length;
+        return `<span class="chip">${esc(APPS[a].name)} · ${n} format${n === 1 ? "" : "s"}</span>`;
+      }).join("");
+      const cap = c.cap ? `${c.cap.n} / ${c.cap.per}` : "—";
+      const cc = (c.countries && c.countries.length) ? c.countries.join(", ") : "all";
+      return `<tr data-id="${esc(id)}">
+        <td class="ttl">${esc(c.title)}<small>${esc(c.clickUrl || "")}</small></td>
+        <td>${chips || "—"}</td><td>${esc(cap)}</td><td>${esc(cc)}</td><td>${esc(period(c))}</td>
+        <td><span class="pill ${esc(c.status)}">${esc(c.status)}</span></td>
+        <td class="acts">
+          <button class="ghost small" data-act="edit">Edit</button>
+          <button class="ghost small" data-act="toggle">${c.status === "active" ? "Pause" : "Activate"}</button>
+          <button class="danger small" data-act="del">Delete</button>
+        </td></tr>`;
+    }).join("")}</tbody></table>`;
+}
+$("list").addEventListener("click", async ev => {
+  const b = ev.target.closest("button[data-act]");
+  if (!b) return;
+  const id = b.closest("tr").dataset.id, c = campaigns[id];
+  if (b.dataset.act === "edit") return openEditor(id);
+  b.disabled = true;
+  try {
+    if (b.dataset.act === "toggle") {
+      c.status = c.status === "active" ? "paused" : "active";
+      c.updatedAt = Date.now();
+      await set(ref(db, "campaigns/" + id + "/status"), c.status);
+      await set(ref(db, "campaigns/" + id + "/updatedAt"), c.updatedAt);
+      await publishFeed();
+    } else if (b.dataset.act === "del") {
+      if (!confirm(`Delete "${c.title}" and its files?`)) { b.disabled = false; return; }
+      await deleteFolder("creatives/" + id);
+      await remove(ref(db, "campaigns/" + id));
+      delete campaigns[id];
+      await publishFeed();
+    }
+  } catch (e) { showErr("Failed: " + esc(e.code || e.message)); }
+  renderList();
+});
+
+async function deleteFolder(path) {
+  try {
+    const res = await listAll(sRef(storage, path));
+    await Promise.all(res.items.map(i => deleteObject(i).catch(() => {})));
+  } catch { /* nothing to delete, or already gone */ }
+}
+
+/* ── Editor ───────────────────────────────────────────────────────────────── */
+function openEditor(id) {
+  const c = id ? campaigns[id] : null;
+  editing = { id, slots: c ? clean(c.slots || {}) : {}, pending: {} };
+  const today = fmtDay(Date.now());
+  $("editor").innerHTML = `
+    <h2>${id ? "Edit ad" : "New ad"}</h2>
+    <div class="grid">
+      <label class="f"><span>Title (not shown; used in reports)</span>
+        <input type="text" id="eTitle" maxlength="60" value="${esc(c ? c.title : "")}"></label>
+      <label class="f"><span>Where a tap goes</span>
+        <input type="url" id="eUrl" maxlength="300" placeholder="https://… or market://details?id=…"
+               value="${esc(c ? c.clickUrl : "")}"></label>
+      <label class="f"><span>Kind</span>
+        <select id="eKind"><option value="house">Own (house)</option><option value="paid">Paid</option></select></label>
+      <label class="f"><span>Status</span>
+        <select id="eStatus"><option value="active">Active</option><option value="paused">Paused</option>
+          <option value="draft">Draft</option></select></label>
+      <label class="f"><span>Description (optional)</span>
+        <textarea id="eDesc" maxlength="300">${esc(c ? c.description : "")}</textarea></label>
+      <div>
+        <label class="f"><span>Show at most</span>
+          <div class="row2">
+            <input type="number" id="eCapN" min="1" max="999" value="${c && c.cap ? c.cap.n : 3}">
+            <select id="eCapPer"><option value="hour">per hour</option><option value="day">per day</option></select>
+          </div></label>
+        <div class="hint">Per user. Applies while AdMob is filling; when AdMob has no ad, an own ad shows regardless.</div>
+      </div>
+      <label class="f"><span>Weight (1–100; higher shows more often)</span>
+        <input type="number" id="eWeight" min="1" max="100" value="${c && c.weight ? c.weight : 10}"></label>
+      <label class="f"><span>Countries (ISO codes, comma separated; empty = all)</span>
+        <input type="text" id="eCc" placeholder="BG, RO, DE" value="${esc(c && c.countries ? c.countries.join(", ") : "")}"></label>
+      <div>
+        <label class="f"><span>From / to (UTC dates, optional)</span>
+          <div class="row2">
+            <input type="date" id="eFrom" value="${c && c.from ? fmtDay(c.from) : ""}" min="2020-01-01">
+            <input type="date" id="eTo" value="${c && c.to ? fmtDay(c.to) : ""}" min="${today}">
+          </div></label>
+      </div>
+    </div>
+
+    <h2 style="margin-top:8px">Apps</h2>
+    <div class="apps" id="eApps">${Object.entries(APPS).map(([k, a]) =>
+      `<label><input type="checkbox" value="${k}" ${c && c.apps && c.apps[k] ? "checked" : ""}> ${esc(a.name)}</label>`).join("")}</div>
+    <div class="hint">TV DSP Center ads are for phone/tablet only, never the TV app.</div>
+
+    <div id="slotBoxes"></div>
+
+    <div id="formErr"></div>
+    <div class="actions">
+      <button class="primary" id="saveBtn">Save</button>
+      <button class="ghost" id="cancelBtn">Cancel</button>
+      <span id="saveMsg"></span>
+    </div>`;
+  if (c) {
+    $("eKind").value = c.kind || "house";
+    $("eStatus").value = c.status || "draft";
+    $("eCapPer").value = c.cap ? c.cap.per : "hour";
+  }
+  $("eApps").onchange = renderSlotBoxes;
+  $("cancelBtn").onclick = closeEditor;
+  $("saveBtn").onclick = save;
+  $("editor").style.display = "block";
+  renderSlotBoxes();
+  $("editor").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function closeEditor() {
+  if (editing) for (const p of Object.values(editing.pending)) URL.revokeObjectURL(p.blobUrl);
+  editing = null;
+  $("editor").style.display = "none";
+  $("editor").innerHTML = "";
+}
+const checkedApps = () => [...document.querySelectorAll("#eApps input:checked")].map(i => i.value);
+
+/* A scaled, non-interactive rendering of a creative in its real pixel size. */
+function previewEl(cr, slotKey) {
+  const slot = SLOTS[slotKey];
+  const box = document.createElement("div");
+  if (!cr) {
+    box.className = "pv none";
+    box.style.width = Math.round(slot.w * slot.scale) + "px";
+    box.style.height = Math.round(slot.h * slot.scale) + "px";
+    box.textContent = "no file";
+    return box;
+  }
+  const w = cr.w || slot.w, h = cr.h || slot.h;
+  box.className = "pv";
+  box.style.width = Math.round(w * slot.scale) + "px";
+  box.style.height = Math.round(h * slot.scale) + "px";
+  let el;
+  if (cr.type === "video") {
+    el = document.createElement("video");
+    el.src = cr.url; el.muted = true; el.loop = true; el.autoplay = true; el.playsInline = true;
+  } else if (cr.type === "html5") {
+    // Untrusted markup: scripts may run, but the frame has no access to this page.
+    el = document.createElement("iframe");
+    el.setAttribute("sandbox", "allow-scripts");
+    el.setAttribute("scrolling", "no");
+    el.src = cr.url;
+  } else {
+    el = document.createElement("img");
+    el.src = cr.url; el.alt = "";
+  }
+  el.style.width = w + "px"; el.style.height = h + "px";
+  el.style.transform = `scale(${slot.scale})`;
+  box.appendChild(el);
+  return box;
+}
+
+function renderSlotBoxes() {
+  const holder = $("slotBoxes");
+  holder.innerHTML = "";
+  for (const appKey of checkedApps()) {
+    for (const slotKey of APPS[appKey].slots) {
+      const slot = SLOTS[slotKey], key = appKey + "/" + slotKey;
+      const pend = editing.pending[key];
+      const existing = editing.slots[appKey] && editing.slots[appKey][slotKey];
+      const shown = pend ? { type: pend.kind, url: pend.blobUrl, w: pend.w, h: pend.h } : existing;
+      const size = slot.ratio ? "9:16, e.g. 720×1280" : `${slot.w}×${slot.h}`;
+      const div = document.createElement("div");
+      div.className = "slotbox";
+      div.innerHTML = `
+        <h3>${esc(APPS[appKey].name)} · ${esc(slot.label)}</h3>
+        <div class="req">${esc(size)} px · ${slot.types.map(t => esc(KINDS[t].label) + ", up to " + kb(KINDS[t].max)).join(" · ")}</div>
+        <div class="body"><div class="pvwrap"></div><div class="ctl">
+          <input type="file" accept="${esc(slot.types.map(t => KINDS[t].accept).join(","))}">
+          <div class="msg"></div>
+          ${shown ? `<div style="margin-top:10px"><button type="button" class="ghost small">Remove this file</button></div>` : ""}
+        </div></div>`;
+      div.querySelector(".pvwrap").appendChild(previewEl(shown, slotKey));
+      const msg = div.querySelector(".msg");
+      if (pend) {
+        msg.className = "msg ok";
+        msg.textContent = `${KINDS[pend.kind].label} · ${pend.w}×${pend.h} · ${kb(pend.file.size)} · uploads on Save`;
+        if (pend.warn) msg.insertAdjacentHTML("afterend", `<div class="warnbox">${esc(pend.warn)}</div>`);
+      } else if (existing) {
+        msg.className = "msg ok";
+        msg.textContent = `${KINDS[existing.type] ? KINDS[existing.type].label : existing.type} · ${existing.w}×${existing.h} · ${existing.bytes ? kb(existing.bytes) : ""}`;
+      }
+      div.querySelector("input[type=file]").onchange = async ev => {
+        const file = ev.target.files[0];
+        if (!file) return;
+        try {
+          const info = await inspect(file, slotKey);
+          if (editing.pending[key]) URL.revokeObjectURL(editing.pending[key].blobUrl);
+          editing.pending[key] = info;
+        } catch (e) {
+          ev.target.value = "";
+          msg.className = "msg bad"; msg.textContent = e.message;
+          return;
+        }
+        renderSlotBoxes();
+      };
+      const rm = div.querySelector("button");
+      if (rm) rm.onclick = () => {
+        if (editing.pending[key]) { URL.revokeObjectURL(editing.pending[key].blobUrl); delete editing.pending[key]; }
+        if (editing.slots[appKey]) delete editing.slots[appKey][slotKey];
+        renderSlotBoxes();
+      };
+      holder.appendChild(div);
+    }
+  }
+}
+
+/* ── Checking a file before it is accepted ────────────────────────────────── */
+function kindOf(file) {
+  if (file.type === "image/gif") return "gif";
+  if (/^image\/(png|webp|jpeg)$/.test(file.type)) return "image";
+  if (file.type === "video/mp4") return "video";
+  if (file.type === "text/html" || /\.html?$/i.test(file.name)) return "html5";
+  return null;
+}
+const loadImg = url => new Promise((res, rej) => {
+  const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error("The file could not be read as an image.")); i.src = url;
+});
+const loadVideo = url => new Promise((res, rej) => {
+  const v = document.createElement("video"); v.preload = "metadata";
+  v.onloadedmetadata = () => res(v); v.onerror = () => rej(new Error("The file could not be read as a video.")); v.src = url;
+});
+function sizeOk(slot, w, h) {
+  if (slot.ratio) return Math.abs(w / h - slot.ratio) / slot.ratio <= 0.02 && w >= 540;
+  return w === slot.w && h === slot.h;
+}
+const sizeMsg = (slot, w, h) => slot.ratio
+  ? `The file is ${w}×${h}; it needs a 9:16 shape at least 540 px wide (for example 720×1280).`
+  : `The file is ${w}×${h}; ${slot.label} must be exactly ${slot.w}×${slot.h}.`;
+
+async function inspect(file, slotKey) {
+  const slot = SLOTS[slotKey], kind = kindOf(file);
+  if (!kind || !slot.types.includes(kind))
+    throw new Error(`${slot.label} accepts: ${slot.types.map(t => KINDS[t].label).join("; ")}.`);
+  if (file.size > KINDS[kind].max)
+    throw new Error(`The file is ${kb(file.size)}; the limit for ${KINDS[kind].label} is ${kb(KINDS[kind].max)}.`);
+  const blobUrl = URL.createObjectURL(file);
+  try {
+    let w, h, warn = "";
+    if (kind === "image" || kind === "gif") {
+      const im = await loadImg(blobUrl); w = im.naturalWidth; h = im.naturalHeight;
+      if (!sizeOk(slot, w, h)) throw new Error(sizeMsg(slot, w, h));
+    } else if (kind === "video") {
+      const v = await loadVideo(blobUrl); w = v.videoWidth; h = v.videoHeight;
+      if (!sizeOk(slot, w, h)) throw new Error(sizeMsg(slot, w, h));
+      if (v.duration > MAX_VIDEO_S + 0.5)
+        throw new Error(`The video is ${v.duration.toFixed(1)} s; the limit is ${MAX_VIDEO_S} s.`);
+    } else {
+      const text = await file.text();
+      const m = text.match(/<meta[^>]+name=["']ad\.size["'][^>]*content=["']width=(\d+)\s*,\s*height=(\d+)["']/i);
+      w = m ? +m[1] : slot.w; h = m ? +m[2] : slot.h;
+      if (!sizeOk(slot, w, h)) throw new Error(sizeMsg(slot, w, h));
+      const ext = [...new Set(text.match(/(?:src|href)\s*=\s*["']https?:\/\/[^"']+|url\(\s*["']?https?:\/\/[^)"']+/gi) || [])];
+      const notes = [];
+      if (!m) notes.push(`No <meta name="ad.size" content="width=${slot.w},height=${slot.h}"> found; assuming ${slot.w}×${slot.h}.`);
+      if (ext.length) notes.push("The file loads " + ext.length + " external resource(s); it should be self-contained (inline the images and scripts).");
+      warn = notes.join(" ");
+    }
+    return { kind, w, h, file, blobUrl, warn };
+  } catch (e) { URL.revokeObjectURL(blobUrl); throw e; }
+}
+
+/* ── Save ─────────────────────────────────────────────────────────────────── */
+function fieldsOrThrow() {
+  const v = id => $(id).value.trim();
+  const title = v("eTitle");
+  if (!title) throw new Error("Give the ad a title.");
+  const clickUrl = v("eUrl");
+  if (!/^(https:\/\/|market:\/\/)\S+$/.test(clickUrl)) throw new Error("The tap link must start with https:// or market://.");
+  const capN = parseInt(v("eCapN"), 10);
+  if (!(capN >= 1)) throw new Error("The limit must be at least 1.");
+  const weight = parseInt(v("eWeight"), 10);
+  if (!(weight >= 1 && weight <= 100)) throw new Error("Weight is 1 to 100.");
+  const countries = v("eCc") ? v("eCc").split(/[\s,;]+/).filter(Boolean).map(s => s.toUpperCase()) : [];
+  if (countries.some(x => !/^[A-Z]{2}$/.test(x))) throw new Error("Countries are two-letter ISO codes, e.g. BG, RO.");
+  const from = v("eFrom") ? Date.parse(v("eFrom") + "T00:00:00Z") : null;
+  const to   = v("eTo")   ? Date.parse(v("eTo")   + "T23:59:59Z") : null;
+  if (from && to && to < from) throw new Error("The end date is before the start date.");
+  const apps = checkedApps();
+  if (!apps.length) throw new Error("Choose at least one app.");
+  return { title, clickUrl, description: v("eDesc"), kind: v("eKind"), status: v("eStatus"),
+           cap: { n: capN, per: v("eCapPer") }, weight, countries, from, to, apps };
+}
+
+async function save() {
+  $("formErr").innerHTML = "";
+  let f;
+  try { f = fieldsOrThrow(); } catch (e) { $("formErr").innerHTML = `<div class="err" style="margin-top:12px">${esc(e.message)}</div>`; return; }
+
+  const slots = {};
+  for (const a of f.apps) {
+    slots[a] = {};
+    for (const s of APPS[a].slots) {
+      const cr = editing.slots[a] && editing.slots[a][s];
+      if (cr) slots[a][s] = cr;
+    }
+  }
+  const hasPending = k => editing.pending[k];
+  const total = f.apps.reduce((n, a) => n + APPS[a].slots.filter(s =>
+    slots[a][s] || hasPending(a + "/" + s)).length, 0);
+  if (f.status === "active" && !total) {
+    $("formErr").innerHTML = `<div class="err" style="margin-top:12px">An active ad needs at least one file. Add a file or save it as a draft.</div>`;
+    return;
+  }
+
+  $("saveBtn").disabled = true; $("cancelBtn").disabled = true;
+  const say = t => { $("saveMsg").textContent = t; };
+  const id = editing.id || push(ref(db, "campaigns")).key;
+  const replaced = [];
+  try {
+    for (const a of f.apps) for (const s of APPS[a].slots) {
+      const p = editing.pending[a + "/" + s];
+      if (!p) continue;
+      say(`Uploading ${APPS[a].name} · ${SLOTS[s].label}…`);
+      const ext = { gif: "gif", html5: "html", video: "mp4" }[p.kind]
+        || (p.file.type === "image/png" ? "png" : p.file.type === "image/webp" ? "webp" : "jpg");
+      const path = `creatives/${id}/${a}_${s}_${Date.now()}.${ext}`;
+      const r = sRef(storage, path);
+      await uploadBytes(r, p.file, { contentType: p.kind === "html5" ? "text/html" : p.file.type,
+                                     cacheControl: "public,max-age=31536000" });
+      const url = await getDownloadURL(r);
+      if (slots[a][s] && slots[a][s].path) replaced.push(slots[a][s].path);
+      slots[a][s] = { type: p.kind, url, path, w: p.w, h: p.h, bytes: p.file.size };
+    }
+    const old = editing.id ? campaigns[editing.id] : null;
+    // Files of formats or apps that were removed in this edit.
+    if (old && old.slots) for (const [a, m] of Object.entries(old.slots)) for (const [s, cr] of Object.entries(m || {}))
+      if (cr && cr.path && !(slots[a] && slots[a][s] && slots[a][s].path === cr.path) && !replaced.includes(cr.path))
+        replaced.push(cr.path);
+
+    const now = Date.now();
+    const rec = clean({
+      title: f.title, description: f.description, clickUrl: f.clickUrl,
+      kind: f.kind, status: f.status, weight: f.weight, cap: f.cap,
+      countries: f.countries, from: f.from, to: f.to,
+      apps: Object.fromEntries(f.apps.map(a => [a, true])),
+      slots, createdAt: old ? old.createdAt || now : now, updatedAt: now,
+    });
+    say("Saving…");
+    await set(ref(db, "campaigns/" + id), rec);
+    campaigns[id] = rec;
+    say("Publishing the feed…");
+    await publishFeed();
+    await Promise.all(replaced.map(p => deleteObject(sRef(storage, p)).catch(() => {})));
+    closeEditor();
+    renderList();
+  } catch (e) {
+    $("saveBtn").disabled = false; $("cancelBtn").disabled = false;
+    say("");
+    $("formErr").innerHTML = `<div class="err" style="margin-top:12px">Could not save: ${esc(e.code || e.message)}</div>`;
+  }
+}
 </script>
 </body>
 </html>
