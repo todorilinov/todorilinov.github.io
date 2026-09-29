@@ -1,0 +1,21 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Approved creatives: the apps and the pages read them, only the admin writes.
+    match /creatives/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == 'REPLACE_WITH_ADMIN_UID';
+    }
+
+    // Files from the public form: anyone may add, nobody but the admin reads.
+    // Images up to 300 KB, video up to 6 MB.
+    match /submissions/{allPaths=**} {
+      allow read: if request.auth != null && request.auth.uid == 'REPLACE_WITH_ADMIN_UID';
+      allow create: if (request.resource.contentType.matches('image/(webp|png|jpeg)')
+                        && request.resource.size <= 300 * 1024)
+                    || (request.resource.contentType == 'video/mp4'
+                        && request.resource.size <= 6 * 1024 * 1024);
+    }
+  }
+}
