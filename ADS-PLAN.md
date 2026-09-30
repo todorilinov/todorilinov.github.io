@@ -150,7 +150,7 @@ Function ги проверява и ги мести в `submissions/{id}/…` (�
 
 ## 7. Cloud Functions
 
-Node 20, gen2, `europe-west1`, ключове в Secret Manager. Код в `ads-backend/functions/`.
+Node 22, gen2, `europe-west1`, ключове в Secret Manager. Код в `ads-backend/functions/`.
 
 | Function | Вид | Какво прави |
 |----------|-----|-------------|

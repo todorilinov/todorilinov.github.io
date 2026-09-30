@@ -1,0 +1,14 @@
+{
+  "name": "tiapps-ads-functions",
+  "private": true,
+  "description": "Cloud Functions of the TI Apps own-ads system",
+  "main": "index.js",
+  "engines": { "node": "22" },
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.0",
+    "firebase-functions": "^6.3.0"
+  }
+}
