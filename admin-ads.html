@@ -115,8 +115,8 @@
   .stgrid h3{font-size:13px;color:var(--dim);font-weight:500;margin:0 0 6px}
   .stgrid table th,.stgrid table td{padding:7px 8px;font-size:12.5px}
   td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-  .bar{height:6px;background:#0b0f14;border-radius:3px;min-width:70px}
-  .bar>i{display:block;height:100%;border-radius:3px;background:var(--accent)}
+  .meter{height:6px;background:#0b0f14;border-radius:3px;min-width:70px}
+  .meter>i{display:block;height:100%;border-radius:3px;background:var(--accent)}
   .stnote{color:var(--faint);font-size:12px;margin-top:12px}
 </style>
 </head>
@@ -448,7 +448,7 @@ function renderStats() {
     const max = list.length ? Math.max(1, list[0][1].imp) : 1;
     return list.map(([k, v]) => `<tr><td>${esc(label(k))}</td><td class="num">${v.imp.toLocaleString()}</td>
       <td class="num">${v.clk.toLocaleString()}</td><td class="num">${ctr(v.imp, v.clk)}</td>
-      <td><div class="bar"><i style="width:${Math.round(v.imp / max * 100)}%"></i></div></td></tr>`).join("");
+      <td><div class="meter"><i style="width:${Math.round(v.imp / max * 100)}%"></i></div></td></tr>`).join("");
   };
   const head = first => `<thead><tr><th>${first}</th><th class="num">Shown</th><th class="num">Clicks</th><th class="num">CTR</th><th></th></tr></thead>`;
   const dayLabel = d => `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6)}`;
@@ -475,7 +475,7 @@ function renderStats() {
         <table><thead><tr><th>Day (UTC)</th><th class="num">Shown</th><th class="num">Clicks</th><th class="num">CTR</th><th></th></tr></thead>
         <tbody>${days.slice(0, 31).map(([d, v]) => `<tr><td>${dayLabel(d)}</td><td class="num">${v.imp.toLocaleString()}</td>
           <td class="num">${v.clk.toLocaleString()}</td><td class="num">${ctr(v.imp, v.clk)}</td>
-          <td><div class="bar"><i style="width:${Math.round(v.imp / dayMax * 100)}%"></i></div></td></tr>`).join("") || empty}</tbody></table></div>
+          <td><div class="meter"><i style="width:${Math.round(v.imp / dayMax * 100)}%"></i></div></td></tr>`).join("") || empty}</tbody></table></div>
     </div>
     <div class="stnote">“Shown” counts every minute an ad was in a slot (the ad is decided again each minute), not unique people.
       Countries come from the phone's mobile network, SIM or region setting; “Unknown” means it could not be told.
