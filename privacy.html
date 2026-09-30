@@ -57,7 +57,7 @@
 <main>
 <div class="wrap">
   <h1>Privacy Policy</h1>
-  <div class="updated">Last updated: September 16, 2026</div>
+  <div class="updated">Last updated: September 30, 2026</div>
 
   <p>This Privacy Policy describes how Todor Ilinov ("TI Apps", "we", "I") handles information in the mobile applications published under this developer account.</p>
 
@@ -77,6 +77,7 @@
     <li><strong>Google Firebase Analytics</strong> — anonymous usage statistics (screens viewed, session length, device model, country, app version). Used to understand how the apps are used and to improve them.</li>
     <li><strong>Firebase Crashlytics</strong> — crash reports (device model, OS version, stack traces). Used to find and fix bugs.</li>
     <li><strong>Google AdMob</strong> — serves advertisements. AdMob may use an advertising identifier to show relevant ads. See <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">Google's Advertising Policy</a>.</li>
+    <li><strong>Our own ads</strong> — advertisements that we run ourselves, shown by the apps next to or instead of AdMob ads. See <a href="#own-ads">Our own advertising</a>.</li>
   </ul>
   <p>This data is aggregated and does not identify you personally. It is processed by Google in accordance with the <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a>.</p>
 
@@ -133,9 +134,21 @@
 
   <p><strong>Permissions:</strong> location (precise and approximate) to show where you are on the map; mock location to report the simulated position, which Android allows only after you select the app under Developer options; foreground service and notifications to keep the simulated location running and show an ongoing notification while it is active.</p>
 
+  <h2 id="own-ads">Our own advertising</h2>
+  <p>Besides Google AdMob, the free versions of our apps may show advertisements that we run ourselves &mdash; at the moment for our own apps, and possibly for other advertisers later. They appear in the same place as the other banners. TV DSP Center shows no ads on Android TV and none to Pro users, and the &ldquo;remove ads for an hour&rdquo; option in World Radio hides these ads too.</p>
+  <p>How they work:</p>
+  <ul>
+    <li><strong>What the app downloads.</strong> A small list of the current ads and their image, GIF, HTML5 or video files, from Google Firebase (Realtime Database and Storage, hosted in the EU, europe-west1) that we run for this purpose. As with any request to a server, Google receives your IP address and basic connection details. The app adds no account, email address, advertising ID or other identifier to these requests.</li>
+    <li><strong>What stays on your device.</strong> How many times each ad has been shown (so that we keep to the limit we set per hour or per day), the downloaded list, and the country code the app works out from your mobile network, SIM card or device region setting. That country code is used only on the device, to choose ads for your country, and is not sent to us.</li>
+    <li><strong>What we measure.</strong> When one of these ads is shown or tapped, the app records an anonymous Firebase Analytics event with the ad's number, format and type. It is a count, like the other usage statistics described above, and is not linked to your name or email address.</li>
+    <li><strong>When you tap an ad.</strong> It opens a web page or a Google Play listing. That page belongs to the advertiser or to Google and is covered by its own privacy policy; we receive no information about you from it.</li>
+    <li><strong>Consent and personalisation.</strong> These ads are not personalised and do not use your advertising ID, so they are shown whatever you chose in the consent form for AdMob.</li>
+    <li><strong>Safety.</strong> We review ads before they are shown. HTML5 ads run in a restricted browser component with no access to the app's data, your files or your device, and cannot open other pages on their own.</li>
+  </ul>
+
   <h2>Advertising consent in Europe</h2>
   <p>If you are in the European Economic Area, the United Kingdom or Switzerland, our apps ask for your consent before showing personalised advertising, using Google's User Messaging Platform. You can choose to consent, to refuse, or to manage individual purposes.</p>
-  <p>You can change or withdraw that choice at any time from the privacy settings inside each app — the shield icon in Fake Location and World Radio, and the "Privacy settings" button in TV DSP Center. If you refuse, you will still see advertising, but it will not be personalised.</p>
+  <p>You can change or withdraw that choice at any time from the privacy settings inside each app — the shield icon in Fake Location and World Radio, and the "Privacy settings" button in TV DSP Center. If you refuse, you will still see advertising, but it will not be personalised. Our own ads (see above) do not use your advertising ID and are shown in either case.</p>
 
   <h2>Children</h2>
   <p>Our apps are not directed at children under 13 and we do not knowingly collect data from children.</p>
