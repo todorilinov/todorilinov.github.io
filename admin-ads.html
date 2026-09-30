@@ -102,6 +102,36 @@
   .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;align-items:center}
   #saveMsg{color:var(--dim);font-size:13px}
 
+  /* country picker */
+  #ccField>span{display:block;margin-bottom:5px;font-size:12.5px;color:var(--dim)}
+  #ccField.wide{grid-column:1/-1}
+  .ccbtn{width:100%;text-align:left;background:#0b0f14;border:1px solid var(--line);color:var(--txt);
+         padding:9px 11px;border-radius:8px;font:inherit}
+  .ccbtn:hover,.ccbtn.open{border-color:var(--accent)}
+  .ccpanel{margin-top:8px;border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#0f1319;max-width:600px}
+  .ccall{display:flex;gap:8px;align-items:center;font-size:14px;cursor:pointer;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  .ccbody{margin-top:10px}
+  .ccbody.off{opacity:.4;pointer-events:none}
+  .ccbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+  .ccbar input[type=text]{flex:1;min-width:150px;padding:7px 10px}
+  .ccchips{display:flex;gap:5px;flex-wrap:wrap}
+  .ccchips:not(:empty){margin-bottom:8px}
+  .ccchip{background:rgba(0,204,255,.12);color:var(--accent);border:1px solid rgba(0,204,255,.35);border-radius:14px;
+          padding:2px 4px 2px 10px;font-size:12px;cursor:default;white-space:nowrap}
+  .ccchip b{cursor:pointer;padding:0 6px;font-weight:600;color:var(--dim)}
+  .ccchip b:hover{color:var(--bad)}
+  .cctop{margin-bottom:8px;font-size:12px;color:var(--dim)}
+  .cctop:empty{display:none}
+  .cctop button{margin:3px 4px 0 0;padding:2px 9px;font-size:12px;border-radius:12px;border:1px solid var(--line);
+                background:transparent;color:var(--txt)}
+  .cctop button:hover{border-color:var(--accent)}
+  .cctop button.on{border-color:var(--accent);color:var(--accent)}
+  .cclist{max-height:260px;overflow-y:auto;border:1px solid var(--line);border-radius:8px}
+  .ccrow{display:flex;gap:9px;align-items:center;padding:6px 10px;border-bottom:1px solid #1d232a;cursor:pointer;font-size:13px}
+  .ccrow:hover{background:rgba(255,255,255,.03)}
+  .ccrow code{margin-left:auto;color:var(--faint);font-size:11.5px}
+  .ccnone{padding:14px;text-align:center;color:var(--faint);font-size:13px}
+
   /* statistics */
   #list{overflow-x:auto}
   #statsPanel{padding:20px 24px;margin-top:8px;display:none}
@@ -355,7 +385,8 @@ function renderList() {
         return `<span class="chip">${esc(APPS[a].name)} · ${n} format${n === 1 ? "" : "s"}</span>`;
       }).join("");
       const cap = c.cap ? `${c.cap.n} / ${c.cap.per}` : "—";
-      const cc = (c.countries && c.countries.length) ? c.countries.join(", ") : "all";
+      const cc = !(c.countries && c.countries.length) ? "all"
+        : c.countries.length <= 4 ? c.countries.join(", ") : `${c.countries.length} countries`;
       const t = aggregate(id, "");
       return `<tr data-id="${esc(id)}">
         <td class="ttl">${esc(c.title)}<small>${esc(c.clickUrl || "")}</small></td>
@@ -484,11 +515,115 @@ function renderStats() {
   $("stClose").onclick = closeStats;
 }
 
-/* ── Editor ───────────────────────────────────────────────────────────────── */
+/* ── Country picker ───────────────────────────────────────────────────────── */
+const ALL_CC = ("AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ " +
+  "CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR " +
+  "GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP " +
+  "KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ " +
+  "NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW " +
+  "SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ " +
+  "UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS XK YE YT ZA ZM ZW").split(" ");
+const EU = "AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL PT RO SK SI ES SE".split(" ");
+// Geographic Europe as users think of it: the EU plus the rest of the continent (Turkey and the Caucasus are not included).
+const EUROPE = EU.concat("AL AD BY BA IS XK LI MD MC ME MK NO RU SM RS CH UA GB VA".split(" "));
+let sortedCc = null;
+
+/** The countries where the apps are really used, most shown first, from the statistics of all ads. */
+function topCountries(n = 10) {
+  const t = {};
+  for (const days of Object.values(stats)) for (const apps of Object.values(days || {}))
+    for (const ccs of Object.values(apps || {})) for (const [cc, v] of Object.entries(ccs || {}))
+      if (cc !== "ZZ") t[cc] = (t[cc] || 0) + (Number(v && v.imp) || 0);
+  return Object.entries(t).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).slice(0, n);
+}
+
+function ccSummary() {
+  if (editing.ccAll) return "All countries";
+  const l = [...editing.cc];
+  if (!l.length) return "No country chosen yet";
+  const names = l.map(countryName).sort((a, b) => a.localeCompare(b, "en"));
+  return `${l.length} countr${l.length === 1 ? "y" : "ies"}: ${names.slice(0, 3).join(", ")}${l.length > 3 ? ` +${l.length - 3}` : ""}`;
+}
+
+function initCountryPicker() {
+  const root = $("ccField");
+  if (!sortedCc) sortedCc = [...new Set(ALL_CC)].sort((a, b) => countryName(a).localeCompare(countryName(b), "en"));
+  root.innerHTML = `<span>Countries</span>
+    <button type="button" class="ccbtn" id="ccBtn"></button>
+    <div class="ccpanel" id="ccPanel" hidden>
+      <label class="ccall"><input type="checkbox" id="ccAll"> <b>All countries</b></label>
+      <div class="ccbody" id="ccBody">
+        <div class="ccbar">
+          <input type="text" id="ccSearch" placeholder="Search countries…" autocomplete="off">
+          <button type="button" class="ghost small" data-cc="visible" title="Tick every country the search shows">Select visible</button>
+          <button type="button" class="ghost small" data-cc="eu">EU</button>
+          <button type="button" class="ghost small" data-cc="europe">Europe</button>
+          <button type="button" class="ghost small" data-cc="clear">Clear</button>
+        </div>
+        <div class="ccchips" id="ccChips"></div>
+        <div class="cctop" id="ccTop"></div>
+        <div class="cclist" id="ccList"></div>
+      </div>
+      <div style="margin-top:10px"><button type="button" class="ghost small" id="ccDone">Done</button></div>
+    </div>`;
+
+  const visible = () => {
+    const q = $("ccSearch").value.trim().toLowerCase();
+    const all = [...new Set(sortedCc.concat([...editing.cc]))];   // a code from an older ad stays editable
+    return q ? all.filter(cc => countryName(cc).toLowerCase().includes(q) || cc.toLowerCase().includes(q)) : all;
+  };
+  const refresh = () => {
+    $("ccBtn").textContent = ccSummary() + "  ▾";
+    $("ccAll").checked = editing.ccAll;
+    $("ccBody").classList.toggle("off", editing.ccAll);
+    $("ccChips").innerHTML = [...editing.cc].sort((a, b) => countryName(a).localeCompare(countryName(b), "en"))
+      .map(cc => `<span class="ccchip">${esc(countryName(cc))}<b data-rm="${esc(cc)}" title="Remove">×</b></span>`).join("");
+    const top = topCountries();
+    $("ccTop").innerHTML = top.length ? "Where your users are: " + top.map(([cc, n]) =>
+      `<button type="button" data-top="${esc(cc)}" class="${editing.cc.has(cc) ? "on" : ""}">${esc(countryName(cc))} · ${n.toLocaleString()}</button>`).join("") : "";
+    const list = visible();
+    $("ccList").innerHTML = list.length ? list.map(cc => `<label class="ccrow"><input type="checkbox" data-code="${esc(cc)}" ${editing.cc.has(cc) ? "checked" : ""}>
+        <span>${esc(countryName(cc))}</span><code>${esc(cc)}</code></label>`).join("") : '<div class="ccnone">No country matches.</div>';
+  };
+  // Choosing anything means "only these": it switches "All countries" off.
+  const pick = codes => { codes.forEach(cc => editing.cc.add(cc)); editing.ccAll = false; refresh(); };
+
+  $("ccBtn").onclick = () => {
+    const open = $("ccPanel").hidden;
+    $("ccPanel").hidden = !open;
+    $("ccBtn").classList.toggle("open", open);
+    root.classList.toggle("wide", open);
+  };
+  $("ccDone").onclick = () => { $("ccPanel").hidden = true; $("ccBtn").classList.remove("open"); root.classList.remove("wide"); };
+  $("ccAll").onchange = ev => { editing.ccAll = ev.target.checked; refresh(); };
+  $("ccSearch").oninput = refresh;
+  root.addEventListener("change", ev => {
+    const code = ev.target.dataset && ev.target.dataset.code;
+    if (!code) return;
+    if (ev.target.checked) editing.cc.add(code); else editing.cc.delete(code);
+    editing.ccAll = false;
+    refresh();
+  });
+  root.addEventListener("click", ev => {
+    const t = ev.target;
+    if (t.dataset.rm) { editing.cc.delete(t.dataset.rm); return refresh(); }
+    if (t.dataset.top) { editing.cc.has(t.dataset.top) ? editing.cc.delete(t.dataset.top) : editing.cc.add(t.dataset.top); editing.ccAll = false; return refresh(); }
+    const k = t.dataset.cc;
+    if (k === "visible") pick(visible());
+    else if (k === "eu") pick(EU);
+    else if (k === "europe") pick(EUROPE);
+    else if (k === "clear") { editing.cc.clear(); editing.ccAll = false; refresh(); }
+  });
+  refresh();
+}
+
+/* ── Editor ────────────────────────────────────────────────────────────────── */
 function openEditor(id) {
   const c = id ? campaigns[id] : null;
   editing = { id, slots: c ? clean(c.slots || {}) : {}, pending: {},
               apps: new Set(c && c.apps ? Object.keys(c.apps).filter(a => c.apps[a] && APPS[a]) : []) };
+  editing.cc = new Set((c && c.countries) || []);
+  editing.ccAll = !editing.cc.size;      // no countries chosen = every country
   const today = fmtDay(Date.now());
   $("editor").innerHTML = `
     <h2>${id ? "Edit ad" : "New ad"}</h2>
@@ -515,8 +650,7 @@ function openEditor(id) {
       </div>
       <label class="f"><span>Weight (1–100; higher shows more often)</span>
         <input type="number" id="eWeight" min="1" max="100" value="${c && c.weight ? c.weight : 10}"></label>
-      <label class="f"><span>Countries (ISO codes, comma separated; empty = all)</span>
-        <input type="text" id="eCc" placeholder="BG, RO, DE" value="${esc(c && c.countries ? c.countries.join(", ") : "")}"></label>
+      <div class="f" id="ccField"></div>
       <div>
         <label class="f"><span>From / to (UTC dates, optional)</span>
           <div class="row2">
@@ -541,6 +675,7 @@ function openEditor(id) {
     $("eStatus").value = c.status || "draft";
     $("eCapPer").value = c.cap ? c.cap.per : "hour";
   }
+  initCountryPicker();
   $("cancelBtn").onclick = closeEditor;
   $("saveBtn").onclick = save;
   $("editor").style.display = "block";
@@ -739,7 +874,8 @@ function fieldsOrThrow() {
   if (!(capN >= 1)) throw new Error("The limit must be at least 1.");
   const weight = parseInt(v("eWeight"), 10);
   if (!(weight >= 1 && weight <= 100)) throw new Error("Weight is 1 to 100.");
-  const countries = v("eCc") ? v("eCc").split(/[\s,;]+/).filter(Boolean).map(s => s.toUpperCase()) : [];
+  const countries = editing.ccAll ? [] : [...editing.cc].sort();
+  if (!editing.ccAll && !countries.length) throw new Error("Choose at least one country, or tick All countries.");
   if (countries.some(x => !/^[A-Z]{2}$/.test(x))) throw new Error("Countries are two-letter ISO codes, e.g. BG, RO.");
   const from = v("eFrom") ? Date.parse(v("eFrom") + "T00:00:00Z") : null;
   const to   = v("eTo")   ? Date.parse(v("eTo")   + "T23:59:59Z") : null;
