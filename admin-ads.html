@@ -458,7 +458,7 @@ function renderStats() {
   $("statsPanel").innerHTML = `
     <div class="sthead"><h2>${esc(c.title)} — statistics</h2>
       <select id="stRange" aria-label="Period">
-        ${[[7, "Last 7 days"], [30, "Last 30 days"], [90, "Last 90 days"], [0, "All time"]]
+        ${[[1, "Today (UTC)"], [7, "Last 7 days"], [30, "Last 30 days"], [90, "Last 90 days"], [0, "All time"]]
           .map(([v, t]) => `<option value="${v}" ${v === statsRange ? "selected" : ""}>${t}</option>`).join("")}
       </select>
       <button class="ghost small" id="stClose">Close</button></div>
