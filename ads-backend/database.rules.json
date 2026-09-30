@@ -39,7 +39,29 @@
     },
 
     "stats": {
-      ".read": "auth != null && auth.uid === '5bCbdUU29cPtffTXwNJw5DzigSd2'"
+      ".read": "auth != null && auth.uid === '5bCbdUU29cPtffTXwNJw5DzigSd2'",
+      ".write": "auth != null && auth.uid === '5bCbdUU29cPtffTXwNJw5DzigSd2'",
+      "$cid": {
+        ".validate": "$cid.matches(/^-[A-Za-z0-9_-]{19}$/)",
+        "$day": {
+          ".validate": "$day.matches(/^[0-9]{8}$/)",
+          "$app": {
+            ".validate": "$app === 'worldradio' || $app === 'tvdsp' || $app === 'fakelocation'",
+            "$cc": {
+              ".validate": "$cc.matches(/^[A-Z]{2}$/) && newData.hasChildren()",
+              "imp": {
+                ".write": "newData.exists()",
+                ".validate": "newData.isNumber() && newData.val() >= (data.exists() ? data.val() : 0) && newData.val() <= (data.exists() ? data.val() : 0) + 100"
+              },
+              "clk": {
+                ".write": "newData.exists()",
+                ".validate": "newData.isNumber() && newData.val() >= (data.exists() ? data.val() : 0) && newData.val() <= (data.exists() ? data.val() : 0) + 100"
+              },
+              "$other": { ".validate": false }
+            }
+          }
+        }
+      }
     }
   }
 }
