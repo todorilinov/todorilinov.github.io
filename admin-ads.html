@@ -132,6 +132,33 @@
   .ccrow code{margin-left:auto;color:var(--faint);font-size:11.5px}
   .ccnone{padding:14px;text-align:center;color:var(--faint);font-size:13px}
 
+  /* charts */
+  .charts{display:grid;gap:18px;margin-bottom:18px}
+  .chartbox{background:#0f1319;border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .chartbox h3{font-size:13px;color:var(--dim);font-weight:500;margin:0 0 8px}
+  .chartrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--dim);margin-top:6px}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+  svg.chart text{fill:var(--faint);font-size:11px}
+  svg.chart .grid{stroke:#1d232a;stroke-width:1}
+  .hbar{display:grid;grid-template-columns:130px 1fr 70px;gap:10px;align-items:center;margin:6px 0;font-size:13px}
+  .hbar .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hbar .tr{height:12px;background:#1a2028;border-radius:6px;overflow:hidden}
+  .hbar .tr i{display:block;height:100%;background:rgba(0,204,255,.45);border-radius:6px;position:relative}
+  .hbar .tr i b{position:absolute;left:0;top:0;bottom:0;background:var(--accent);border-radius:6px}
+  .hbar .v{text-align:right;color:var(--dim);font-variant-numeric:tabular-nums}
+  .donutwrap{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+  .donutwrap ul{list-style:none;margin:0;padding:0;font-size:13px}
+  .donutwrap li{margin:4px 0}
+  .donutwrap li i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:7px}
+  #worldMap{width:100%;min-height:120px}
+  #worldMap svg{width:100%;height:auto;display:block}
+  #worldMap path{stroke:#0d1117;stroke-width:.4}
+  #worldMap path.hit:hover{stroke:#fff;stroke-width:1}
+  .mapbar{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--dim);margin-top:6px}
+  .mapbar span.g{width:140px;height:8px;border-radius:4px;background:linear-gradient(90deg,rgba(0,204,255,.18),#00ccff)}
+  details.tbl>summary{cursor:pointer;color:var(--dim);margin-bottom:10px}
+
   /* statistics */
   #list{overflow-x:auto}
   #statsPanel{padding:20px 24px;margin-top:8px;display:none}
@@ -460,6 +487,120 @@ function aggregate(id, fromDay) {
   return out;
 }
 
+/* ── Charts ───────────────────────────────────────────────────────────────── */
+const PALETTE = ["#00CCFF", "#00FF99", "#ffb020", "#b48cff", "#ff5c5c", "#6b7785"];
+const fmt = n => Number(n).toLocaleString();
+
+/** Shown and clicked per day as bars, with the click-through rate as a line. */
+function dayChartSvg(byDay) {
+  const keys = Object.keys(byDay).sort();
+  if (!keys.length) return '<div class="ccnone">No data in this period.</div>';
+  const toMs = d => Date.UTC(+d.slice(0, 4), +d.slice(4, 6) - 1, +d.slice(6, 8));
+  const msKey = ms => new Date(ms).toISOString().slice(0, 10).replace(/-/g, "");
+  const days = [];
+  for (let t = toMs(keys[0]), end = toMs(keys[keys.length - 1]); t <= end && days.length < 120; t += 86400000) days.push(msKey(t));
+  const W = 700, H = 230, L = 40, R = 44, T = 12, B = 28, pw = W - L - R, ph = H - T - B;
+  const vals = days.map(d => byDay[d] || { imp: 0, clk: 0 });
+  const max = Math.max(1, ...vals.map(v => v.imp));
+  const step = pw / days.length, bw = Math.min(34, step * 0.7);
+  const y = v => T + ph - v / max * ph;
+  const ctrs = vals.map(v => v.imp ? v.clk / v.imp : 0), cmax = Math.max(0.01, ...ctrs);
+  const yc = v => T + ph - v / cmax * ph;
+  const every = Math.ceil(days.length / 8);
+  let o = `<svg class="chart" viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Shown, clicks and CTR per day">`;
+  for (let i = 0; i <= 4; i++) {
+    const gy = T + ph - ph * i / 4;
+    o += `<line class="grid" x1="${L}" x2="${W - R}" y1="${gy}" y2="${gy}"/>`
+      + `<text x="${L - 6}" y="${gy + 4}" text-anchor="end">${fmt(Math.round(max * i / 4))}</text>`
+      + `<text x="${W - R + 6}" y="${gy + 4}">${(cmax * 100 * i / 4).toFixed(0)}%</text>`;
+  }
+  days.forEach((d, i) => {
+    const v = vals[i], cx = L + step * i + step / 2;
+    o += `<g><title>${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6)}: ${fmt(v.imp)} shown, ${fmt(v.clk)} clicks, ${ctr(v.imp, v.clk)}</title>`
+      + `<rect x="${cx - bw / 2}" y="${y(v.imp)}" width="${bw}" height="${T + ph - y(v.imp)}" rx="3" fill="#00CCFF" fill-opacity=".45"/>`
+      + `<rect x="${cx - bw / 2}" y="${y(v.clk)}" width="${bw}" height="${T + ph - y(v.clk)}" rx="3" fill="#00FF99"/>`
+      + `<rect x="${cx - step / 2}" y="${T}" width="${step}" height="${ph}" fill="transparent"/></g>`;
+    if (i % every === 0) o += `<text x="${cx}" y="${H - 8}" text-anchor="middle">${d.slice(6)}.${d.slice(4, 6)}</text>`;
+  });
+  const pts = ctrs.map((c, i) => `${(L + step * i + step / 2).toFixed(1)},${yc(c).toFixed(1)}`);
+  o += `<polyline points="${pts.join(" ")}" fill="none" stroke="#ffb020" stroke-width="2" stroke-linejoin="round"/>`;
+  if (days.length <= 45) o += pts.map(p => `<circle cx="${p.split(",")[0]}" cy="${p.split(",")[1]}" r="3" fill="#ffb020"/>`).join("");
+  return o + "</svg>";
+}
+
+/** The countries with most shown as horizontal bars; the clicks are the bright part of each bar. */
+function countryBarsHtml(byCc, top = 8) {
+  const list = Object.entries(byCc).sort((a, b) => b[1].imp - a[1].imp || b[1].clk - a[1].clk);
+  if (!list.length) return '<div class="ccnone">No data in this period.</div>';
+  const rows = list.slice(0, top).map(([k, v]) => [countryName(k), v]);
+  const rest = list.slice(top).reduce((r, [, v]) => (r.imp += v.imp, r.clk += v.clk, r), { imp: 0, clk: 0 });
+  if (list.length > top) rows.push([`Other (${list.length - top})`, rest]);
+  const max = Math.max(1, ...rows.map(r => r[1].imp));
+  return rows.map(([n, v]) => `<div class="hbar" title="${esc(n)}: ${fmt(v.imp)} shown, ${fmt(v.clk)} clicks, ${ctr(v.imp, v.clk)}">
+    <span class="nm">${esc(n)}</span>
+    <span class="tr"><i style="width:${v.imp / max * 100}%"><b style="width:${v.imp ? v.clk / v.imp * 100 : 0}%"></b></i></span>
+    <span class="v">${fmt(v.imp)}</span></div>`).join("");
+}
+
+/** Share of the shown per app as a donut. */
+function appDonutHtml(byApp) {
+  const list = Object.entries(byApp).sort((a, b) => b[1].imp - a[1].imp);
+  const total = list.reduce((n, [, v]) => n + v.imp, 0);
+  if (!total) return '<div class="ccnone">No data in this period.</div>';
+  const r = 52, C = 2 * Math.PI * r;
+  let off = 0, arcs = "";
+  list.forEach(([k, v], i) => {
+    const len = v.imp / total * C, name = APPS[k] ? APPS[k].name : k;
+    arcs += `<circle cx="70" cy="70" r="${r}" fill="none" stroke="${PALETTE[i % PALETTE.length]}" stroke-width="22"
+      stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-off}" transform="rotate(-90 70 70)">
+      <title>${esc(name)}: ${fmt(v.imp)} shown (${(v.imp / total * 100).toFixed(1)}%), ${fmt(v.clk)} clicks</title></circle>`;
+    off += len;
+  });
+  const lis = list.map(([k, v], i) => `<li><i style="background:${PALETTE[i % PALETTE.length]}"></i>${esc(APPS[k] ? APPS[k].name : k)}
+    <span style="color:var(--dim)"> · ${(v.imp / total * 100).toFixed(1)}% · CTR ${ctr(v.imp, v.clk)}</span></li>`).join("");
+  return `<div class="donutwrap"><svg viewBox="0 0 140 140" width="150" height="150" role="img" aria-label="Shown per app">${arcs}
+    <text x="70" y="68" text-anchor="middle" style="fill:var(--txt);font-size:18px;font-weight:600">${fmt(total)}</text>
+    <text x="70" y="84" text-anchor="middle" style="fill:var(--faint);font-size:10px">shown</text></svg><ul>${lis}</ul></div>`;
+}
+
+/** World map, countries shaded by the number shown. The map data and d3-geo load from a CDN when first needed. */
+let geoLibs = null, mapToken = 0;
+function loadGeo() {
+  return geoLibs || (geoLibs = Promise.all([
+    import("https://cdn.jsdelivr.net/npm/d3-geo@3/+esm"),
+    fetch("https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@master/geojson/ne_110m_admin_0_countries.geojson").then(r => {
+      if (!r.ok) throw new Error("map data " + r.status);
+      return r.json();
+    }),
+  ]).catch(e => { geoLibs = null; throw e; }));
+}
+async function drawMap(byCc) {
+  const box = $("worldMap"); if (!box) return;
+  const token = ++mapToken;
+  box.innerHTML = '<div class="ccnone">Loading map…</div>';
+  try {
+    const [{ geoNaturalEarth1, geoPath }, world] = await loadGeo();
+    if (token !== mapToken || !$("worldMap")) return;
+    const feats = world.features.filter(f => f.properties.ADMIN !== "Antarctica");
+    const proj = geoNaturalEarth1().fitSize([960, 500], { type: "FeatureCollection", features: feats });
+    const path = geoPath(proj);
+    const max = Math.max(1, ...Object.values(byCc).map(v => v.imp));
+    const ccOf = p => { const c = p.ISO_A2_EH && p.ISO_A2_EH !== "-99" ? p.ISO_A2_EH : p.ISO_A2; return c && c !== "-99" ? c : ""; };
+    const paths = feats.map(f => {
+      const cc = ccOf(f.properties), v = byCc[cc], d = path(f);
+      if (!d) return "";
+      if (!v) return `<path d="${d}" fill="#1a2028"><title>${esc(f.properties.NAME || cc)}</title></path>`;
+      const a = (0.2 + 0.8 * Math.sqrt(v.imp / max)).toFixed(2);
+      return `<path class="hit" d="${d}" fill="rgba(0,204,255,${a})"><title>${esc(countryName(cc))}: ${fmt(v.imp)} shown, ${fmt(v.clk)} clicks, CTR ${ctr(v.imp, v.clk)}</title></path>`;
+    }).join("");
+    const unknown = byCc.ZZ ? ` · Unknown country: ${fmt(byCc.ZZ.imp)} shown` : "";
+    box.innerHTML = `<svg viewBox="0 0 960 500" role="img" aria-label="World map of the shown ads">${paths}</svg>
+      <div class="mapbar">fewer <span class="g"></span> more shown (max ${fmt(max)})${unknown}</div>`;
+  } catch (e) {
+    if (token === mapToken && $("worldMap")) $("worldMap").innerHTML = `<div class="ccnone">The map could not be loaded (${esc(e.message || e)}). The bars below still show the countries.</div>`;
+  }
+}
+
 let statsFor = null, statsRange = 30;
 function openStats(id) {
   statsFor = id;
@@ -499,6 +640,17 @@ function renderStats() {
       <div class="kpi"><div class="n">${ctr(a.imp, a.clk)}</div><div class="l">Click-through rate</div></div>
       <div class="kpi"><div class="n">${Object.keys(a.byCc).length}</div><div class="l">Countries</div></div>
     </div>
+    <div class="charts">
+      <div class="chartbox"><h3>World map — shown by country</h3><div id="worldMap"></div></div>
+      <div class="chartbox"><h3>By day</h3>${dayChartSvg(a.byDay)}
+        <div class="legend"><span><i style="background:rgba(0,204,255,.45)"></i>Shown</span><span><i style="background:#00FF99"></i>Clicks</span><span><i style="background:#ffb020"></i>CTR (right axis)</span></div></div>
+      <div class="chartrow">
+        <div class="chartbox"><h3>By country</h3>${countryBarsHtml(a.byCc)}
+          <div class="legend"><span><i style="background:rgba(0,204,255,.45)"></i>Shown</span><span><i style="background:#00CCFF"></i>Clicks</span></div></div>
+        <div class="chartbox"><h3>By app</h3>${appDonutHtml(a.byApp)}</div>
+      </div>
+    </div>
+    <details class="tbl"><summary>Show tables</summary>
     <div class="stgrid">
       <div><h3>By country</h3><table>${head("Country")}<tbody>${rows(a.byCc, countryName) || empty}</tbody></table></div>
       <div><h3>By app</h3><table>${head("App")}<tbody>${rows(a.byApp, k => (APPS[k] ? APPS[k].name : k)) || empty}</tbody></table>
@@ -508,10 +660,12 @@ function renderStats() {
           <td class="num">${v.clk.toLocaleString()}</td><td class="num">${ctr(v.imp, v.clk)}</td>
           <td><div class="meter"><i style="width:${Math.round(v.imp / dayMax * 100)}%"></i></div></td></tr>`).join("") || empty}</tbody></table></div>
     </div>
+    </details>
     <div class="stnote">“Shown” counts every minute an ad was in a slot (the ad is decided again each minute), not unique people.
       Countries come from the phone's mobile network, SIM or region setting; “Unknown” means it could not be told.
       Counts reach the server in batches every few minutes, so the newest numbers can lag.</div>`;
-  $("stRange").onchange = ev => { statsRange = parseInt(ev.target.value, 10); renderStats(); };
+  drawMap(a.byCc);
+  $("stRange").onchange =ev => { statsRange = parseInt(ev.target.value, 10); renderStats(); };
   $("stClose").onclick = closeStats;
 }
 
