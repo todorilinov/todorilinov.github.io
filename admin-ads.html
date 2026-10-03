@@ -220,6 +220,7 @@
         <span class="spacer"></span>
         <span id="feedInfo"></span>
         <button class="ghost" id="repubBtn" title="Rebuild what the apps download from all active ads">Republish feed</button>
+        <button class="ghost" id="mailBtn" title="Send a test email to the admin address (checks Resend and the sending domain)">Test email</button>
       </div>
       <div id="err"></div>
 
@@ -235,6 +236,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut,
          onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getDatabase, ref, get, set, remove, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL, listAll,
          deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
@@ -277,6 +279,7 @@ const MAX_VIDEO_S = 15;
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getDatabase(app);
+const fns  = getFunctions(app, "europe-west1");
 const storage = getStorage(app);
 
 const $ = id => document.getElementById(id);
@@ -339,6 +342,18 @@ function init() {
     try { await publishFeed(); } catch (e) { showErr("Could not publish the feed: " + esc(e.message)); }
     $("repubBtn").disabled = false;
   };
+  $("mailBtn").onclick = async () => {
+    $("mailBtn").disabled = true;
+    $("feedInfo").textContent = "Sending the test email…";
+    try {
+      const r = (await httpsCallable(fns, "sendTestEmail")()).data;
+      $("feedInfo").textContent = "Test email sent to " + r.to + ".";
+    } catch (e) {
+      showErr("Test email failed: " + esc(e.message || e.code));
+      renderFeedInfo();
+    }
+    $("mailBtn").disabled = false;
+  };
   load();
 }
 
@@ -378,8 +393,10 @@ function buildFeed(appKey) {
 }
 const clean = o => JSON.parse(JSON.stringify(o));
 
+// The server writes feed/{app} (Cloud Function rebuildFeed, also triggered by every campaigns/ write).
+// This call waits until the rebuild is done, so the page knows the feed is current.
 async function publishFeed() {
-  await Promise.all(Object.keys(APPS).map(a => set(ref(db, "feed/" + a), clean(buildFeed(a)))));
+  await httpsCallable(fns, "republishFeed")();
   renderFeedInfo();
 }
 function renderFeedInfo() {
