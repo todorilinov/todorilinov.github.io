@@ -394,9 +394,16 @@ function buildFeed(appKey) {
 const clean = o => JSON.parse(JSON.stringify(o));
 
 // The server writes feed/{app} (Cloud Function rebuildFeed, also triggered by every campaigns/ write).
-// This call waits until the rebuild is done, so the page knows the feed is current.
+
 async function publishFeed() {
-  await httpsCallable(fns, "republishFeed")();
+  try {
+    await httpsCallable(fns, "republishFeed")();
+  } catch (e) {
+    // Safety net: if the server cannot rebuild the feed, write it from here so the apps are not left stale.
+    console.warn("republishFeed failed, publishing from the browser:", e);
+    await Promise.all(Object.keys(APPS).map(a => set(ref(db, "feed/" + a), clean(buildFeed(a)))));
+    showErr("The server could not rebuild the feed (" + esc(e.message || e.code) + "). Published from this page instead.");
+  }
   renderFeedInfo();
 }
 function renderFeedInfo() {
