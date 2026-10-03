@@ -62,7 +62,11 @@ exports.rebuildFeed = onValueWritten(
   }
 );
 
-exports.republishFeed = onCall(async request => {
+// Callable functions are called from the browser (tiapps.dev), so they must be publicly invocable
+// (Cloud Run IAM) and answer the CORS preflight. Who may do what is checked inside (requireAdmin).
+const CALLABLE = { invoker: 'public', cors: true };
+
+exports.republishFeed = onCall(CALLABLE, async request => {
   requireAdmin(request);
   try {
     const written = await rebuildFeeds();
@@ -73,7 +77,7 @@ exports.republishFeed = onCall(async request => {
   }
 });
 
-exports.sendTestEmail = onCall({ secrets: [RESEND_API_KEY] }, async request => {
+exports.sendTestEmail = onCall({ ...CALLABLE, secrets: [RESEND_API_KEY] }, async request => {
   requireAdmin(request);
   try {
     const id = await sendEmail({
