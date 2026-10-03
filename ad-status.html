@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your ad request — TI Apps</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0E16; --card:#111726; --card-edge:#1C2436;
+    --blue:#1E7BE0; --cyan:#19A0EA; --orange:#F5821A;
+    --text:#E9EDF5; --muted:#8A93A8; --ok:#22E39A; --bad:#F55A5A; --warn:#FFAA33;
+    --mono:'IBM Plex Mono',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:'Archivo',sans-serif;font-variation-settings:'wdth' 100;
+       line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh}
+  a{color:var(--cyan)}
+  .wrap{max-width:760px;margin:0 auto;padding:0 20px}
+  header{padding:22px 0;border-bottom:1px solid var(--card-edge)}
+  .logo{font-weight:900;font-variation-settings:'wdth' 125;font-size:1.3rem;letter-spacing:.02em;text-decoration:none;color:var(--text)}
+  .logo .ti{color:var(--cyan)} .logo .apps{color:var(--orange)}
+  h1{font-size:clamp(1.5rem,4vw,2rem);font-weight:800;font-variation-settings:'wdth' 110;margin:34px 0 6px;line-height:1.2;word-break:break-word}
+  .ref{font-family:var(--mono);color:var(--muted);font-size:.85rem;letter-spacing:.1em;margin-bottom:22px}
+  .card{background:var(--card);border:1px solid var(--card-edge);border-radius:14px;padding:22px;margin-bottom:16px}
+  .card h2{font-size:.76rem;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);font-family:var(--mono);font-weight:500;margin-bottom:14px}
+  .badge{display:inline-block;padding:3px 12px;border-radius:14px;font-size:.82rem;font-weight:700;background:rgba(25,160,234,.15);color:var(--cyan)}
+  .badge.ok{background:rgba(34,227,154,.14);color:var(--ok)}
+  .badge.warn{background:rgba(255,170,51,.14);color:var(--warn)}
+  .badge.bad{background:rgba(245,90,90,.14);color:var(--bad)}
+  .steps{display:flex;gap:6px;margin:6px 0 4px;flex-wrap:wrap}
+  .step{flex:1;min-width:92px;font-size:.74rem;color:var(--muted);border-top:3px solid var(--card-edge);padding-top:6px}
+  .step.done{border-color:var(--cyan);color:var(--text)}
+  .step.now{border-color:var(--orange);color:var(--text);font-weight:700}
+  .note{border-left:3px solid var(--orange);padding:10px 14px;background:#0E1424;border-radius:0 8px 8px 0;margin:10px 0;white-space:pre-wrap;word-break:break-word}
+  .price{font-size:2rem;font-weight:800;margin:4px 0}
+  .btn{display:inline-block;margin-top:12px;background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff;border:none;border-radius:10px;
+       padding:13px 28px;font:inherit;font-weight:700;font-size:1rem;cursor:pointer;text-decoration:none}
+  .btn.alt{background:transparent;border:1px solid var(--card-edge);color:var(--text)}
+  dl{display:grid;grid-template-columns:140px 1fr;gap:6px 14px;font-size:.93rem}
+  dt{color:var(--muted)} dd{word-break:break-word}
+  ul.log{list-style:none;font-size:.88rem;color:var(--muted)}
+  ul.log li{padding:4px 0;border-bottom:1px solid #151C2E}
+  .muted{color:var(--muted);font-size:.9rem}
+  #err{display:none;text-align:center;padding:40px 20px}
+  footer{margin:40px 0;color:var(--muted);font-size:.84rem;text-align:center}
+</style>
+</head>
+<body>
+<header><div class="wrap"><a class="logo" href="/"><span class="ti">TI</span> <span class="apps">Apps</span></a></div></header>
+
+<main class="wrap">
+  <div id="loading" class="muted" style="margin-top:40px">Loading your request…</div>
+
+  <div id="err" class="card"><h2 style="margin-bottom:8px">This link does not work</h2><p id="errText"></p></div>
+
+  <div id="view" style="display:none">
+    <h1 id="title"></h1>
+    <div class="ref">REFERENCE <span id="ref"></span></div>
+
+    <div class="card">
+      <h2>Status</h2>
+      <span class="badge" id="badge"></span>
+      <div class="steps" id="steps"></div>
+      <div id="body"></div>
+    </div>
+
+    <div class="card">
+      <h2>Your request</h2>
+      <dl id="summary"></dl>
+    </div>
+
+    <div class="card">
+      <h2>History</h2>
+      <ul class="log" id="log"></ul>
+    </div>
+  </div>
+</main>
+<footer class="wrap">TI Apps · <a href="privacy.html">Privacy</a> · <a href="contact.html">Contact</a></footer>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
+
+/* These identify the project, they don't grant access: the function checks the secret token of the link. */
+const firebaseConfig = {
+  apiKey: "AIzaSyAV7LkuxHUt9HtERzGijsQodjm7-mfaXZU",
+  authDomain: "tiapps-ads.firebaseapp.com",
+  databaseURL: "https://tiapps-ads-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "tiapps-ads",
+  storageBucket: "tiapps-ads.firebasestorage.app",
+  messagingSenderId: "664823611213",
+  appId: "1:664823611213:web:ecea2626c1a506d1a24104"
+};
+// reCAPTCHA v3 site key for App Check. Empty = App Check is off.
+const APP_CHECK_SITE_KEY = "";
+
+const app = initializeApp(firebaseConfig);
+if (APP_CHECK_SITE_KEY) {
+  const ac = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js");
+  ac.initializeAppCheck(app, { provider: new ac.ReCaptchaV3Provider(APP_CHECK_SITE_KEY), isTokenAutoRefreshEnabled: true });
+}
+const fns = getFunctions(app, "europe-west1");
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const day = ms => ms ? new Date(ms).toISOString().slice(0, 10) : "—";
+const when = ms => new Date(ms).toISOString().replace("T", " ").slice(0, 16) + " UTC";
+const money = f => Number(f.amount).toFixed(2) + " " + f.currency;
+
+const params = new URLSearchParams(location.search);
+const id = params.get("i") || "", token = params.get("t") || "";
+const link = (page) => page + "?i=" + encodeURIComponent(id) + "&t=" + encodeURIComponent(token);
+
+const STATUS = {
+  pending:           { text: "Under review", cls: "" },
+  changes_requested: { text: "Changes needed", cls: "warn" },
+  rejected:          { text: "Not approved", cls: "bad" },
+  approved:          { text: "Approved — waiting for payment", cls: "ok" },
+  expired:           { text: "Approval expired", cls: "bad" },
+  paid:              { text: "Paid — starting soon", cls: "ok" },
+  active:            { text: "Live", cls: "ok" },
+  finished:          { text: "Finished", cls: "" },
+};
+const FLOW = ["Received", "Review", "Approved", "Paid", "Live"];
+const POS = { pending: 1, changes_requested: 1, rejected: 1, approved: 2, expired: 2, paid: 3, active: 4, finished: 4 };
+
+function fail(msg) {
+  $("loading").style.display = "none";
+  $("errText").textContent = msg;
+  $("err").style.display = "block";
+}
+
+function bodyFor(v) {
+  const s = v.status;
+  if (s === "pending") return `<p>We are reviewing your ad by hand, usually within 2 working days. We will email you the result.</p>`;
+  if (s === "changes_requested") return `<p>We need a few changes before we can approve your ad:</p>
+    <div class="note">${esc(v.review && v.review.note)}</div>
+    <a class="btn" href="${esc(link("advertise.html"))}">Update my request</a>`;
+  if (s === "rejected") return `<p>We could not approve this ad:</p>
+    <div class="note">${esc(v.review && v.review.rejectReason)}</div>
+    <p class="muted">You can fix it and send a new version.</p>
+    <a class="btn" href="${esc(link("advertise.html"))}">Send a new version</a>`;
+  if (s === "approved") {
+    const ok = typeof v.payLink === "string" && v.payLink.startsWith("https://");
+    return `<p>Your ad is approved. The price for ${esc(Number(v.budget.target).toLocaleString())} impressions is:</p>
+      <div class="price">${esc(money(v.final))}</div>
+      ${v.final.note ? `<div class="note">${esc(v.final.note)}</div>` : ""}
+      <p class="muted">Please pay by ${esc(day(v.payBy))}. After that the approval expires.</p>
+      ${ok ? `<a class="btn" href="${esc(v.payLink)}" target="_blank" rel="noopener noreferrer">Pay ${esc(money(v.final))}</a>` : `<p class="note">The payment link is not ready. Please write to us from the contact page.</p>`}
+      <p class="muted" style="margin-top:14px">When we receive the payment we email you. You do not need to send us anything.</p>`;
+  }
+  if (s === "expired") return `<p>The approval expired because we did not receive the payment in time. If you still want to advertise, please send a new request.</p>
+    <a class="btn" href="advertise.html">New request</a>`;
+  if (s === "paid") return `<p>Thank you, we received your payment${v.paidAt ? " on " + esc(day(v.paidAt)) : ""}. Your ad will start around <b>${esc(day(v.from))}</b>, after a last check by us. We will email you when it goes live.</p>`;
+  if (s === "active") return `<p>Your ad is live in the apps.</p>`;
+  if (s === "finished") return `<p>This campaign is finished. Thank you for advertising with us!</p>`;
+  return "";
+}
+
+function render(v) {
+  $("title").textContent = v.title;
+  $("ref").textContent = v.ref;
+  const st = STATUS[v.status] || { text: v.status, cls: "" };
+  $("badge").textContent = st.text; $("badge").className = "badge " + st.cls;
+  const pos = POS[v.status] == null ? 0 : POS[v.status];
+  $("steps").innerHTML = FLOW.map((n, i) => `<div class="step ${i < pos ? "done" : i === pos ? "now" : ""}">${esc(n)}</div>`).join("");
+  $("body").innerHTML = bodyFor(v);
+  $("summary").innerHTML = `
+    <dt>Apps and formats</dt><dd>${v.apps.map(a => esc(a.name) + ": " + a.slots.map(s => esc(s.label)).join(", ")).join("<br>")}</dd>
+    <dt>Impressions</dt><dd>${esc(Number(v.budget.target).toLocaleString())}</dd>
+    <dt>Start date</dt><dd>${esc(day(v.from))}</dd>
+    <dt>Countries</dt><dd>${v.countries.length ? esc(v.countries.join(", ")) : "All"}</dd>
+    <dt>Link</dt><dd>${esc(v.clickUrl)}</dd>`;
+  const label = { pending: "sent for review", changes_requested: "changes requested", rejected: "not approved", approved: "approved", paid: "payment received", expired: "approval expired", active: "live", finished: "finished" };
+  $("log").innerHTML = v.log.map(l => `<li>${esc(when(l.at))} · ${esc(label[l.to] || l.to)}</li>`).join("");
+  $("loading").style.display = "none";
+  $("view").style.display = "block";
+}
+
+if (!id || !token) {
+  fail("The link is incomplete. Please open it again from the email we sent you.");
+} else {
+  try {
+    const res = await httpsCallable(fns, "statusGet")({ id, token });
+    render(res.data);
+  } catch (e) {
+    if (e && e.code === "functions/resource-exhausted") fail("Too many requests from your connection. Please try again in an hour.");
+    else if (e && e.code === "functions/not-found") fail("We could not find a request for this link. Please open it again from the email we sent you.");
+    else fail("Something went wrong. Please try again in a moment.");
+  }
+}
+</script>
+</body>
+</html>

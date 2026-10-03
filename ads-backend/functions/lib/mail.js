@@ -68,4 +68,112 @@ Reply to this email to write to the advertiser.`,
   };
 }
 
-module.exports = { receivedEmail, adminEmail };
+const money = f => Number(f.amount).toFixed(2) + ' ' + f.currency;
+const sign = '\nTI Apps\nhttps://tiapps.dev';
+
+/** Approved: the advertiser can pay. */
+function approvedEmail(rec, ref, statusUrl, payBy) {
+  return {
+    subject: 'Your ad is approved (' + ref + ')',
+    text:
+`Hi ${rec.advertiser.name},
+
+Good news: your ad "${rec.title}" is approved.
+
+Price: ${money(rec.final)} for ${fmtN(rec.budget.target)} impressions${rec.final.note ? '\nNote: ' + rec.final.note : ''}
+
+To pay and start the campaign, open your status page and use the Pay button:
+${statusUrl}
+
+Please pay by ${fmtDate(payBy)}. After that date the approval expires and you would need to ask again.
+We will email you as soon as the payment is received.
+${sign}`,
+  };
+}
+
+/** Rejected, with the reason. */
+function rejectedEmail(rec, ref, statusUrl) {
+  return {
+    subject: 'About your ad request (' + ref + ')',
+    text:
+`Hi ${rec.advertiser.name},
+
+We could not approve your ad "${rec.title}".
+
+Reason: ${rec.review.rejectReason}
+
+You can fix this and send a new version from your status page:
+${statusUrl}
+${sign}`,
+  };
+}
+
+/** Changes needed before it can be approved. */
+function changesEmail(rec, ref, statusUrl) {
+  return {
+    subject: 'Changes needed for your ad (' + ref + ')',
+    text:
+`Hi ${rec.advertiser.name},
+
+Before we can approve your ad "${rec.title}" we need a few changes:
+
+${rec.review.note}
+
+You can update your request and upload new files from your status page:
+${statusUrl}
+${sign}`,
+  };
+}
+
+/** Payment received. */
+function paidEmail(rec, ref, statusUrl) {
+  return {
+    subject: 'Payment received (' + ref + ')',
+    text:
+`Hi ${rec.advertiser.name},
+
+We received your payment of ${money(rec.final)}. Thank you!
+
+Your ad "${rec.title}" will start around ${fmtDate(rec.from)}. We check every campaign before it goes live and we will email you when it does.
+
+You can follow it here:
+${statusUrl}
+${sign}`,
+  };
+}
+
+/** An approval nobody paid for. */
+function expiredEmail(rec, ref) {
+  return {
+    subject: 'Your ad approval expired (' + ref + ')',
+    text:
+`Hi ${rec.advertiser.name},
+
+Your ad "${rec.title}" was approved, but we did not receive the payment in time, so the approval expired.
+If you still want to advertise, please send a new request at https://tiapps.dev/advertise.html.
+${sign}`,
+  };
+}
+
+/** To the admin: the advertiser sent a new version. */
+function updatedAdminEmail(rec, ref, adminUrl) {
+  const a = rec.advertiser;
+  return {
+    subject: 'Updated ad request ' + ref + ': ' + rec.title,
+    text:
+`${a.name} <${a.email}> sent a new version of the request and it is waiting for review again.
+
+Reference: ${ref}
+Ad: ${rec.title}
+Link: ${rec.clickUrl}
+Apps and formats:
+${formatLines(rec)}
+Budget: ${fmtN(rec.budget.target)} impressions
+Requested start: ${fmtDate(rec.from)}
+
+Review it here:
+${adminUrl}`,
+  };
+}
+
+module.exports = { receivedEmail, adminEmail, approvedEmail, rejectedEmail, changesEmail, paidEmail, expiredEmail, updatedAdminEmail };

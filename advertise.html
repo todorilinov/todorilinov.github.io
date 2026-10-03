@@ -92,6 +92,8 @@
   #done{display:none;text-align:center;padding:50px 20px}
   #done h2{font-size:1.6rem;margin-bottom:10px;color:var(--ok);letter-spacing:0;text-transform:none;font-family:inherit;font-weight:800}
   #done .ref{font-family:var(--mono);font-size:1.3rem;letter-spacing:.12em;margin:16px 0;color:var(--text)}
+  .note{border-left:3px solid var(--orange);padding:10px 14px;background:#0E1424;border-radius:0 8px 8px 0;margin:10px 0;white-space:pre-wrap;word-break:break-word}
+  .btn{display:inline-block;margin-top:10px;background:transparent;border:1px solid var(--card-edge);color:var(--text);border-radius:10px;padding:10px 20px;text-decoration:none}
   footer{margin:40px 0;color:var(--muted);font-size:.84rem;text-align:center}
 </style>
 </head>
@@ -99,11 +101,12 @@
 <header><div class="wrap"><a class="logo" href="/"><span class="ti">TI</span> <span class="apps">Apps</span></a></div></header>
 
 <main class="wrap">
-  <h1>Advertise in our apps</h1>
-  <p class="lead">Show your ad inside WorldRadio, TV DSP Center and FakeLocation. Fill in the form and add your banners. We review every ad by hand, usually within 2 working days, and you pay only after it is approved.</p>
+  <h1 id="h1">Advertise in our apps</h1>
+  <div class="card" id="resubNote" style="display:none"><h2>What to change</h2><div class="note" id="resubText"></div><p class="hint">Check the details below and add your files again, then send the new version. <a id="backLink" href="#">Back to the status page</a></p></div>
+  <p class="lead" id="lead">Show your ad inside WorldRadio, TV DSP Center and FakeLocation. Fill in the form and add your banners. We review every ad by hand, usually within 2 working days, and you pay only after it is approved.</p>
 
   <form id="f" novalidate autocomplete="on">
-    <div class="card">
+    <div class="card" id="aboutCard">
       <h2>1 · About you</h2>
       <div class="grid">
         <div class="field" data-f="name"><label for="name">Your name</label><input type="text" id="name" maxlength="80" autocomplete="name"><div class="err"></div></div>
@@ -175,10 +178,11 @@
   </form>
 
   <section id="done" class="card" aria-live="polite">
-    <h2>Request received</h2>
-    <p>Thank you! We will review your ad and email you at <b id="doneMail"></b>.</p>
+    <h2 id="doneTitle">Request received</h2>
+    <p id="doneText">Thank you! We will review your ad and email you at <b id="doneMail"></b>.</p>
     <div class="ref" id="doneRef"></div>
-    <p class="hint">Keep this reference. We also sent you a confirmation email; if you do not see it, check the spam folder.</p>
+    <p class="hint" id="doneHint">Keep this reference. We also sent you a confirmation email; if you do not see it, check the spam folder.</p>
+    <a class="btn" id="doneLink" href="#" style="display:none">Back to the status page</a>
   </section>
 </main>
 <footer class="wrap">TI Apps · <a href="privacy.html">Privacy</a> · <a href="contact.html">Contact</a></footer>
@@ -360,6 +364,48 @@ const minDate = ymd(Date.now() + 3 * 86400000);
 $("startDate").min = minDate; $("startDate").value = ymd(Date.now() + 7 * 86400000);
 $("description").oninput = () => { $("descCount").textContent = $("description").value.length + "/300"; };
 
+/* ── Sending a new version of a request (link from the status page: ?i=…&t=…) ── */
+const qs = new URLSearchParams(location.search);
+const RESUB = qs.get("i") && qs.get("t") ? { id: qs.get("i"), token: qs.get("t") } : null;
+if (RESUB) {
+  $("aboutCard").style.display = "none";
+  $("h1").textContent = "Update your ad request";
+  $("lead").style.display = "none";
+  $("send").textContent = "Send the new version";
+  $("backLink").href = "ad-status.html?i=" + encodeURIComponent(RESUB.id) + "&t=" + encodeURIComponent(RESUB.token);
+  try {
+    const v = (await httpsCallable(fns, "statusGet")(RESUB)).data;
+    if (!v.canChange) {
+      $("f").style.display = "none";
+      $("resubNote").style.display = "block";
+      $("resubText").textContent = "This request cannot be changed any more. Open the status page to see where it is.";
+    } else {
+      $("resubNote").style.display = "block";
+      $("resubText").textContent = (v.review && (v.review.note || v.review.rejectReason)) || "";
+      $("title").value = v.title; $("description").value = v.description; $("clickUrl").value = v.clickUrl;
+      $("descCount").textContent = v.description.length + "/300";
+      if (v.countries.length) {
+        document.querySelector("input[name=aud][value=some]").checked = true;
+        $("ccBox").classList.add("on");
+        v.countries.forEach(c => picked.add(c)); renderCc();
+      }
+      const t = String(v.budget.target);
+      if ([...$("target").options].some(o => o.value === t)) $("target").value = t;
+      else { $("target").value = "custom"; $("targetCustom").style.display = "block"; $("targetCustom").value = t; }
+      const day = new Date(v.from).toISOString().slice(0, 10);
+      if (day >= minDate) $("startDate").value = day;
+      for (const a of v.apps) {
+        const cb = document.querySelector(`[data-on="${a.app}"]`);
+        if (cb) { cb.checked = true; cb.closest(".app").classList.add("on"); }
+      }
+    }
+  } catch (e) {
+    $("f").style.display = "none";
+    $("resubNote").style.display = "block";
+    $("resubText").textContent = "We could not open this request. Please use the link from the email we sent you.";
+  }
+}
+
 /* ── Errors ───────────────────────────────────────────────────────────────── */
 function setErr(field, text) {
   document.querySelectorAll(`[data-f="${field}"]`).forEach(el => {
@@ -387,9 +433,11 @@ function collect() {
 }
 function check(d) {
   const e = {};
-  if (!d.advertiser.name) e.name = "Enter your name.";
-  if (!EMAIL.test(d.advertiser.email)) e.email = "Enter a valid email address.";
-  if (!d.advertiser.country) e.country = "Choose your country.";
+  if (!RESUB) {
+    if (!d.advertiser.name) e.name = "Enter your name.";
+    if (!EMAIL.test(d.advertiser.email)) e.email = "Enter a valid email address.";
+    if (!d.advertiser.country) e.country = "Choose your country.";
+  }
   if (!d.ad.title) e.title = "Enter a title.";
   if (!(d.ad.clickUrl.startsWith("https://") || d.ad.clickUrl.startsWith("market://")) || /\s/.test(d.ad.clickUrl)) e.clickUrl = "Enter a link that starts with https:// (or market:// for Google Play).";
   const chosen = Object.keys(d.apps);
@@ -441,11 +489,18 @@ $("f").addEventListener("submit", async ev => {
       (payloadApps[a] = payloadApps[a] || {})[s] = { path };
     }
     say("info", "Sending your request…");
-    const res = await httpsCallable(fns, "submit")({
-      advertiser: d.advertiser, ad: d.ad, apps: payloadApps, countries: d.countries,
-      startDate: d.startDate, budget: { target: d.target }, terms: d.terms, website: d.website,
-    });
-    $("doneMail").textContent = d.advertiser.email;
+    const body = { ad: d.ad, apps: payloadApps, countries: d.countries, startDate: d.startDate, budget: { target: d.target }, terms: d.terms, website: d.website };
+    const res = RESUB
+      ? await httpsCallable(fns, "statusResubmit")({ ...RESUB, ...body })
+      : await httpsCallable(fns, "submit")({ advertiser: d.advertiser, ...body });
+    if (RESUB) {
+      $("doneTitle").textContent = "New version received";
+      $("doneText").textContent = "Thank you! We will review your changes and email you the result.";
+      $("doneHint").style.display = "none";
+      $("doneLink").href = $("backLink").href; $("doneLink").style.display = "inline-block";
+    } else {
+      $("doneMail").textContent = d.advertiser.email;
+    }
     $("doneRef").textContent = (res.data && res.data.ref) || "";
     $("f").style.display = "none"; $("done").style.display = "block";
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -459,6 +514,8 @@ $("f").addEventListener("submit", async ev => {
       say("err", "Too many requests from your connection. Please try again in an hour.");
     } else if (e && e.code === "functions/failed-precondition") {
       say("err", e.message);
+    } else if (e && e.code === "functions/not-found") {
+      say("err", "This link is not valid any more. Please use the link from the email we sent you.");
     } else if (e && e.code && String(e.code).startsWith("storage/")) {
       say("err", "A file could not be uploaded. Check your connection and try again.");
     } else {

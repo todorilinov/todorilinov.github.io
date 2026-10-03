@@ -2,22 +2,13 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const { sniff, checkFile, validateInput } = require('../lib/spec');
-const { processSubmission, InvalidRequest, RateLimited } = require('../lib/submit');
+const { processSubmission, processResubmission, InvalidRequest, RateLimited, NotAllowed } = require('../lib/submit');
 
 // ── helpers ─────────────────────────────────────────────────────────────────
-const png = (w, h, pad = 0) => {
-  const b = Buffer.alloc(33 + pad);
-  Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(b);
-  b.writeUInt32BE(13, 8); b.write('IHDR', 12); b.writeUInt32BE(w, 16); b.writeUInt32BE(h, 20); b[24] = 8; b[25] = 2;
-  return b;
-};
-const gif = (w, h) => {
-  const b = Buffer.alloc(20); b.write('GIF89a'); b.writeUInt16LE(w, 6); b.writeUInt16LE(h, 8); return b;
-};
-const mp4 = (size = 100) => { const b = Buffer.alloc(size); b.writeUInt32BE(24, 0); b.write('ftypisom', 4); return b; };
-
+const { FakeDb, FakeBucket, png, gif, mp4, makeCtx } = require('./fakes');
 const NOW = Date.parse('2026-10-10T12:00:00Z');
 const goodPath = 'uploads/AbCdEfGhIjKlMnOpQr/banner.png';
+const SID = '-Npush0000000000001';
 
 const input = (over = {}) => ({
   advertiser: { name: 'Ann', company: 'Acme', email: 'ann@acme.com', country: 'bg', vat: '' },
@@ -31,35 +22,9 @@ const input = (over = {}) => ({
 });
 
 function fakes(files) {
-  const store = new Map(Object.entries(files));
-  const db = {
-    data: {},
-    ref(path) {
-      const self = this;
-      return {
-        push() { return { key: '-Nabc123def456ghi789' }; },
-        async set(v) { self.data[path] = JSON.parse(JSON.stringify(v)); },
-        async transaction(fn) { const v = fn(self.data[path]); self.data[path] = v; return { snapshot: { val: () => v } }; },
-      };
-    },
-  };
-  const moved = [];
-  const bucket = {
-    file(path) {
-      return {
-        async exists() { return [store.has(path)]; },
-        async getMetadata() { return [{ size: String(store.get(path).length) }]; },
-        async download(o) { const b = store.get(path); return [o && o.end != null ? b.slice(o.start, o.end + 1) : b]; },
-        async move(dest) { moved.push([path, dest]); },
-      };
-    },
-  };
-  const mails = [];
-  const ctx = {
-    now: NOW, ip: '1.2.3.4', db, bucket, adminEmail: 'admin@x.dev', baseUrl: 'https://tiapps.dev',
-    newToken: () => 'TOKEN123', sendMail: async m => { mails.push(m); }, log: () => {},
-  };
-  return { ctx, db, moved, mails };
+  const db = new FakeDb(), bucket = new FakeBucket(files);
+  const { ctx, mails } = makeCtx(db, bucket);
+  return { ctx, db, bucket, mails, moved: () => bucket.log.filter(x => x[0] === 'move').map(x => x.slice(1)) };
 }
 
 // ── file recognition ────────────────────────────────────────────────────────
@@ -139,18 +104,18 @@ test('a good request is saved, files are moved, both sides get an email', async 
   const r = await processSubmission(input(), ctx);
   assert.strictEqual(r.ok, true);
   assert.match(r.ref, /^[0-9A-F]{8}$/);
-  const rec = db.data['submissions/-Nabc123def456ghi789'];
+  const rec = db.read('submissions/' + SID);
   assert.strictEqual(rec.status, 'pending');
   assert.strictEqual(rec.advertiser.email, 'ann@acme.com');
   assert.strictEqual(rec.budget.target, 100000);
-  assert.deepStrictEqual(rec.slots.tvdsp.banner.file, 'submissions/-Nabc123def456ghi789/tvdsp_banner.png');
+  assert.deepStrictEqual(rec.slots.tvdsp.banner.file, 'submissions/' + SID + '/tvdsp_banner.png');
   assert.strictEqual(rec.slots.tvdsp.banner.w, 640);
-  assert.ok(rec.tokenHash && rec.tokenHash !== 'TOKEN123', 'only the hash of the token is stored');
-  assert.strictEqual(JSON.stringify(rec).includes('TOKEN123'), false);
-  assert.deepStrictEqual(moved, [[goodPath, 'submissions/-Nabc123def456ghi789/tvdsp_banner.png']]);
+  assert.strictEqual(JSON.stringify(rec).includes('TOKEN1234567890abcdef'), false, 'the token is not in the request itself');
+  assert.strictEqual(db.read('tokens/' + SID), 'TOKEN1234567890abcdef', 'it is in tokens/, which only the functions read');
+  assert.deepStrictEqual(moved(), [[goodPath, 'submissions/' + SID + '/tvdsp_banner.png']]);
   assert.strictEqual(mails.length, 2);
   assert.strictEqual(mails[0].to, 'ann@acme.com');
-  assert.match(mails[0].text, /ad-status\.html\?t=TOKEN123/);
+  assert.match(mails[0].text, /ad-status\.html\?i=-Npush0000000000001&t=TOKEN1234567890abcdef/);
   assert.strictEqual(mails[1].to, 'admin@x.dev');
   assert.strictEqual(mails[1].replyTo, 'ann@acme.com');
 });
@@ -158,8 +123,8 @@ test('a good request is saved, files are moved, both sides get an email', async 
 test('a wrong file is reported on its slot and nothing is saved', async () => {
   const { ctx, db, moved, mails } = fakes({ [goodPath]: png(300, 100) });
   await assert.rejects(() => processSubmission(input(), ctx), e => e instanceof InvalidRequest && e.errors[0].field === 'file:tvdsp/banner');
-  assert.deepStrictEqual(Object.keys(db.data).filter(k => k.startsWith('submissions')), []);
-  assert.strictEqual(moved.length, 0);
+  assert.strictEqual(db.read('submissions'), undefined);
+  assert.strictEqual(moved().length, 0);
   assert.strictEqual(mails.length, 0);
 });
 
@@ -182,7 +147,7 @@ test('the hidden field catches bots: success, but nothing stored or sent', async
   const { ctx, db, mails } = fakes({ [goodPath]: png(640, 100) });
   const r = await processSubmission(input({ website: 'http://spam' }), ctx);
   assert.deepStrictEqual(r, { ok: true });
-  assert.deepStrictEqual(db.data, {});
+  assert.deepStrictEqual(db.root, {});
   assert.strictEqual(mails.length, 0);
 });
 
@@ -197,5 +162,5 @@ test('a failing email does not lose the saved request', async () => {
   ctx.sendMail = async () => { throw new Error('Resend down'); };
   const r = await processSubmission(input(), ctx);
   assert.strictEqual(r.ok, true);
-  assert.ok(db.data['submissions/-Nabc123def456ghi789']);
+  assert.ok(db.read('submissions/' + SID));
 });

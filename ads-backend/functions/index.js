@@ -6,6 +6,12 @@
 // Phase B:
 //  - submit          : advertise.html sends a request here; it is checked, saved and both sides get an email
 //  - cleanupUploads  : deletes abandoned files in uploads/ every day
+// Phase C:
+//  - adminReview     : approve (price + payment link), reject (reason) or send back (note); the advertiser gets an email
+//  - adminMarkPaid   : payment arrived: files are copied, a paused campaign is created
+//  - statusGet       : ad-status.html asks for the state of a request (id + secret token)
+//  - statusResubmit  : the advertiser sends a new version of a request that was sent back or rejected
+//  - expireUnpaid    : approvals nobody paid within 14 days expire
 
 const { onValueWritten } = require('firebase-functions/v2/database');
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
@@ -19,7 +25,8 @@ const crypto = require('crypto');
 
 const { APP_KEYS, buildFeed, sameFeed } = require('./lib/feed');
 const { sendEmail } = require('./lib/email');
-const { processSubmission, InvalidRequest, RateLimited } = require('./lib/submit');
+const { processSubmission, processResubmission, InvalidRequest, RateLimited, NotAllowed } = require('./lib/submit');
+const { review, markPaid, expireUnpaid, statusGet, ReviewError } = require('./lib/review');
 
 // The database is in europe-west1, so the Admin SDK needs its URL spelled out.
 initializeApp({
@@ -106,34 +113,74 @@ exports.sendTestEmail = onCall({ ...CALLABLE, secrets: [RESEND_API_KEY] }, async
   }
 });
 
-exports.submit = onCall(
-  { ...CALLABLE, secrets: [RESEND_API_KEY], timeoutSeconds: 120, memory: '512MiB' },
-  async request => {
-    if (APPCHECK_REQUIRED.value() === 'true' && !request.app) {
-      throw new HttpsError('failed-precondition', 'The request could not be verified. Please reload the page and try again.');
-    }
-    const fwd = request.rawRequest && request.rawRequest.headers && request.rawRequest.headers['x-forwarded-for'];
-    const ip = (typeof fwd === 'string' ? fwd.split(',')[0].trim() : '') || (request.rawRequest && request.rawRequest.ip) || '';
-    try {
-      return await processSubmission(request.data, {
-        now: Date.now(),
-        ip,
-        db: getDatabase(),
-        bucket: getStorage().bucket(),
-        sendMail: m => sendEmail({ apiKey: RESEND_API_KEY.value(), from: MAIL_FROM.value(), ...m }),
-        newToken: () => crypto.randomBytes(16).toString('base64url'),
-        adminEmail: ADMIN_EMAIL.value(),
-        baseUrl: 'https://tiapps.dev',
-        log: (msg, extra) => logger.warn(msg, extra),
-      });
-    } catch (e) {
-      if (e instanceof InvalidRequest) throw new HttpsError('invalid-argument', e.message, { errors: e.errors });
-      if (e instanceof RateLimited) throw new HttpsError('resource-exhausted', e.message);
-      logger.error('submit failed', { error: e.message, stack: e.stack });
-      throw new HttpsError('internal', 'Something went wrong on our side. Please try again later.');
-    }
+/** Everything the logic in lib/ needs from the outside. */
+function makeCtx(request) {
+  const fwd = request && request.rawRequest && request.rawRequest.headers && request.rawRequest.headers['x-forwarded-for'];
+  const ip = (typeof fwd === 'string' ? fwd.split(',')[0].trim() : '') || (request && request.rawRequest && request.rawRequest.ip) || '';
+  const bucket = getStorage().bucket();
+  return {
+    now: Date.now(),
+    ip,
+    db: getDatabase(),
+    bucket,
+    bucketName: bucket.name,
+    sendMail: m => sendEmail({ apiKey: RESEND_API_KEY.value(), from: MAIL_FROM.value(), ...m }),
+    newToken: () => crypto.randomBytes(16).toString('base64url'),
+    adminEmail: ADMIN_EMAIL.value(),
+    baseUrl: 'https://tiapps.dev',
+    log: (msg, extra) => logger.warn(msg, extra),
+  };
+}
+
+/** Runs [fn] and turns the errors of lib/ into the errors the browser understands. */
+async function guarded(name, fn) {
+  try {
+    return await fn();
+  } catch (e) {
+    if (e instanceof InvalidRequest) throw new HttpsError('invalid-argument', e.message, { errors: e.errors });
+    if (e instanceof RateLimited) throw new HttpsError('resource-exhausted', e.message);
+    if (e instanceof NotAllowed || e instanceof ReviewError) throw new HttpsError(e.code, e.message);
+    logger.error(name + ' failed', { error: e.message, stack: e.stack });
+    throw new HttpsError('internal', 'Something went wrong on our side. Please try again later.');
   }
-);
+}
+
+function requireAppCheck(request) {
+  if (APPCHECK_REQUIRED.value() === 'true' && !request.app) {
+    throw new HttpsError('failed-precondition', 'The request could not be verified. Please reload the page and try again.');
+  }
+}
+
+const PUBLIC_CALL = { ...CALLABLE, secrets: [RESEND_API_KEY], timeoutSeconds: 120, memory: '512MiB' };
+
+exports.submit = onCall(PUBLIC_CALL, request => {
+  requireAppCheck(request);
+  return guarded('submit', () => processSubmission(request.data, makeCtx(request)));
+});
+
+exports.statusResubmit = onCall(PUBLIC_CALL, request => {
+  requireAppCheck(request);
+  return guarded('statusResubmit', () => processResubmission(request.data, makeCtx(request)));
+});
+
+exports.statusGet = onCall({ ...CALLABLE, memory: '256MiB' }, request => {
+  return guarded('statusGet', () => statusGet(request.data, makeCtx(request)));
+});
+
+exports.adminReview = onCall({ ...CALLABLE, secrets: [RESEND_API_KEY] }, request => {
+  requireAdmin(request);
+  return guarded('adminReview', () => review(request.data || {}, makeCtx(request)));
+});
+
+exports.adminMarkPaid = onCall({ ...CALLABLE, secrets: [RESEND_API_KEY], timeoutSeconds: 120, memory: '512MiB' }, request => {
+  requireAdmin(request);
+  return guarded('adminMarkPaid', () => markPaid(request.data || {}, makeCtx(request)));
+});
+
+exports.expireUnpaid = onSchedule({ schedule: 'every day 04:00', timeZone: 'UTC', secrets: [RESEND_API_KEY] }, async () => {
+  const n = await expireUnpaid(makeCtx(null));
+  logger.info('expireUnpaid', { expired: n });
+});
 
 // Files uploaded by the form but never submitted (or already moved) must not pile up.
 exports.cleanupUploads = onSchedule({ schedule: 'every day 03:30', timeZone: 'UTC' }, async () => {

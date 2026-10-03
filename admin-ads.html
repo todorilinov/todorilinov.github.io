@@ -65,6 +65,17 @@
   .pill.paused{background:rgba(255,176,32,.13);color:var(--warn)}
   .pill.draft{background:rgba(154,164,175,.15);color:var(--dim)}
   .pill.pending{background:rgba(0,204,255,.13);color:var(--accent)}
+  .pill.approved,.pill.paid{background:rgba(0,255,153,.12);color:var(--ok)}
+  .pill.changes_requested{background:rgba(255,176,32,.13);color:var(--warn)}
+  .pill.rejected{background:rgba(255,92,92,.13);color:var(--bad)}
+  .pill.expired,.pill.finished{background:rgba(154,164,175,.15);color:var(--dim)}
+  .rqact{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0 4px}
+  #rqForm{flex-basis:100%}
+  .rqform{border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:6px;background:#0f1319;max-width:620px}
+  .rqform label{display:block;margin:0 0 4px;color:var(--dim);font-size:12.5px}
+  .rqform input,.rqform textarea{width:100%;background:#0b0f14;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:9px 11px;font:inherit;margin-bottom:10px}
+  .rqform textarea{min-height:84px}
+  .rqform .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .tabs{display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--line)}
   .tab{background:transparent;color:var(--dim);padding:9px 16px;border-radius:8px 8px 0 0;border-bottom:2px solid transparent;font-weight:600}
   .tab.on{color:var(--txt);border-bottom-color:var(--accent)}
@@ -1149,6 +1160,8 @@ async function save() {
       apps: Object.fromEntries(f.apps.map(a => [a, true])),
       slots, createdAt: old ? old.createdAt || now : now, updatedAt: now,
     });
+    // Fields the editor has no inputs for (a campaign made from a paid request) must survive an edit.
+    if (old) for (const k of ["source", "submissionId", "budget", "delivered"]) if (old[k] !== undefined) rec[k] = old[k];
     say("Saving…");
     await set(ref(db, "campaigns/" + id), rec);
     campaigns[id] = rec;
@@ -1246,11 +1259,20 @@ async function renderSubDetail(id) {
       <dt>Countries</dt><dd>${r.countries && r.countries.length ? esc(r.countries.map(countryName).join(", ")) : "all"}</dd>
       <dt>Impressions</dt><dd>${esc(Number(r.budget && r.budget.target || 0).toLocaleString())}</dd>
       <dt>Requested start</dt><dd>${esc(fmtDay(r.from) || "—")}</dd>
+      ${r.final ? `<dt>Price</dt><dd>${esc(Number(r.final.amount).toFixed(2))} ${esc(r.final.currency)}${r.final.note ? "<br>" + esc(r.final.note) : ""}</dd>` : ""}
+      ${r.payment && r.payment.link ? `<dt>Payment link</dt><dd>${/^https:\/\//.test(r.payment.link) ? `<a href="${esc(r.payment.link)}" target="_blank" rel="noopener noreferrer">${esc(r.payment.link)}</a>` : esc(r.payment.link)}</dd>` : ""}
+      ${r.payBy ? `<dt>Pay by</dt><dd>${esc(fmtDay(r.payBy))}</dd>` : ""}
+      ${r.payment && r.payment.paidAt ? `<dt>Paid</dt><dd>${esc(fmtTime(r.payment.paidAt))}${r.payment.ref ? " · " + esc(r.payment.ref) : ""}</dd>` : ""}
+      ${r.review ? `<dt>Sent to advertiser</dt><dd>${esc(r.review.note || r.review.rejectReason)}</dd>` : ""}
+      ${r.campaignId ? `<dt>Campaign</dt><dd><code>${esc(r.campaignId)}</code></dd>` : ""}
       <dt>Terms accepted</dt><dd>${r.termsAccepted ? esc(r.termsAccepted.version) + ", " + esc(fmtTime(r.termsAccepted.at)) : "—"}</dd>
       <dt>History</dt><dd>${log || "—"}</dd>
     </dl>
-    <h2 style="margin-top:6px">Files</h2>
+    <div id="rqActions">${actionsHtml(r)}</div>
+    <div id="rqFormErr"></div>
+    <h2 style="margin-top:14px">Files</h2>
     <div class="rfiles" id="rqFiles"></div>`;
+  wireActions(id, r);
   $("rqClose").onclick = closeSub;
   $("rqDel").onclick = () => deleteSub(id);
 
@@ -1267,6 +1289,56 @@ async function renderSubDetail(id) {
       holder.firstChild.src = url;
     }).catch(e => { card.querySelector(".media").textContent = "Could not load the file (" + (e.code || e.message) + ")."; });
   }
+}
+
+/* ── Review actions ───────────────────────────────────────────────────────── */
+function actionsHtml(r) {
+  if (r.status === "pending") return `<div class="rqact">
+      <button class="primary" data-a="approve">Approve…</button>
+      <button class="ghost" data-a="changes">Request changes…</button>
+      <button class="danger" data-a="reject">Reject…</button><div id="rqForm"></div></div>`;
+  if (r.status === "approved") return `<div class="rqact">
+      <button class="primary" data-a="paid">Mark as paid…</button>
+      <button class="danger" data-a="reject">Reject…</button><div id="rqForm"></div></div>`;
+  if (r.status === "paid" && r.campaignId) return `<div class="rqact">
+      <button class="primary" id="rqOpenCamp">Open the campaign</button>
+      <span style="color:var(--dim)">It starts paused. Check it and press Activate in Campaigns.</span></div>`;
+  if (r.status === "changes_requested" || r.status === "rejected")
+    return `<div class="rqact" style="color:var(--dim)">Waiting for the advertiser to send a new version.</div>`;
+  return "";
+}
+
+function wireActions(id, r) {
+  const form = html => { const f = $("rqForm"); if (f) f.innerHTML = `<div class="rqform">${html}<div id="rqErrBox"></div></div>`; };
+  const fail = e => { const b = $("rqErrBox") || $("rqFormErr"); b.innerHTML = `<div class="err" style="margin-top:8px">${esc(e.message || e.code)}</div>`; };
+  const call = async (name, data, btn) => {
+    btn.disabled = true;
+    try { await httpsCallable(fns, name)({ id, ...data }); }
+    catch (e) { btn.disabled = false; return fail(e); }
+    if (name === "adminMarkPaid") await load();
+    await loadSubs();
+  };
+  document.querySelectorAll("#rqActions [data-a]").forEach(b => b.onclick = () => {
+    const a = b.dataset.a;
+    if (a === "approve") {
+      form(`<label for="rqAmt">Price (EUR)</label><input id="rqAmt" type="number" min="0.01" step="0.01" placeholder="e.g. 120">
+        <label for="rqLink">Payment link (Stripe, PayPal…)</label><input id="rqLink" type="url" placeholder="https://">
+        <label for="rqNote">Note for the advertiser (optional)</label><textarea id="rqNote"></textarea>
+        <div class="row"><button class="primary" id="rqGo">Approve and email the advertiser</button></div>`);
+      $("rqGo").onclick = () => call("adminReview", { action: "approve", amount: Number($("rqAmt").value), paymentLink: $("rqLink").value.trim(), note: $("rqNote").value }, $("rqGo"));
+    } else if (a === "changes" || a === "reject") {
+      const rej = a === "reject";
+      form(`<label for="rqNote">${rej ? "Reason: the advertiser will read this" : "What should the advertiser change? They will read this"}</label><textarea id="rqNote"></textarea>
+        <div class="row"><button class="${rej ? "danger" : "primary"}" id="rqGo">${rej ? "Reject and email the advertiser" : "Send back and email the advertiser"}</button></div>`);
+      $("rqGo").onclick = () => call("adminReview", { action: a, note: $("rqNote").value }, $("rqGo"));
+    } else if (a === "paid") {
+      form(`<label for="rqRef">Payment reference (optional, for your records)</label><input id="rqRef" type="text" maxlength="80">
+        <div class="row"><button class="primary" id="rqGo">Payment received: create the campaign</button></div>`);
+      $("rqGo").onclick = () => call("adminMarkPaid", { reference: $("rqRef").value }, $("rqGo"));
+    }
+  });
+  const open = $("rqOpenCamp");
+  if (open) open.onclick = () => { showTab("camp"); openEditor(r.campaignId); };
 }
 
 async function deleteSub(id) {
