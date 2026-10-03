@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advertise with TI Apps</title>
+<meta name="description" content="Show your ad inside WorldRadio, TV DSP Center and FakeLocation.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0E16; --card:#111726; --card-edge:#1C2436;
+    --blue:#1E7BE0; --cyan:#19A0EA; --orange:#F5821A;
+    --text:#E9EDF5; --muted:#8A93A8; --ok:#22E39A; --bad:#F55A5A;
+    --mono:'IBM Plex Mono',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:'Archivo',sans-serif;font-variation-settings:'wdth' 100;
+       line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh}
+  a{color:var(--cyan)}
+  .wrap{max-width:820px;margin:0 auto;padding:0 20px}
+  header{padding:22px 0;border-bottom:1px solid var(--card-edge)}
+  .logo{font-weight:900;font-variation-settings:'wdth' 125;font-size:1.3rem;letter-spacing:.02em;text-decoration:none;color:var(--text)}
+  .logo .ti{color:var(--cyan)} .logo .apps{color:var(--orange)}
+  h1{font-size:clamp(1.7rem,4vw,2.3rem);font-weight:800;font-variation-settings:'wdth' 110;margin:38px 0 10px;line-height:1.15}
+  .lead{color:var(--muted);max-width:60ch;margin-bottom:28px}
+  .card{background:var(--card);border:1px solid var(--card-edge);border-radius:14px;padding:24px;margin-bottom:18px}
+  .card h2{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);font-family:var(--mono);font-weight:500;margin-bottom:18px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid .full{grid-column:1/-1}
+  @media(max-width:620px){.grid{grid-template-columns:1fr}}
+  .field label,.lbl{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+  .field label i{text-transform:none;letter-spacing:0;font-style:normal;color:#5A6478}
+  input[type=text],input[type=email],input[type=url],input[type=date],input[type=number],textarea,select{
+    width:100%;background:#0B101C;border:1px solid var(--card-edge);border-radius:10px;color:var(--text);
+    padding:11px 13px;font:inherit;font-size:.97rem}
+  input:focus,textarea:focus,select:focus{outline:2px solid var(--cyan);outline-offset:1px;border-color:transparent}
+  textarea{min-height:86px;resize:vertical}
+  .hint{font-size:.8rem;color:var(--muted);margin-top:6px}
+  .err{color:var(--bad);font-size:.84rem;margin-top:6px}
+  .err:empty{display:none}
+  .invalid input,.invalid textarea,.invalid select{border-color:var(--bad)}
+  .count{float:right;color:#5A6478}
+
+  .app{border:1px solid var(--card-edge);border-radius:12px;margin-bottom:12px;overflow:hidden}
+  .app>.head{display:flex;gap:12px;align-items:center;padding:14px 16px;cursor:pointer;background:#0E1424}
+  .app>.head b{font-weight:700}
+  .app>.head small{color:var(--muted);display:block;font-size:.82rem}
+  .app input[type=checkbox]{width:19px;height:19px;accent-color:var(--cyan);flex:none}
+  .app .body{padding:16px;display:none;border-top:1px solid var(--card-edge)}
+  .app.on .body{display:block}
+  .cells{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+  .cell{border:1px solid var(--card-edge);border-radius:10px;padding:12px}
+  .cell .t{font-weight:700;font-size:.92rem}
+  .cell .s{font-size:.78rem;color:var(--muted);margin-bottom:8px}
+  .drop{position:relative;border:1.5px dashed #2B3550;border-radius:8px;min-height:64px;display:flex;align-items:center;
+        justify-content:center;color:var(--muted);font-size:.88rem;text-align:center;padding:8px;overflow:hidden;background:#0B101C}
+  .drop:hover,.drop.drag{border-color:var(--cyan);color:var(--cyan)}
+  .drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+  .drop .pv:empty{display:none}
+  .drop .pv img,.drop .pv video{max-width:100%;max-height:200px;display:block;pointer-events:none}
+  .cell .msg{font-size:.8rem;margin-top:6px;color:var(--muted);word-break:break-word}
+  .cell .msg.ok{color:var(--ok)} .cell .msg.bad{color:var(--bad)}
+  .cell .rm{background:none;border:none;color:var(--muted);font:inherit;font-size:.8rem;text-decoration:underline;cursor:pointer;margin-top:4px}
+  .rule{font-size:.82rem;color:var(--muted);margin-top:12px}
+
+  .radio{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:12px}
+  .radio label{display:flex;gap:8px;align-items:center;cursor:pointer;font-size:.97rem;text-transform:none;letter-spacing:0;font-family:inherit;color:var(--text);margin:0}
+  .radio input{accent-color:var(--cyan)}
+  #ccBox{display:none;border:1px solid var(--card-edge);border-radius:10px;padding:12px}
+  #ccBox.on{display:block}
+  #ccChips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+  .chip{background:rgba(25,160,234,.13);color:var(--cyan);border:1px solid rgba(25,160,234,.35);border-radius:14px;padding:1px 4px 1px 10px;font-size:.8rem}
+  .chip b{cursor:pointer;padding:0 6px;color:var(--muted)}
+  #ccList{max-height:230px;overflow:auto;border:1px solid var(--card-edge);border-radius:8px;margin-top:8px}
+  .ccrow{display:flex;gap:9px;align-items:center;padding:6px 10px;border-bottom:1px solid #151C2E;cursor:pointer;font-size:.9rem}
+  .ccrow:hover{background:rgba(255,255,255,.03)}
+  .ccrow code{margin-left:auto;color:#5A6478;font-size:.76rem}
+
+  .consent{display:flex;gap:11px;align-items:flex-start;font-size:.92rem}
+  .consent input{margin-top:4px;width:18px;height:18px;accent-color:var(--cyan);flex:none}
+  .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+  .submit{margin-top:18px;background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff;border:none;border-radius:10px;
+          padding:14px 30px;font:inherit;font-weight:700;font-size:1.02rem;cursor:pointer}
+  .submit:disabled{opacity:.55;cursor:default}
+  .status{margin-top:14px;padding:12px 14px;border-radius:10px;font-size:.93rem;display:none}
+  .status.err{display:block;background:rgba(245,90,90,.12);border:1px solid rgba(245,90,90,.35);color:#F1A5A5}
+  .status.info{display:block;background:rgba(25,160,234,.1);border:1px solid rgba(25,160,234,.3);color:#9CD6F4}
+  #done{display:none;text-align:center;padding:50px 20px}
+  #done h2{font-size:1.6rem;margin-bottom:10px;color:var(--ok);letter-spacing:0;text-transform:none;font-family:inherit;font-weight:800}
+  #done .ref{font-family:var(--mono);font-size:1.3rem;letter-spacing:.12em;margin:16px 0;color:var(--text)}
+  footer{margin:40px 0;color:var(--muted);font-size:.84rem;text-align:center}
+</style>
+</head>
+<body>
+<header><div class="wrap"><a class="logo" href="/"><span class="ti">TI</span> <span class="apps">Apps</span></a></div></header>
+
+<main class="wrap">
+  <h1>Advertise in our apps</h1>
+  <p class="lead">Show your ad inside WorldRadio, TV DSP Center and FakeLocation. Fill in the form and add your banners. We review every ad by hand, usually within 2 working days, and you pay only after it is approved.</p>
+
+  <form id="f" novalidate autocomplete="on">
+    <div class="card">
+      <h2>1 · About you</h2>
+      <div class="grid">
+        <div class="field" data-f="name"><label for="name">Your name</label><input type="text" id="name" maxlength="80" autocomplete="name"><div class="err"></div></div>
+        <div class="field" data-f="company"><label for="company">Company <i>(optional)</i></label><input type="text" id="company" maxlength="80" autocomplete="organization"><div class="err"></div></div>
+        <div class="field" data-f="email"><label for="email">Email</label><input type="email" id="email" maxlength="120" autocomplete="email"><div class="err"></div><div class="hint">We send the review result and the status link here.</div></div>
+        <div class="field" data-f="country"><label for="country">Your country</label><select id="country" autocomplete="country"><option value="">Choose…</option></select><div class="err"></div></div>
+        <div class="field full" data-f="vat"><label for="vat">VAT / tax ID <i>(optional)</i></label><input type="text" id="vat" maxlength="30"><div class="err"></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>2 · Your ad</h2>
+      <div class="grid">
+        <div class="field full" data-f="title"><label for="title">Title</label><input type="text" id="title" maxlength="60"><div class="err"></div><div class="hint">For your own reference and our review. 60 characters at most.</div></div>
+        <div class="field full" data-f="description"><label for="description">Description <i>(optional)</i> <span class="count" id="descCount">0/300</span></label><textarea id="description" maxlength="300"></textarea><div class="err"></div></div>
+        <div class="field full" data-f="clickUrl"><label for="clickUrl">Link where the ad leads</label><input type="url" id="clickUrl" maxlength="300" placeholder="https://"><div class="err"></div><div class="hint">Starts with https://, or market:// for Google Play.</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>3 · Apps and formats</h2>
+      <p class="hint" style="margin:-6px 0 14px">Tick the apps you want, then add a file for at least one format. Fewer formats means fewer places your ad can appear.</p>
+      <div id="apps"></div>
+      <div class="err" id="appsErr" data-f="apps"></div>
+      <p class="rule">Images up to 1 MB (PNG, WebP or JPEG), GIFs up to 2 MB, videos up to 6 MB (MP4, 9:16, 15 seconds at most). The size of the picture must be exact.</p>
+    </div>
+
+    <div class="card">
+      <h2>4 · Audience</h2>
+      <div class="radio">
+        <label><input type="radio" name="aud" value="all" checked> All countries</label>
+        <label><input type="radio" name="aud" value="some"> Only selected countries</label>
+      </div>
+      <div id="ccBox">
+        <div id="ccChips"></div>
+        <input type="text" id="ccSearch" placeholder="Search a country" aria-label="Search a country">
+        <div id="ccList"></div>
+      </div>
+      <div class="err" data-f="countries"></div>
+    </div>
+
+    <div class="card">
+      <h2>5 · Budget and start</h2>
+      <div class="grid">
+        <div class="field" data-f="target"><label for="target">Impressions</label>
+          <select id="target">
+            <option value="50000">50,000</option><option value="100000" selected>100,000</option>
+            <option value="250000">250,000</option><option value="500000">500,000</option>
+            <option value="1000000">1,000,000</option><option value="custom">Other number…</option>
+          </select>
+          <input type="number" id="targetCustom" min="10000" max="10000000" step="1000" placeholder="10,000 to 10,000,000" style="display:none;margin-top:8px">
+          <div class="err"></div>
+          <div class="hint">One impression is one time your ad is shown. We confirm the price after the review, and you pay only after approval.</div>
+        </div>
+        <div class="field" data-f="startDate"><label for="startDate">Start date</label><input type="date" id="startDate"><div class="err"></div><div class="hint">At least 3 days from today, so we can review the ad.</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="hp" aria-hidden="true"><label>Website <input type="text" id="website" tabindex="-1" autocomplete="off"></label></div>
+      <div data-f="terms">
+        <label class="consent"><input type="checkbox" id="terms">
+          <span>I own the rights to this content and it is not misleading or unlawful. I accept the advertising terms and the content policy, and that you keep my details to handle this request (see the <a href="privacy.html" target="_blank" rel="noopener">privacy policy</a>).</span></label>
+        <div class="err"></div>
+      </div>
+      <button class="submit" id="send" type="submit">Send request</button>
+      <div class="status" id="status" role="status" aria-live="polite"></div>
+    </div>
+  </form>
+
+  <section id="done" class="card" aria-live="polite">
+    <h2>Request received</h2>
+    <p>Thank you! We will review your ad and email you at <b id="doneMail"></b>.</p>
+    <div class="ref" id="doneRef"></div>
+    <p class="hint">Keep this reference. We also sent you a confirmation email; if you do not see it, check the spam folder.</p>
+  </section>
+</main>
+<footer class="wrap">TI Apps · <a href="privacy.html">Privacy</a> · <a href="contact.html">Contact</a></footer>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getStorage, ref as sRef, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
+
+/* These identify the project, they don't grant access: the rules and the functions decide what is allowed. */
+const firebaseConfig = {
+  apiKey: "AIzaSyAV7LkuxHUt9HtERzGijsQodjm7-mfaXZU",
+  authDomain: "tiapps-ads.firebaseapp.com",
+  databaseURL: "https://tiapps-ads-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "tiapps-ads",
+  storageBucket: "tiapps-ads.firebasestorage.app",
+  messagingSenderId: "664823611213",
+  appId: "1:664823611213:web:ecea2626c1a506d1a24104"
+};
+// reCAPTCHA v3 site key for App Check. Empty = App Check is off (the function does not require it yet).
+const APP_CHECK_SITE_KEY = "";
+
+const app = initializeApp(firebaseConfig);
+if (APP_CHECK_SITE_KEY) {
+  const ac = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js");
+  ac.initializeAppCheck(app, { provider: new ac.ReCaptchaV3Provider(APP_CHECK_SITE_KEY), isTokenAutoRefreshEnabled: true });
+}
+const storage = getStorage(app);
+const fns = getFunctions(app, "europe-west1");
+
+/* ── What can be bought (same as the server, functions/lib/spec.js) ───────── */
+const APPS = {
+  worldradio:   { name: "WorldRadio",    about: "Internet radio, listeners worldwide", slots: ["banner", "mrec", "fullscreen"] },
+  tvdsp:        { name: "TV DSP Center", about: "Audio processing for phones and tablets", slots: ["banner"] },
+  fakelocation: { name: "FakeLocation",  about: "Location tools for Android", slots: ["banner"] },
+};
+const SLOTS = {
+  banner:     { label: "Banner",           w: 640, h: 100,  types: ["image", "gif"],  note: "Shown at the bottom of the screen" },
+  mrec:       { label: "Medium rectangle", w: 600, h: 500,  types: ["image", "gif"],  note: "Shown inside the content" },
+  fullscreen: { label: "Full screen",      w: 720, h: 1280, types: ["video", "image"], note: "Shown when a listener removes ads for an hour" },
+};
+const KINDS = { "image/png": "image", "image/webp": "image", "image/jpeg": "image", "image/gif": "gif", "video/mp4": "video" };
+const MAX = { image: 1024 * 1024, gif: 2 * 1024 * 1024, video: 6 * 1024 * 1024 };
+const EXT = { "image/png": "png", "image/webp": "webp", "image/jpeg": "jpg", "image/gif": "gif", "video/mp4": "mp4" };
+const TYPE_TEXT = { image: "an image (PNG, WebP or JPEG)", gif: "a GIF", video: "an MP4 video" };
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const MB = n => (n / 1048576).toFixed(n < 1048576 ? 2 : 1) + " MB";
+
+/* ── Countries ────────────────────────────────────────────────────────────── */
+const ALL_CC = ("AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ " +
+  "CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR " +
+  "GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP " +
+  "KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ " +
+  "NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW " +
+  "SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ " +
+  "UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS XK YE YT ZA ZM ZW").split(" ");
+const regionNames = (() => { try { return new Intl.DisplayNames(["en"], { type: "region" }); } catch { return null; } })();
+const countryName = cc => { try { return (regionNames && regionNames.of(cc)) || cc; } catch { return cc; } };
+const sorted = [...new Set(ALL_CC)].sort((a, b) => countryName(a).localeCompare(countryName(b), "en"));
+$("country").insertAdjacentHTML("beforeend", sorted.map(cc => `<option value="${cc}">${esc(countryName(cc))}</option>`).join(""));
+
+const picked = new Set();
+function renderCc() {
+  const q = $("ccSearch").value.trim().toLowerCase();
+  $("ccChips").innerHTML = [...picked].map(cc => `<span class="chip">${esc(countryName(cc))}<b data-x="${cc}" title="Remove">×</b></span>`).join("");
+  const list = sorted.filter(cc => !q || countryName(cc).toLowerCase().includes(q) || cc.toLowerCase() === q);
+  $("ccList").innerHTML = list.map(cc => `<label class="ccrow"><input type="checkbox" data-cc="${cc}" ${picked.has(cc) ? "checked" : ""}>${esc(countryName(cc))}<code>${cc}</code></label>`).join("")
+    || '<div class="hint" style="padding:12px">No match.</div>';
+}
+$("ccSearch").oninput = renderCc;
+$("ccList").onchange = e => { const cc = e.target.dataset.cc; if (!cc) return; e.target.checked ? picked.add(cc) : picked.delete(cc); renderCc(); };
+$("ccChips").onclick = e => { const cc = e.target.dataset.x; if (cc) { picked.delete(cc); renderCc(); } };
+document.querySelectorAll("input[name=aud]").forEach(r => r.onchange = () => {
+  $("ccBox").classList.toggle("on", document.querySelector("input[name=aud]:checked").value === "some");
+});
+renderCc();
+
+/* ── Apps, formats and files ──────────────────────────────────────────────── */
+const files = {};   // "app/slot" -> { file, kind, w, h }
+
+$("apps").innerHTML = Object.entries(APPS).map(([k, a]) => `
+  <div class="app" data-app="${k}">
+    <label class="head"><input type="checkbox" data-on="${k}"><span><b>${esc(a.name)}</b><small>${esc(a.about)}</small></span></label>
+    <div class="body"><div class="cells">${a.slots.map(s => {
+      const S = SLOTS[s];
+      return `<div class="cell" data-key="${k}/${s}">
+        <div class="t">${esc(S.label)}</div>
+        <div class="s">${S.w}×${S.h} px · ${S.types.map(t => ({ image: "image", gif: "GIF", video: "MP4 video" }[t])).join(" / ")}<br>${esc(S.note)}</div>
+        <div class="drop"><span class="ph">Click or drop a file</span><div class="pv"></div><input type="file" accept="${S.types.flatMap(t => t === "image" ? ["image/png", "image/webp", "image/jpeg"] : t === "gif" ? ["image/gif"] : ["video/mp4"]).join(",")}" aria-label="${esc(a.name)} ${esc(S.label)} file"></div>
+        <div class="msg"></div><button type="button" class="rm" hidden>Remove</button>
+        <div class="err" data-f="file:${k}/${s}"></div>
+      </div>`;
+    }).join("")}</div><div class="err" data-f="app:${k}"></div></div>
+  </div>`).join("");
+
+document.querySelectorAll("[data-on]").forEach(cb => cb.onchange = () => cb.closest(".app").classList.toggle("on", cb.checked));
+
+const loadImg = url => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+const loadVid = url => new Promise((res, rej) => {
+  const v = document.createElement("video"); v.preload = "metadata"; v.muted = true;
+  v.onloadedmetadata = () => res(v); v.onerror = rej; v.src = url;
+});
+
+/** Returns { kind, w, h, url } or throws an Error with a message for the advertiser. */
+async function inspect(slot, file) {
+  const S = SLOTS[slot];
+  const kind = KINDS[file.type];
+  if (!kind) throw new Error("This file type is not supported. Use PNG, WebP, JPEG, GIF or MP4.");
+  if (!S.types.includes(kind)) throw new Error(S.label + " accepts " + S.types.map(t => TYPE_TEXT[t]).join(" or ") + ".");
+  if (file.size > MAX[kind]) throw new Error("The file is " + MB(file.size) + ". The limit is " + MB(MAX[kind]) + " for this type.");
+  const url = URL.createObjectURL(file);
+  try {
+    if (kind === "video") {
+      const v = await loadVid(url);
+      if (v.duration > 15.5) throw new Error("The video is " + Math.round(v.duration) + " seconds. 15 seconds at most.");
+      if (Math.abs(v.videoWidth / v.videoHeight - 9 / 16) > 0.02) throw new Error("The video must be vertical, 9:16 (it is " + v.videoWidth + "×" + v.videoHeight + ").");
+      return { kind, w: v.videoWidth, h: v.videoHeight, url };
+    }
+    const i = await loadImg(url).catch(() => { throw new Error("The file could not be read as a picture."); });
+    if (i.naturalWidth !== S.w || i.naturalHeight !== S.h) {
+      throw new Error("The size must be exactly " + S.w + "×" + S.h + " px (this one is " + i.naturalWidth + "×" + i.naturalHeight + ").");
+    }
+    return { kind, w: i.naturalWidth, h: i.naturalHeight, url };
+  } catch (e) { URL.revokeObjectURL(url); throw e; }
+}
+
+function clearCell(cell) {
+  const key = cell.dataset.key;
+  if (files[key] && files[key].url) URL.revokeObjectURL(files[key].url);
+  delete files[key];
+  const drop = cell.querySelector(".drop");
+  drop.querySelector(".pv").innerHTML = "";
+  drop.querySelector(".ph").hidden = false;
+  drop.querySelector("input").value = "";
+  cell.querySelector(".msg").textContent = ""; cell.querySelector(".msg").className = "msg";
+  cell.querySelector(".rm").hidden = true;
+}
+
+function bindCell(cell) {
+  const [app, slot] = cell.dataset.key.split("/");
+  const drop = cell.querySelector(".drop");
+  const input = drop.querySelector("input");
+  const msg = cell.querySelector(".msg");
+  const take = async file => {
+    if (!file) return;
+    setErr("file:" + cell.dataset.key, "");
+    msg.className = "msg"; msg.textContent = "Checking…";
+    try {
+      const info = await inspect(slot, file);
+      const key = cell.dataset.key;
+      if (files[key] && files[key].url) URL.revokeObjectURL(files[key].url);
+      files[key] = { file, kind: info.kind, w: info.w, h: info.h, url: info.url };
+      drop.querySelector(".ph").hidden = true;
+      drop.querySelector(".pv").innerHTML = info.kind === "video"
+        ? `<video src="${info.url}" muted autoplay loop playsinline></video>` : `<img src="${info.url}" alt="">`;
+      msg.className = "msg ok";
+      msg.textContent = file.name + " · " + info.w + "×" + info.h + " · " + MB(file.size);
+      cell.querySelector(".rm").hidden = false;
+      setErr("app:" + app, "");
+    } catch (e) {
+      msg.className = "msg bad"; msg.textContent = e.message;
+      input.value = "";
+    }
+  };
+  input.onchange = () => take(input.files[0]);
+  drop.ondragover = e => { e.preventDefault(); drop.classList.add("drag"); };
+  drop.ondragleave = () => drop.classList.remove("drag");
+  drop.ondrop = e => { e.preventDefault(); drop.classList.remove("drag"); take(e.dataTransfer.files[0]); };
+  cell.querySelector(".rm").onclick = () => clearCell(cell);
+}
+document.querySelectorAll(".cell").forEach(bindCell);
+
+/* ── Budget and date ──────────────────────────────────────────────────────── */
+$("target").onchange = () => { $("targetCustom").style.display = $("target").value === "custom" ? "block" : "none"; };
+const ymd = ms => new Date(ms).toISOString().slice(0, 10);
+const minDate = ymd(Date.now() + 3 * 86400000);
+$("startDate").min = minDate; $("startDate").value = ymd(Date.now() + 7 * 86400000);
+$("description").oninput = () => { $("descCount").textContent = $("description").value.length + "/300"; };
+
+/* ── Errors ───────────────────────────────────────────────────────────────── */
+function setErr(field, text) {
+  document.querySelectorAll(`[data-f="${field}"]`).forEach(el => {
+    const box = el.classList.contains("err") ? el : el.querySelector(".err");
+    if (box) box.textContent = text;
+    if (!el.classList.contains("err")) el.classList.toggle("invalid", !!text);
+  });
+}
+function clearErrs() { document.querySelectorAll("[data-f]").forEach(el => { const f = el.dataset.f; setErr(f, ""); }); }
+function firstError() { return document.querySelector(".err:not(:empty), .invalid"); }
+
+/* ── Collecting and checking on the page (the server checks again) ────────── */
+const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+function collect() {
+  const apps = {};
+  document.querySelectorAll("[data-on]:checked").forEach(cb => { apps[cb.dataset.on] = {}; });
+  for (const key of Object.keys(files)) { const [a, s] = key.split("/"); if (apps[a]) apps[a][s] = files[key]; }
+  const t = $("target").value === "custom" ? Number($("targetCustom").value) : Number($("target").value);
+  return {
+    advertiser: { name: $("name").value.trim(), company: $("company").value.trim(), email: $("email").value.trim(), country: $("country").value, vat: $("vat").value.trim() },
+    ad: { title: $("title").value.trim(), description: $("description").value.trim(), clickUrl: $("clickUrl").value.trim() },
+    apps, countries: document.querySelector("input[name=aud]:checked").value === "some" ? [...picked] : [],
+    startDate: $("startDate").value, target: t, terms: $("terms").checked, website: $("website").value,
+  };
+}
+function check(d) {
+  const e = {};
+  if (!d.advertiser.name) e.name = "Enter your name.";
+  if (!EMAIL.test(d.advertiser.email)) e.email = "Enter a valid email address.";
+  if (!d.advertiser.country) e.country = "Choose your country.";
+  if (!d.ad.title) e.title = "Enter a title.";
+  if (!(d.ad.clickUrl.startsWith("https://") || d.ad.clickUrl.startsWith("market://")) || /\s/.test(d.ad.clickUrl)) e.clickUrl = "Enter a link that starts with https:// (or market:// for Google Play).";
+  const chosen = Object.keys(d.apps);
+  if (!chosen.length) e.apps = "Choose at least one app.";
+  for (const a of chosen) if (!Object.keys(d.apps[a]).length) e["app:" + a] = "Add at least one file for " + APPS[a].name + ", or untick it.";
+  if (document.querySelector("input[name=aud]:checked").value === "some" && !d.countries.length) e.countries = "Choose at least one country, or select all countries.";
+  if (!d.startDate || d.startDate < minDate) e.startDate = "The start date must be at least 3 days from today.";
+  if (!Number.isInteger(d.target) || d.target < 10000 || d.target > 10000000) e.target = "Choose between 10,000 and 10,000,000 impressions.";
+  if (!d.terms) e.terms = "You need to accept the advertising terms to continue.";
+  return e;
+}
+
+/* ── Sending ──────────────────────────────────────────────────────────────── */
+const rand = () => { const b = crypto.getRandomValues(new Uint8Array(16)); return btoa(String.fromCharCode(...b)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); };
+const say = (cls, text) => { const s = $("status"); s.className = "status" + (cls ? " " + cls : ""); s.textContent = text || ""; };
+
+function upload(key, f, onProgress) {
+  const [, slot] = key.split("/");
+  const path = "uploads/" + rand() + "/" + slot + "." + EXT[f.file.type];
+  return new Promise((resolve, reject) => {
+    const task = uploadBytesResumable(sRef(storage, path), f.file, { contentType: f.file.type });
+    task.on("state_changed", s => onProgress(Math.round(s.bytesTransferred / s.totalBytes * 100)), reject, () => resolve(path));
+  });
+}
+
+$("f").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  clearErrs(); say("");
+  const d = collect();
+  const errs = check(d);
+  if (Object.keys(errs).length) {
+    for (const [f, m] of Object.entries(errs)) setErr(f, m);
+    say("err", "Please fix the highlighted fields.");
+    const el = firstError(); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
+  $("send").disabled = true;
+  try {
+    const payloadApps = {};
+    const keys = Object.keys(d.apps).flatMap(a => Object.keys(d.apps[a]).map(s => a + "/" + s));
+    let n = 0;
+    for (const key of keys) {
+      const [a, s] = key.split("/");
+      const cellMsg = document.querySelector(`.cell[data-key="${key}"] .msg`);
+      n++;
+      say("info", "Uploading file " + n + " of " + keys.length + "…");
+      const path = await upload(key, d.apps[a][s], p => { cellMsg.className = "msg"; cellMsg.textContent = "Uploading " + p + "%"; });
+      cellMsg.className = "msg ok"; cellMsg.textContent = "Uploaded";
+      (payloadApps[a] = payloadApps[a] || {})[s] = { path };
+    }
+    say("info", "Sending your request…");
+    const res = await httpsCallable(fns, "submit")({
+      advertiser: d.advertiser, ad: d.ad, apps: payloadApps, countries: d.countries,
+      startDate: d.startDate, budget: { target: d.target }, terms: d.terms, website: d.website,
+    });
+    $("doneMail").textContent = d.advertiser.email;
+    $("doneRef").textContent = (res.data && res.data.ref) || "";
+    $("f").style.display = "none"; $("done").style.display = "block";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } catch (e) {
+    const list = e && e.details && e.details.errors;
+    if (Array.isArray(list) && list.length) {
+      for (const x of list) setErr(x.field, x.msg);
+      say("err", "Please fix the highlighted fields.");
+      const el = firstError(); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    } else if (e && e.code === "functions/resource-exhausted") {
+      say("err", "Too many requests from your connection. Please try again in an hour.");
+    } else if (e && e.code === "functions/failed-precondition") {
+      say("err", e.message);
+    } else if (e && e.code && String(e.code).startsWith("storage/")) {
+      say("err", "A file could not be uploaded. Check your connection and try again.");
+    } else {
+      say("err", "Something went wrong. Please try again, or write to us from the contact page.");
+    }
+    $("send").disabled = false;
+  }
+});
+</script>
+</body>
+</html>

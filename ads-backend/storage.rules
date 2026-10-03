@@ -8,16 +8,21 @@ service firebase.storage {
       allow write: if request.auth != null && request.auth.uid == '5bCbdUU29cPtffTXwNJw5DzigSd2';
     }
 
-    // Files from the public form: anyone may add, nobody but the admin reads.
-    // Images up to 300 KB, GIFs up to 500 KB, video up to 6 MB.
-    match /submissions/{allPaths=**} {
-      allow read: if request.auth != null && request.auth.uid == '5bCbdUU29cPtffTXwNJw5DzigSd2';
+    // Files from the public form wait here until the `submit` function checks them and moves them
+    // into submissions/. Anyone may add a file, nobody reads or changes it; `cleanupUploads`
+    // deletes what is left after a day. Images up to 1 MB, GIFs up to 2 MB, MP4 up to 6 MB.
+    match /uploads/{rand}/{file} {
       allow create: if (request.resource.contentType.matches('image/(webp|png|jpeg)')
-                        && request.resource.size <= 300 * 1024)
+                        && request.resource.size <= 1024 * 1024)
                     || (request.resource.contentType == 'image/gif'
-                        && request.resource.size <= 500 * 1024)
+                        && request.resource.size <= 2 * 1024 * 1024)
                     || (request.resource.contentType == 'video/mp4'
                         && request.resource.size <= 6 * 1024 * 1024);
+    }
+
+    // Checked files of the requests: only the admin (and the functions) read, change or delete.
+    match /submissions/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == '5bCbdUU29cPtffTXwNJw5DzigSd2';
     }
   }
 }
