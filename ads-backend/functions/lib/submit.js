@@ -1,10 +1,11 @@
 'use strict';
-// A request from advertise.html becomes submissions/{id} (ADS-PLAN.md, sections 4–8).
-// Everything outside (database, bucket, mail, clock) is passed in, so it can be tested with fakes.
+// A request from advertise.html becomes submissions/{id} (ADS-PLAN.md, sections 4–8), and the
+// advertiser can send an updated version of it later. Everything outside (database, bucket, mail,
+// clock) is passed in, so it can be tested with fakes.
 
 const crypto = require('crypto');
 const { SLOTS, MAX_BYTES, validateInput, sniff, checkFile } = require('./spec');
-const { receivedEmail, adminEmail } = require('./mail');
+const { receivedEmail, adminEmail, updatedAdminEmail } = require('./mail');
 
 const TERMS_VERSION = 'draft-0';
 const HOUR_MS = 3600000;
@@ -18,41 +19,47 @@ class InvalidRequest extends Error {
 class RateLimited extends Error {
   constructor() { super('Too many requests. Please try again later.'); }
 }
+/** The link (id + token) does not match a request, or the request is not in a state that allows this. */
+class NotAllowed extends Error {
+  constructor(msg, code) { super(msg); this.code = code || 'not-found'; }
+}
 
 const sha256 = s => crypto.createHash('sha256').update(s).digest('hex');
+const ipHashOf = ip => sha256((ip || 'unknown') + '|tiapps-ads').slice(0, 32);
 
-/** Counts a request. Returns false when the IP or the whole site has had too many. */
+/** Counts one hit under [key] in the current window. True while it is still within [max]. */
+async function hit(db, key, max, windowMs, now) {
+  const r = await db.ref('ratelimit/' + key + '/' + Math.floor(now / windowMs)).transaction(cur => (cur || 0) + 1);
+  return r.snapshot.val() <= max;
+}
+
+/** A new request: false when this address, or the whole site, has had too many today. */
 async function countRequest(db, ipHash, now) {
-  const bump = async path => {
-    const r = await db.ref(path).transaction(cur => (cur || 0) + 1);
-    return r.snapshot.val();
-  };
-  const hour = await bump('ratelimit/ip/' + ipHash + '/' + Math.floor(now / HOUR_MS));
-  if (hour > MAX_PER_IP_HOUR) return false;
-  const day = await bump('ratelimit/all/' + Math.floor(now / DAY_MS));
-  return day <= MAX_PER_DAY;
+  if (!(await hit(db, 'ip/' + ipHash, MAX_PER_IP_HOUR, HOUR_MS, now))) return false;
+  return hit(db, 'all', MAX_PER_DAY, DAY_MS, now);
+}
+
+/** Does the token of the link belong to this request? */
+async function tokenOk(db, id, token) {
+  if (typeof id !== 'string' || typeof token !== 'string' || !/^[-\w]{10,40}$/.test(id) || !/^[-\w]{16,64}$/.test(token)) return false;
+  const stored = (await db.ref('tokens/' + id).get()).val();
+  if (typeof stored !== 'string') return false;
+  return crypto.timingSafeEqual(Buffer.from(sha256(stored)), Buffer.from(sha256(token)));
+}
+
+const statusUrl = (baseUrl, id, token) => baseUrl + '/ad-status.html?i=' + id + '&t=' + token;
+
+async function safeSend(ctx, m, who) {
+  try { await ctx.sendMail(m); } catch (e) { if (ctx.log) ctx.log('mail failed', { to: who, error: e.message }); }
 }
 
 /**
- * @param {object} data  what the form sent
- * @param {object} ctx   { now, ip, db, bucket, sendMail(msg), newToken(), adminEmail, baseUrl, log }
- * @returns {Promise<{ok:true, ref?:string}>}
+ * Reads the uploads: what a file really is matters, not what the browser said.
+ * @returns {{checked:object[], errors:{field:string,msg:string}[]}}
  */
-async function processSubmission(data, ctx) {
-  const { now, db, bucket } = ctx;
-
-  // A bot filled the hidden field: pretend it worked, store nothing.
-  if (data && typeof data.website === 'string' && data.website.trim()) return { ok: true };
-
-  const ipHash = sha256((ctx.ip || 'unknown') + '|tiapps-ads').slice(0, 32);
-  if (!(await countRequest(db, ipHash, now))) throw new RateLimited();
-
-  const { errors, value } = validateInput(data, now);
-  if (errors.length) throw new InvalidRequest(errors);
-
-  // Read the uploads: what a file really is matters, not what the browser said.
-  const checked = [];
-  for (const f of value.files) {
+async function checkUploads(files, bucket) {
+  const checked = [], errors = [];
+  for (const f of files) {
     const file = bucket.file(f.path);
     const field = 'file:' + f.app + '/' + f.slot;
     const [exists] = await file.exists();
@@ -67,12 +74,11 @@ async function processSubmission(data, ctx) {
     if (msg) { errors.push({ field, msg }); continue; }
     checked.push({ ...f, info, size });
   }
-  if (errors.length) throw new InvalidRequest(errors);
+  return { checked, errors };
+}
 
-  const id = db.ref('submissions').push().key;
-  const ref = sha256(id).slice(0, 8).toUpperCase();
-
-  // Move the files out of uploads/ (cleaned every day) into the request's own folder.
+/** Moves the files out of uploads/ (cleaned every day) into the request's own folder. Returns the slots map. */
+async function moveUploads(checked, bucket, id) {
   const slots = {};
   for (const c of checked) {
     const dest = 'submissions/' + id + '/' + c.app + '_' + c.slot + '.' + c.info.ext;
@@ -85,6 +91,31 @@ async function processSubmission(data, ctx) {
       size: c.size,
     };
   }
+  return slots;
+}
+
+/**
+ * @param {object} data  what the form sent
+ * @param {object} ctx   { now, ip, db, bucket, sendMail(msg), newToken(), adminEmail, baseUrl, log }
+ * @returns {Promise<{ok:true, ref?:string}>}
+ */
+async function processSubmission(data, ctx) {
+  const { now, db, bucket } = ctx;
+
+  // A bot filled the hidden field: pretend it worked, store nothing.
+  if (data && typeof data.website === 'string' && data.website.trim()) return { ok: true };
+
+  const ipHash = ipHashOf(ctx.ip);
+  if (!(await countRequest(db, ipHash, now))) throw new RateLimited();
+
+  const { errors, value } = validateInput(data, now);
+  if (errors.length) throw new InvalidRequest(errors);
+  const up = await checkUploads(value.files, bucket);
+  if (up.errors.length) throw new InvalidRequest(up.errors);
+
+  const id = db.ref('submissions').push().key;
+  const ref = sha256(id).slice(0, 8).toUpperCase();
+  const slots = await moveUploads(up.checked, bucket, id);
 
   const token = ctx.newToken();
   const a = value.advertiser;
@@ -95,7 +126,7 @@ async function processSubmission(data, ctx) {
     apps: Object.fromEntries(value.apps.map(x => [x, true])),
     slots, from: value.from, budget: value.budget,
     termsAccepted: { version: TERMS_VERSION, at: now },
-    tokenHash: sha256(token), ipHash,
+    ipHash,
     log: { [now]: { by: 'advertiser', from: null, to: 'pending' } },
   };
   if (a.company) rec.advertiser.company = a.company;
@@ -103,18 +134,69 @@ async function processSubmission(data, ctx) {
   if (value.ad.description) rec.description = value.ad.description;
   if (value.countries.length) rec.countries = value.countries;
   await db.ref('submissions/' + id).set(rec);
+  // Only the functions read tokens/ (the rules give nobody else access): the status link can be re-sent in later emails.
+  await db.ref('tokens/' + id).set(token);
 
   // The request is saved; a failed email must not lose it.
-  const statusUrl = ctx.baseUrl + '/ad-status.html?t=' + token;
   const adminUrl = ctx.baseUrl + '/admin-ads.html#requests';
-  const mails = [
-    { to: a.email, ...receivedEmail(rec, ref, statusUrl) },
-    { to: ctx.adminEmail, replyTo: a.email, ...adminEmail(rec, ref, adminUrl) },
-  ];
-  for (const m of mails) {
-    try { await ctx.sendMail(m); } catch (e) { if (ctx.log) ctx.log('mail failed', { to: m.to === a.email ? 'advertiser' : 'admin', error: e.message }); }
-  }
+  await safeSend(ctx, { to: a.email, ...receivedEmail(rec, ref, statusUrl(ctx.baseUrl, id, token)) }, 'advertiser');
+  await safeSend(ctx, { to: ctx.adminEmail, replyTo: a.email, ...adminEmail(rec, ref, adminUrl) }, 'admin');
   return { ok: true, ref };
 }
 
-module.exports = { processSubmission, InvalidRequest, RateLimited, countRequest, sha256, TERMS_VERSION };
+/**
+ * The advertiser sends a new version of a request that was sent back or rejected.
+ * @param {object} data  { id, token, ad, apps, countries, startDate, budget, terms, website }
+ */
+async function processResubmission(data, ctx) {
+  const { now, db, bucket } = ctx;
+  data = data && typeof data === 'object' ? data : {};
+  if (typeof data.website === 'string' && data.website.trim()) return { ok: true };
+
+  const ipHash = ipHashOf(ctx.ip);
+  if (!(await hit(db, 'resubmit/' + ipHash, 20, HOUR_MS, now))) throw new RateLimited();
+  const id = data.id;
+  if (!(await tokenOk(db, id, data.token))) throw new NotAllowed('This link is not valid.');
+
+  const rec = (await db.ref('submissions/' + id).get()).val();
+  if (!rec) throw new NotAllowed('This link is not valid.');
+  if (!['changes_requested', 'rejected'].includes(rec.status)) {
+    throw new NotAllowed('This request cannot be changed any more.', 'failed-precondition');
+  }
+
+  // The advertiser's own details stay as they were.
+  const { errors, value } = validateInput({ ...data, advertiser: rec.advertiser }, now);
+  if (errors.length) throw new InvalidRequest(errors);
+  const up = await checkUploads(value.files, bucket);
+  if (up.errors.length) throw new InvalidRequest(up.errors);
+  const slots = await moveUploads(up.checked, bucket, id);
+
+  // Files of the old version that the new one does not use any more.
+  const keep = new Set(Object.values(slots).flatMap(m => Object.values(m).map(f => f.file)));
+  for (const m of Object.values(rec.slots || {})) {
+    for (const f of Object.values(m || {})) {
+      if (f && f.file && !keep.has(f.file)) await bucket.file(f.file).delete().catch(() => {});
+    }
+  }
+
+  const changes = {
+    title: value.ad.title, clickUrl: value.ad.clickUrl,
+    description: value.ad.description || null,
+    apps: Object.fromEntries(value.apps.map(x => [x, true])),
+    slots, countries: value.countries.length ? value.countries : null,
+    from: value.from, budget: value.budget,
+    termsAccepted: { version: TERMS_VERSION, at: now },
+    status: 'pending', review: null, updatedAt: now,
+  };
+  changes['log/' + now] = { by: 'advertiser', from: rec.status, to: 'pending', note: 'sent a new version' };
+  await db.ref('submissions/' + id).update(changes);
+
+  const updated = { ...rec, ...changes, advertiser: rec.advertiser, countries: changes.countries || [], description: changes.description || '' };
+  await safeSend(ctx, { to: ctx.adminEmail, replyTo: rec.advertiser.email, ...updatedAdminEmail(updated, rec.ref, ctx.baseUrl + '/admin-ads.html#requests') }, 'admin');
+  return { ok: true, ref: rec.ref };
+}
+
+module.exports = {
+  processSubmission, processResubmission, InvalidRequest, RateLimited, NotAllowed,
+  countRequest, hit, tokenOk, statusUrl, safeSend, ipHashOf, sha256, TERMS_VERSION, DAY_MS,
+};
