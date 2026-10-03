@@ -122,3 +122,19 @@ Google Cloud Console → Billing → Budgets & alerts: бюджетът от Ф�
    на `submit` и `track` е в кода на функциите (фази B и F). Включването върху цялата база ще
    счупи приложенията, които още не пращат App Check токен.
 4. Прати ми **site key** (не е тайна).
+
+---
+
+# Бележки от първото разгръщане (Фаза A)
+
+- **Първо разгръщане на 2nd gen функции:** `firebase deploy` може да се провали с Eventarc или
+  Secret Manager грешка. Включи API-то от линка в съобщението, изчакай 3–5 минути и пусни пак.
+- **„Forbidden“ или CORS грешка в админа:** функциите `republishFeed` и `sendTestEmail` трябва
+  да са публично достъпни за извикване (Cloud Run → услугата → Security → **Allow public access**
+  → View diff & redeploy → Deploy changes). Проверка: адресът `https://<функция>-….run.app` в
+  браузъра трябва да отговаря „Bad Request“, не „Forbidden“.
+- **Имейл:** Resend с домейна `tiapps.dev` (DNS през Cloudflare, Auto configure). Click tracking
+  остава изключен, защото писмата ще съдържат тайни линкове. Ключът е в Secret Manager:
+  `firebase functions:secrets:set RESEND_API_KEY` (името е точно това, ключът се въвежда на
+  следващия ред и никога не се показва или пише в чата).
+- **Проект:** само `tiapps-ads` (ID `tiapps-ads`).
