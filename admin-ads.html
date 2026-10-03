@@ -64,6 +64,21 @@
   .pill.active{background:rgba(0,255,153,.12);color:var(--ok)}
   .pill.paused{background:rgba(255,176,32,.13);color:var(--warn)}
   .pill.draft{background:rgba(154,164,175,.15);color:var(--dim)}
+  .pill.pending{background:rgba(0,204,255,.13);color:var(--accent)}
+  .tabs{display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--line)}
+  .tab{background:transparent;color:var(--dim);padding:9px 16px;border-radius:8px 8px 0 0;border-bottom:2px solid transparent;font-weight:600}
+  .tab.on{color:var(--txt);border-bottom-color:var(--accent)}
+  .tab .n{display:inline-block;min-width:18px;padding:0 6px;margin-left:6px;border-radius:9px;background:var(--accent);color:#002733;font-size:11.5px}
+  .tab .n:empty{display:none}
+  #reqDetail{padding:18px;margin-bottom:14px;display:none}
+  #reqDetail.on{display:block}
+  .kv{display:grid;grid-template-columns:150px 1fr;gap:6px 14px;margin:12px 0}
+  .kv dt{color:var(--dim)} .kv dd{margin:0;word-break:break-word}
+  .rfiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:10px}
+  .rfile{border:1px solid var(--line);border-radius:10px;padding:10px;background:#0f1319}
+  .rfile img,.rfile video{max-width:100%;max-height:260px;display:block;margin-top:6px;background:#000}
+  .rfile small{color:var(--dim)}
+  tr.rrow{cursor:pointer} tr.rrow:hover td{background:rgba(255,255,255,.03)}
   .chip{display:inline-block;padding:2px 8px;border:1px solid var(--line);border-radius:6px;
         font-size:11.5px;color:var(--dim);margin:0 4px 3px 0;white-space:nowrap}
   .ttl{font-weight:600}
@@ -206,6 +221,11 @@
     </div>
 
     <div id="main" style="display:none">
+      <div class="tabs">
+        <button class="tab on" id="tabCamp">Campaigns</button>
+        <button class="tab" id="tabReq">Requests<span class="n" id="reqCount"></span></button>
+      </div>
+      <div id="campView">
       <div class="bar">
         <button class="primary" id="newBtn">New ad</button>
         <select id="fStatus" aria-label="Status">
@@ -227,6 +247,13 @@
       <div id="editor" class="card"></div>
       <div id="statsPanel" class="card"></div>
       <div id="list" class="card" style="margin-top:14px"></div>
+      </div>
+
+      <div id="reqView" style="display:none">
+        <div id="reqErr"></div>
+        <div id="reqDetail" class="card"></div>
+        <div id="reqList" class="card"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -354,7 +381,10 @@ function init() {
     }
     $("mailBtn").disabled = false;
   };
+  $("tabCamp").onclick = () => showTab("camp");
+  $("tabReq").onclick = () => showTab("req");
   load();
+  loadSubs().then(() => { if (location.hash === "#requests") showTab("req"); });
 }
 
 async function load() {
@@ -1131,6 +1161,122 @@ async function save() {
     say("");
     $("formErr").innerHTML = `<div class="err" style="margin-top:12px">Could not save: ${esc(e.code || e.message)}</div>`;
   }
+}
+
+/* ── Requests from advertise.html ─────────────────────────────────────────── */
+// Everything in a request comes from the public. It is always passed through esc() before it is shown.
+let subs = {};          // id -> record, as stored under /submissions
+let openSub = null;
+
+function showTab(t) {
+  const req = t === "req";
+  $("campView").style.display = req ? "none" : "";
+  $("reqView").style.display = req ? "" : "none";
+  $("tabCamp").classList.toggle("on", !req);
+  $("tabReq").classList.toggle("on", req);
+  if (req) loadSubs();
+}
+
+async function loadSubs() {
+  $("reqErr").innerHTML = "";
+  try { subs = (await get(ref(db, "submissions"))).val() || {}; }
+  catch (e) {
+    subs = {};
+    $("reqErr").innerHTML = `<div class="err" style="margin-bottom:12px">Could not load the requests: ${esc(e.code || e.message)}</div>`;
+  }
+  const pending = Object.values(subs).filter(r => r && r.status === "pending").length;
+  $("reqCount").textContent = pending ? String(pending) : "";
+  renderSubs();
+  if (openSub && subs[openSub]) renderSubDetail(openSub); else closeSub();
+}
+
+const fmtTime = ms => ms ? new Date(ms).toISOString().replace("T", " ").slice(0, 16) + " UTC" : "—";
+const SLOT_LABEL = { banner: "Banner", mrec: "Medium rectangle", fullscreen: "Full screen" };
+
+function renderSubs() {
+  const rows = Object.entries(subs).filter(([, r]) => r && typeof r === "object")
+    .sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+  if (!rows.length) { $("reqList").innerHTML = `<p style="padding:20px;color:var(--dim)">No requests yet.</p>`; return; }
+  $("reqList").innerHTML = `<table><thead><tr>
+      <th>Received</th><th>Reference</th><th>Advertiser</th><th>Ad</th><th>Apps</th><th>Impressions</th><th>Start</th><th>Status</th>
+    </tr></thead><tbody>${rows.map(([id, r]) => {
+      const a = r.advertiser || {};
+      const apps = Object.keys(r.apps || {}).filter(k => APPS[k]).map(k => APPS[k].name).join(", ");
+      return `<tr class="rrow" data-id="${esc(id)}">
+        <td>${esc(fmtTime(r.createdAt))}</td><td><code>${esc(r.ref || "")}</code></td>
+        <td class="ttl">${esc(a.name)}<small>${esc(a.company ? a.company + " · " : "")}${esc(a.email)} · ${esc(a.country)}</small></td>
+        <td>${esc(r.title)}</td><td>${esc(apps)}</td>
+        <td class="num">${esc(Number(r.budget && r.budget.target || 0).toLocaleString())}</td>
+        <td>${esc(fmtDay(r.from) || "—")}</td>
+        <td><span class="pill ${esc(r.status)}">${esc(r.status)}</span></td></tr>`;
+    }).join("")}</tbody></table>`;
+}
+$("reqList").addEventListener("click", e => {
+  const tr = e.target.closest("tr.rrow");
+  if (tr) { openSub = tr.dataset.id; renderSubDetail(openSub); $("reqDetail").scrollIntoView({ behavior: "smooth", block: "start" }); }
+});
+
+function closeSub() { openSub = null; $("reqDetail").classList.remove("on"); $("reqDetail").innerHTML = ""; }
+
+async function renderSubDetail(id) {
+  const r = subs[id];
+  if (!r) return closeSub();
+  const a = r.advertiser || {};
+  const safeLink = typeof r.clickUrl === "string" && r.clickUrl.startsWith("https://")
+    ? `<a href="${esc(r.clickUrl)}" target="_blank" rel="noopener noreferrer">${esc(r.clickUrl)}</a>` : esc(r.clickUrl);
+  const log = Object.entries(r.log || {}).sort((x, y) => Number(x[0]) - Number(y[0]))
+    .map(([t, l]) => `${esc(fmtTime(Number(t)))}: ${esc(l.by)} → ${esc(l.to)}`).join("<br>");
+  const el = $("reqDetail");
+  el.classList.add("on");
+  el.innerHTML = `
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <h2 style="margin:0">${esc(r.title)} <span class="pill ${esc(r.status)}">${esc(r.status)}</span></h2>
+      <span class="spacer" style="flex:1"></span>
+      <a class="ghost" style="padding:8px 14px;border-radius:8px;text-decoration:none" href="mailto:${esc(a.email)}?subject=${encodeURIComponent("Your ad request " + (r.ref || ""))}">Email advertiser</a>
+      <button class="danger" id="rqDel">Delete</button>
+      <button class="ghost" id="rqClose">Close</button>
+    </div>
+    <dl class="kv">
+      <dt>Reference</dt><dd><code>${esc(r.ref)}</code></dd>
+      <dt>Received</dt><dd>${esc(fmtTime(r.createdAt))}</dd>
+      <dt>Advertiser</dt><dd>${esc(a.name)}${a.company ? " · " + esc(a.company) : ""}<br>${esc(a.email)} · ${esc(countryName(a.country))}${a.vat ? "<br>VAT / tax ID: " + esc(a.vat) : ""}</dd>
+      <dt>Description</dt><dd>${r.description ? esc(r.description) : "—"}</dd>
+      <dt>Link</dt><dd>${safeLink}</dd>
+      <dt>Countries</dt><dd>${r.countries && r.countries.length ? esc(r.countries.map(countryName).join(", ")) : "all"}</dd>
+      <dt>Impressions</dt><dd>${esc(Number(r.budget && r.budget.target || 0).toLocaleString())}</dd>
+      <dt>Requested start</dt><dd>${esc(fmtDay(r.from) || "—")}</dd>
+      <dt>Terms accepted</dt><dd>${r.termsAccepted ? esc(r.termsAccepted.version) + ", " + esc(fmtTime(r.termsAccepted.at)) : "—"}</dd>
+      <dt>History</dt><dd>${log || "—"}</dd>
+    </dl>
+    <h2 style="margin-top:6px">Files</h2>
+    <div class="rfiles" id="rqFiles"></div>`;
+  $("rqClose").onclick = closeSub;
+  $("rqDel").onclick = () => deleteSub(id);
+
+  // The files are private; the admin signs in, so the pictures can be loaded here.
+  const box = $("rqFiles");
+  for (const [app, slots] of Object.entries(r.slots || {})) for (const [slot, f] of Object.entries(slots || {})) {
+    const card = document.createElement("div"); card.className = "rfile";
+    card.innerHTML = `<b>${esc((APPS[app] && APPS[app].name) || app)} · ${esc(SLOT_LABEL[slot] || slot)}</b><br>
+      <small>${esc(f.type)} · ${esc(f.w)}×${esc(f.h)} · ${esc(Math.round((f.size || 0) / 1024))} KB</small><div class="media">Loading…</div>`;
+    box.appendChild(card);
+    getDownloadURL(sRef(storage, f.file)).then(url => {
+      const holder = card.querySelector(".media");
+      holder.innerHTML = f.type === "video" ? `<video controls playsinline preload="metadata"></video>` : `<img alt="">`;
+      holder.firstChild.src = url;
+    }).catch(e => { card.querySelector(".media").textContent = "Could not load the file (" + (e.code || e.message) + ")."; });
+  }
+}
+
+async function deleteSub(id) {
+  const r = subs[id];
+  if (!r || !confirm(`Delete the request "${r.title}" from ${r.advertiser && r.advertiser.email} and its files? This cannot be undone.`)) return;
+  try {
+    await deleteFolder("submissions/" + id);
+    await remove(ref(db, "submissions/" + id));
+    delete subs[id]; closeSub();
+    await loadSubs();
+  } catch (e) { $("reqErr").innerHTML = `<div class="err" style="margin-bottom:12px">Could not delete: ${esc(e.code || e.message)}</div>`; }
 }
 </script>
 </body>

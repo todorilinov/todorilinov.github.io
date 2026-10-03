@@ -138,3 +138,57 @@ Google Cloud Console → Billing → Budgets & alerts: бюджетът от Ф�
   `firebase functions:secrets:set RESEND_API_KEY` (името е точно това, ключът се въвежда на
   следващия ред и никога не се показва или пише в чата).
 - **Проект:** само `tiapps-ads` (ID `tiapps-ads`).
+
+---
+
+# Фаза B — форма за рекламодатели (стъпки за теб)
+
+Нови неща: `advertise.html` (скрита страница), функциите `submit` и `cleanupUploads`, нови
+правила за Storage и базата, раздел „Requests“ в `admin-ads.html`.
+
+## 1. Свали новия код
+
+Свали ZIP на `main` и го разархивирай в **нова** папка, например `C:\tiapps\v2`:
+`https://github.com/todorilinov/todorilinov.github.io/archive/refs/heads/main.zip`
+Вътре отиди в `ads-backend` (при разархивиране може да има две вложени папки със същото име).
+
+## 2. Разгърни
+
+В PowerShell, в папката `ads-backend`:
+
+```
+firebase use tiapps-ads
+cd functions
+npm install
+cd ..
+firebase deploy --only functions,database,storage
+```
+
+- В новата папка няма старите настройки, затова ще те попита за `MAIL_FROM`, `ADMIN_EMAIL` и
+  `APPCHECK_REQUIRED`. На всичките натисни **Enter** (подразбиращите се стойности са правилни).
+  Тайната `RESEND_API_KEY` е вече записана и няма да я пита.
+- Ако поиска да включи API (Cloud Scheduler и други): `y`. Ако даде грешка за права, изчакай
+  3 минути и повтори.
+- `database` и `storage` качват новите правила (публичното качване вече е само в `uploads/`).
+
+## 3. Направи функцията публична (както миналия път)
+
+Cloud Run → услугата **submit** → Security → **Allow public access** → View diff & redeploy →
+Deploy changes. Проверка: адресът на `submit` (от Functions страницата) в браузъра трябва да
+каже „Bad Request“, не „Forbidden“. `cleanupUploads` се вика от Google, не от браузъра: не я пипай.
+
+## 4. Проба от край до край
+
+1. Отвори `https://tiapps.dev/advertise.html` (линк към нея няма отникъде).
+2. Попълни формата със свой друг имейл, качи банер с точния размер и изпрати.
+3. Трябва да видиш „Request received“ с референтен номер и да получиш два имейла: потвърждение
+   (на имейла от формата) и известие за теб.
+4. В `admin-ads.html` → таб **Requests** заявката се вижда с файловете. Линкът за статус в
+   писмото още не работи: страницата `ad-status.html` идва във фаза C.
+5. Изтрий пробната заявка с бутона **Delete**.
+
+## 5. App Check (по-късно, когато има reCAPTCHA ключ)
+
+Сложи ключа в `APP_CHECK_SITE_KEY` в `advertise.html`, а във функциите стойност `true` на
+`APPCHECK_REQUIRED` (пита се при разгръщане). Докато ключът е празен, защитата са скритото поле,
+ограничението на заявките (5 на час за адрес, 100 на ден общо) и проверката на файловете.
