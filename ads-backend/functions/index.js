@@ -14,7 +14,8 @@ const { getDatabase } = require('firebase-admin/database');
 const { APP_KEYS, buildFeed, sameFeed } = require('./lib/feed');
 const { sendEmail } = require('./lib/email');
 
-initializeApp();
+// The database is in europe-west1, so the Admin SDK needs its URL spelled out.
+initializeApp({ databaseURL: 'https://tiapps-ads-default-rtdb.europe-west1.firebasedatabase.app' });
 
 const REGION = 'europe-west1';
 const ADMIN_UID = '5bCbdUU29cPtffTXwNJw5DzigSd2';
@@ -51,15 +52,25 @@ async function rebuildFeeds() {
 exports.rebuildFeed = onValueWritten(
   { ref: '/campaigns/{cid}', instance: 'tiapps-ads-default-rtdb', region: REGION },
   async event => {
-    const written = await rebuildFeeds();
-    logger.info('rebuildFeed', { cid: event.params.cid, written });
+    try {
+      const written = await rebuildFeeds();
+      logger.info('rebuildFeed ok', { cid: event.params.cid, written });
+    } catch (e) {
+      logger.error('rebuildFeed failed', { cid: event.params.cid, error: e.message });
+      throw e;
+    }
   }
 );
 
 exports.republishFeed = onCall(async request => {
   requireAdmin(request);
-  const written = await rebuildFeeds();
-  return { written };
+  try {
+    const written = await rebuildFeeds();
+    return { written };
+  } catch (e) {
+    logger.error('republishFeed failed', e);
+    throw new HttpsError('internal', 'Feed rebuild failed: ' + e.message);
+  }
 });
 
 exports.sendTestEmail = onCall({ secrets: [RESEND_API_KEY] }, async request => {
