@@ -12,6 +12,8 @@
 //  - statusGet       : ad-status.html asks for the state of a request (id + secret token)
 //  - statusResubmit  : the advertiser sends a new version of a request that was sent back or rejected
 //  - expireUnpaid    : approvals nobody paid within 14 days expire
+// Phase D:
+//  - deliveryCheck   : every 15 minutes counts the impressions of paid campaigns and finishes the ones that are done
 
 const { onValueWritten } = require('firebase-functions/v2/database');
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
@@ -27,6 +29,7 @@ const { APP_KEYS, buildFeed, sameFeed } = require('./lib/feed');
 const { sendEmail } = require('./lib/email');
 const { processSubmission, processResubmission, InvalidRequest, RateLimited, NotAllowed } = require('./lib/submit');
 const { review, markPaid, expireUnpaid, statusGet, ReviewError } = require('./lib/review');
+const { deliveryCheck } = require('./lib/delivery');
 
 // The database is in europe-west1, so the Admin SDK needs its URL spelled out.
 initializeApp({
@@ -194,4 +197,9 @@ exports.cleanupUploads = onSchedule({ schedule: 'every day 03:30', timeZone: 'UT
     }
   }
   logger.info('cleanupUploads', { found: files.length, deleted });
+});
+
+exports.deliveryCheck = onSchedule({ schedule: 'every 15 minutes', timeZone: 'UTC', secrets: [RESEND_API_KEY] }, async () => {
+  const r = await deliveryCheck(makeCtx(null));
+  logger.info('deliveryCheck', r);
 });

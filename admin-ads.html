@@ -69,6 +69,14 @@
   .pill.changes_requested{background:rgba(255,176,32,.13);color:var(--warn)}
   .pill.rejected{background:rgba(255,92,92,.13);color:var(--bad)}
   .pill.expired,.pill.finished{background:rgba(154,164,175,.15);color:var(--dim)}
+  .ptable{width:100%;border-collapse:collapse;margin:8px 0 14px}
+  .ptable th,.ptable td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left}
+  .ptable th{color:var(--dim);font-weight:600;font-size:12.5px}
+  .ptable input[type=number]{width:110px;background:#0b0f14;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:7px 9px;font:inherit}
+  .ptable input[type=text]{width:260px;background:#0b0f14;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:7px 9px;font:inherit}
+  .pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:10px 0 14px}
+  .pgrid label{display:block;color:var(--dim);font-size:12.5px;margin-bottom:4px}
+  .pgrid input{width:100%;background:#0b0f14;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px 10px;font:inherit}
   .rqact{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0 4px}
   #rqForm{flex-basis:100%}
   .rqform{border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:6px;background:#0f1319;max-width:620px}
@@ -236,6 +244,7 @@
       <div class="tabs">
         <button class="tab on" id="tabCamp">Campaigns</button>
         <button class="tab" id="tabReq">Requests<span class="n" id="reqCount"></span></button>
+        <button class="tab" id="tabPrices">Prices</button>
       </div>
       <div id="campView">
       <div class="bar">
@@ -259,6 +268,11 @@
       <div id="editor" class="card"></div>
       <div id="statsPanel" class="card"></div>
       <div id="list" class="card" style="margin-top:14px"></div>
+      </div>
+
+      <div id="priceView" style="display:none">
+        <div id="priceErr"></div>
+        <div id="priceBox" class="card" style="padding:18px"></div>
       </div>
 
       <div id="reqView" style="display:none">
@@ -395,6 +409,7 @@ function init() {
   };
   $("tabCamp").onclick = () => showTab("camp");
   $("tabReq").onclick = () => showTab("req");
+  $("tabPrices").onclick = () => showTab("prices");
   load();
   loadSubs().then(() => { if (location.hash === "#requests") showTab("req"); });
 }
@@ -1183,12 +1198,14 @@ let subs = {};          // id -> record, as stored under /submissions
 let openSub = null;
 
 function showTab(t) {
-  const req = t === "req";
-  $("campView").style.display = req ? "none" : "";
-  $("reqView").style.display = req ? "" : "none";
-  $("tabCamp").classList.toggle("on", !req);
-  $("tabReq").classList.toggle("on", req);
-  if (req) loadSubs();
+  $("campView").style.display = t === "camp" ? "" : "none";
+  $("reqView").style.display = t === "req" ? "" : "none";
+  $("priceView").style.display = t === "prices" ? "" : "none";
+  $("tabCamp").classList.toggle("on", t === "camp");
+  $("tabReq").classList.toggle("on", t === "req");
+  $("tabPrices").classList.toggle("on", t === "prices");
+  if (t === "req") loadSubs();
+  if (t === "prices") loadPrices();
 }
 
 async function loadSubs() {
@@ -1212,7 +1229,7 @@ function renderSubs() {
     .sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
   if (!rows.length) { $("reqList").innerHTML = `<p style="padding:20px;color:var(--dim)">No requests yet.</p>`; return; }
   $("reqList").innerHTML = `<table><thead><tr>
-      <th>Received</th><th>Reference</th><th>Advertiser</th><th>Ad</th><th>Apps</th><th>Impressions</th><th>Start</th><th>Status</th>
+      <th>Received</th><th>Reference</th><th>Advertiser</th><th>Ad</th><th>Apps</th><th>Budget</th><th>Start</th><th>Status</th>
     </tr></thead><tbody>${rows.map(([id, r]) => {
       const a = r.advertiser || {};
       const apps = Object.keys(r.apps || {}).filter(k => APPS[k]).map(k => APPS[k].name).join(", ");
@@ -1220,7 +1237,7 @@ function renderSubs() {
         <td>${esc(fmtTime(r.createdAt))}</td><td><code>${esc(r.ref || "")}</code></td>
         <td class="ttl">${esc(a.name)}<small>${esc(a.company ? a.company + " · " : "")}${esc(a.email)} · ${esc(a.country)}</small></td>
         <td>${esc(r.title)}</td><td>${esc(apps)}</td>
-        <td class="num">${esc(Number(r.budget && r.budget.target || 0).toLocaleString())}</td>
+        <td class="num">${r.budget && r.budget.amount != null ? esc(Number(r.budget.amount).toFixed(2)) + " €" : ""}<small style="display:block;color:var(--faint)">${esc(Number(r.budget && r.budget.target || 0).toLocaleString())} imp.</small></td>
         <td>${esc(fmtDay(r.from) || "—")}</td>
         <td><span class="pill ${esc(r.status)}">${esc(r.status)}</span></td></tr>`;
     }).join("")}</tbody></table>`;
@@ -1257,7 +1274,7 @@ async function renderSubDetail(id) {
       <dt>Description</dt><dd>${r.description ? esc(r.description) : "—"}</dd>
       <dt>Link</dt><dd>${safeLink}</dd>
       <dt>Countries</dt><dd>${r.countries && r.countries.length ? esc(r.countries.map(countryName).join(", ")) : "all"}</dd>
-      <dt>Impressions</dt><dd>${esc(Number(r.budget && r.budget.target || 0).toLocaleString())}</dd>
+      <dt>Budget</dt><dd>${budgetHtml(r)}</dd>
       <dt>Requested start</dt><dd>${esc(fmtDay(r.from) || "—")}</dd>
       ${r.final ? `<dt>Price</dt><dd>${esc(Number(r.final.amount).toFixed(2))} ${esc(r.final.currency)}${r.final.note ? "<br>" + esc(r.final.note) : ""}</dd>` : ""}
       ${r.payment && r.payment.link ? `<dt>Payment link</dt><dd>${/^https:\/\//.test(r.payment.link) ? `<a href="${esc(r.payment.link)}" target="_blank" rel="noopener noreferrer">${esc(r.payment.link)}</a>` : esc(r.payment.link)}</dd>` : ""}
@@ -1291,6 +1308,117 @@ async function renderSubDetail(id) {
   }
 }
 
+/* ── Prices ───────────────────────────────────────────────────────────────── */
+// The price list lives under pricing/. advertise.html shows it and `submit` works the price out from it.
+// Same rules as functions/lib/pricing.js (and advertise.html).
+const DEFAULT_PRICING = {
+  currency: "EUR", minBudget: 10, maxBudget: 5000, presets: [10, 25, 50, 100, 250],
+  items: {
+    worldradio: { banner: { cpm: 1.5, on: true }, mrec: { cpm: 3, on: true }, fullscreen: { cpm: 10, on: true } },
+    tvdsp: { banner: { cpm: 1.2, on: true } }, fakelocation: { banner: { cpm: 1, on: true } },
+  },
+};
+const numIn = (v, min, max, d) => { const n = Number(v); return Number.isFinite(n) && n >= min && n <= max ? n : d; };
+function normalizePricing(r) {
+  r = r && typeof r === "object" ? r : {};
+  const d = DEFAULT_PRICING;
+  const minBudget = numIn(r.minBudget, 1, 100000, d.minBudget);
+  const maxBudget = Math.max(minBudget, numIn(r.maxBudget, 1, 1000000, d.maxBudget));
+  let presets = Array.isArray(r.presets) ? r.presets.map(Number).filter(n => Number.isFinite(n) && n >= minBudget && n <= maxBudget) : [];
+  presets = [...new Set(presets)].sort((a, b) => a - b).slice(0, 8);
+  if (!presets.length) presets = d.presets.filter(n => n >= minBudget && n <= maxBudget);
+  const items = {};
+  for (const [app, spec] of Object.entries(APPS)) {
+    items[app] = {};
+    for (const slot of spec.slots) {
+      const got = r.items && r.items[app] && r.items[app][slot];
+      items[app][slot] = { cpm: numIn(got && got.cpm, 0.01, 1000, d.items[app][slot].cpm), on: got && typeof got.on === "boolean" ? got.on : true };
+    }
+  }
+  return { currency: "EUR", minBudget, maxBudget, presets, items };
+}
+const impressionsFor = (amount, cpm) => Math.floor(amount / cpm * 1000 / 100) * 100;
+
+let pricing = null;
+async function loadPrices() {
+  $("priceErr").innerHTML = "";
+  let saved = null;
+  try { saved = (await get(ref(db, "pricing"))).val(); }
+  catch (e) { $("priceErr").innerHTML = `<div class="err" style="margin-bottom:12px">Could not load the prices: ${esc(e.code || e.message)}</div>`; }
+  pricing = normalizePricing(saved);
+  renderPrices(!saved);
+}
+
+function renderPrices(notSavedYet) {
+  const p = pricing;
+  const rows = Object.entries(APPS).flatMap(([app, a]) => a.slots.map(slot => {
+    const it = p.items[app][slot];
+    return `<tr data-k="${app}/${slot}"><td>${esc(a.name)} · ${esc(SLOTS[slot].label)}</td>
+      <td><input type="number" class="pcpm" min="0.01" max="1000" step="0.01" value="${it.cpm}"> EUR</td>
+      <td><label style="display:flex;gap:6px;align-items:center"><input type="checkbox" class="pon" ${it.on ? "checked" : ""}> on sale</label></td>
+      <td class="pex" style="color:var(--dim)"></td></tr>`;
+  })).join("");
+  $("priceBox").innerHTML = `
+    <h2 style="margin-bottom:4px">Prices for advertisers</h2>
+    <p style="color:var(--dim);margin:0 0 6px">The price of 1,000 impressions for every format. The form on advertise.html shows advertisers how many impressions their budget buys. New prices apply to new requests at once; requests already sent keep their price. <b>Your own ads are not affected.</b></p>
+    ${notSavedYet ? `<div class="err" style="margin:8px 0;border-color:rgba(255,176,32,.5);color:var(--warn)">No prices have been saved yet. The suggested ones are shown; press Save to publish them.</div>` : ""}
+    <table class="ptable"><thead><tr><th>Format</th><th>Price per 1,000 impressions</th><th>Sale</th><th>Example</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="pgrid">
+      <div><label for="pMin">Minimum budget per format (EUR)</label><input id="pMin" type="number" min="1" step="1" value="${p.minBudget}"></div>
+      <div><label for="pMax">Maximum budget per format (EUR)</label><input id="pMax" type="number" min="1" step="1" value="${p.maxBudget}"></div>
+      <div><label for="pPre">Quick amounts (EUR, separated by commas)</label><input id="pPre" type="text" value="${esc(p.presets.join(", "))}"></div>
+    </div>
+    <div class="actions"><button class="primary" id="pSave">Save prices</button><span id="pMsg" style="color:var(--dim)"></span></div>`;
+  const example = () => {
+    const min = numIn($("pMin").value, 1, 100000, p.minBudget);
+    document.querySelectorAll("#priceBox tbody tr").forEach(tr => {
+      const cpm = numIn(tr.querySelector(".pcpm").value, 0.01, 1000, 0);
+      tr.querySelector(".pex").textContent = cpm ? `${Math.max(50, min)} EUR → ${impressionsFor(Math.max(50, min), cpm).toLocaleString()} impressions` : "";
+    });
+  };
+  document.querySelectorAll("#priceBox input").forEach(i => i.oninput = example);
+  example();
+  $("pSave").onclick = savePrices;
+}
+
+async function savePrices() {
+  $("pSave").disabled = true; $("pMsg").textContent = "";
+  try {
+    const items = {};
+    document.querySelectorAll("#priceBox tbody tr").forEach(tr => {
+      const [app, slot] = tr.dataset.k.split("/");
+      const cpm = Number(tr.querySelector(".pcpm").value);
+      if (!(cpm >= 0.01 && cpm <= 1000)) throw new Error(`${APPS[app].name} · ${SLOTS[slot].label}: the price must be between 0.01 and 1000.`);
+      (items[app] = items[app] || {})[slot] = { cpm: Math.round(cpm * 100) / 100, on: tr.querySelector(".pon").checked };
+    });
+    const min = Number($("pMin").value), max = Number($("pMax").value);
+    if (!(min >= 1) || !(max >= min)) throw new Error("The minimum budget must be at least 1 and not more than the maximum.");
+    const presets = $("pPre").value.split(",").map(x => Number(x.trim())).filter(n => Number.isFinite(n) && n >= min && n <= max);
+    if (!presets.length) throw new Error("Write at least one quick amount between the minimum and the maximum.");
+    const rec = { currency: "EUR", minBudget: min, maxBudget: max, presets: [...new Set(presets)].sort((a, b) => a - b).slice(0, 8), items, updatedAt: Date.now() };
+    await set(ref(db, "pricing"), rec);
+    pricing = normalizePricing(rec);
+    $("pMsg").textContent = "Saved. New requests use these prices now.";
+    renderPrices(false);
+    $("pMsg").textContent = "Saved. New requests use these prices now.";
+  } catch (e) {
+    $("pMsg").textContent = "";
+    $("priceErr").innerHTML = `<div class="err" style="margin-bottom:12px">Could not save: ${esc(e.message || e.code)}</div>`;
+    $("pSave").disabled = false;
+  }
+}
+
+/** What a request wants to buy: the amount and the impressions for each format, and the total. */
+function budgetHtml(r) {
+  const b = r.budget || {};
+  const rows = [];
+  for (const [app, m] of Object.entries(b.items || {})) for (const [slot, it] of Object.entries(m || {})) {
+    rows.push(`${esc((APPS[app] && APPS[app].name) || app)} · ${esc((SLOTS[slot] && SLOTS[slot].label) || slot)}: ${esc(Number(it.amount).toFixed(2))} EUR at ${esc(Number(it.cpm).toFixed(2))} per 1,000 → ${esc(Number(it.impressions).toLocaleString())} impressions`);
+  }
+  rows.push(`<b>Total: ${b.amount != null ? esc(Number(b.amount).toFixed(2)) + " EUR · " : ""}${esc(Number(b.target || 0).toLocaleString())} impressions</b>`);
+  return rows.join("<br>");
+}
+
 /* ── Review actions ───────────────────────────────────────────────────────── */
 function actionsHtml(r) {
   if (r.status === "pending") return `<div class="rqact">
@@ -1321,7 +1449,8 @@ function wireActions(id, r) {
   document.querySelectorAll("#rqActions [data-a]").forEach(b => b.onclick = () => {
     const a = b.dataset.a;
     if (a === "approve") {
-      form(`<label for="rqAmt">Price (EUR)</label><input id="rqAmt" type="number" min="0.01" step="0.01" placeholder="e.g. 120">
+      const quote = r.budget && r.budget.amount != null ? Number(r.budget.amount) : "";
+      form(`<label for="rqAmt">Price (EUR)${quote !== "" ? " · the price list gave " + quote.toFixed(2) + " EUR when it was sent" : ""}</label><input id="rqAmt" type="number" min="0.01" step="0.01" value="${quote}" placeholder="e.g. 120">
         <label for="rqLink">Payment link (Stripe, PayPal…)</label><input id="rqLink" type="url" placeholder="https://">
         <label for="rqNote">Note for the advertiser (optional)</label><textarea id="rqNote"></textarea>
         <div class="row"><button class="primary" id="rqGo">Approve and email the advertiser</button></div>`);

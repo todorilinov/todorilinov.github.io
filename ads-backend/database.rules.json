@@ -15,6 +15,11 @@
       }
     },
 
+    "pricing": {
+      ".read": true,
+      ".write": "auth != null && auth.uid === '5bCbdUU29cPtffTXwNJw5DzigSd2'"
+    },
+
     "submissions": {
       ".read": "auth != null && auth.uid === '5bCbdUU29cPtffTXwNJw5DzigSd2'",
       ".write": "auth != null && auth.uid === '5bCbdUU29cPtffTXwNJw5DzigSd2'"

@@ -6,6 +6,20 @@ const { APPS, SLOTS } = require('./spec');
 const fmtDate = ms => new Date(ms).toISOString().slice(0, 10);
 const fmtN = n => Number(n).toLocaleString('en');
 
+/** The money and the impressions, for each format and in total. Old requests only have the impressions. */
+function budgetLines(rec) {
+  const b = rec.budget || {};
+  const lines = [];
+  for (const [app, m] of Object.entries(b.items || {})) {
+    for (const [slot, it] of Object.entries(m || {})) {
+      lines.push('  ' + (APPS[app] ? APPS[app].name : app) + ' · ' + (SLOTS[slot] ? SLOTS[slot].label : slot) + ': ' +
+        Number(it.amount).toFixed(2) + ' ' + (b.currency || 'EUR') + ' → about ' + fmtN(it.impressions) + ' impressions');
+    }
+  }
+  const total = b.amount != null ? Number(b.amount).toFixed(2) + ' ' + (b.currency || 'EUR') + ' for about ' : '';
+  return lines.concat(['  Total: ' + total + fmtN(b.target) + ' impressions']).join('\n');
+}
+
 function formatLines(rec) {
   const lines = [];
   for (const [app, slots] of Object.entries(rec.slots || {})) {
@@ -28,7 +42,8 @@ Reference: ${ref}
 Ad: ${rec.title}
 Apps and formats:
 ${formatLines(rec)}
-Budget: ${fmtN(rec.budget.target)} impressions
+Budget:
+${budgetLines(rec)}
 Requested start: ${fmtDate(rec.from)}
 
 You can follow the status of your request here:
@@ -58,7 +73,8 @@ ${rec.description ? rec.description + '\n' : ''}Link: ${rec.clickUrl}
 Apps and formats:
 ${formatLines(rec)}
 Countries: ${rec.countries && rec.countries.length ? rec.countries.join(', ') : 'all'}
-Budget: ${fmtN(rec.budget.target)} impressions
+Budget:
+${budgetLines(rec)}
 Requested start: ${fmtDate(rec.from)}
 
 Review it here:
@@ -168,7 +184,8 @@ Ad: ${rec.title}
 Link: ${rec.clickUrl}
 Apps and formats:
 ${formatLines(rec)}
-Budget: ${fmtN(rec.budget.target)} impressions
+Budget:
+${budgetLines(rec)}
 Requested start: ${fmtDate(rec.from)}
 
 Review it here:
@@ -176,4 +193,21 @@ ${adminUrl}`,
   };
 }
 
-module.exports = { receivedEmail, adminEmail, approvedEmail, rejectedEmail, changesEmail, paidEmail, expiredEmail, updatedAdminEmail };
+/** The campaign has shown everything that was paid for. */
+function finishedEmail(rec, ref, statusUrl, delivered) {
+  return {
+    subject: 'Your campaign is finished (' + ref + ')',
+    text:
+`Hi ${rec.advertiser.name},
+
+Your campaign "${rec.title}" has shown all the impressions you paid for (${fmtN(delivered)}). Thank you for advertising with us!
+
+You can see the summary here:
+${statusUrl}
+
+If you would like to run another campaign, you can send a new request at https://tiapps.dev/advertise.html.
+${sign}`,
+  };
+}
+
+module.exports = { finishedEmail, receivedEmail, adminEmail, approvedEmail, rejectedEmail, changesEmail, paidEmail, expiredEmail, updatedAdminEmail };

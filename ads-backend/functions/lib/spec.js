@@ -23,8 +23,6 @@ const MIME = { png: 'image/png', webp: 'image/webp', jpg: 'image/jpeg', gif: 'im
 
 const MIN_LEAD_DAYS = 3;
 const MAX_LEAD_DAYS = 365;
-const MIN_IMPRESSIONS = 10000;
-const MAX_IMPRESSIONS = 10000000;
 const DAY_MS = 86400000;
 
 const UPLOAD_PATH = /^uploads\/[A-Za-z0-9_-]{16,40}\/[A-Za-z0-9._-]{1,80}$/;
@@ -79,7 +77,10 @@ const dayStart = ms => Math.floor(ms / DAY_MS) * DAY_MS;
  * Checks the fields of a request. Files are checked separately (they need to be read).
  * @returns {{errors:{field:string,msg:string}[], value:object}}
  */
-function validateInput(input, nowMs) {
+function validateInput(input, nowMs, pricing) {
+  // required lazily: pricing.js needs APPS from this file
+  const { impressionsFor, round2 } = require('./pricing');
+  pricing = pricing || require('./pricing').normalizePricing(null);
   const errors = [];
   const err = (field, msg) => errors.push({ field, msg });
   const d = input && typeof input === 'object' ? input : {};
@@ -144,9 +145,22 @@ function validateInput(input, nowMs) {
     if (from > today + MAX_LEAD_DAYS * DAY_MS) err('startDate', 'The start date is too far ahead.');
   }
 
-  const target = Number(d.budget && d.budget.target);
-  if (!Number.isInteger(target) || target < MIN_IMPRESSIONS || target > MAX_IMPRESSIONS) {
-    err('target', 'Choose between ' + MIN_IMPRESSIONS.toLocaleString('en') + ' and ' + MAX_IMPRESSIONS.toLocaleString('en') + ' impressions.');
+  // Budget: an amount for every format that has a file. The impressions are worked out from the price list.
+  const asked = d.budget && d.budget.items && typeof d.budget.items === 'object' ? d.budget.items : {};
+  const items = {};
+  let amountTotal = 0, impTotal = 0;
+  for (const f of files) {
+    const field = 'budget:' + f.app + '/' + f.slot;
+    const p = pricing.items[f.app] && pricing.items[f.app][f.slot];
+    const raw = asked[f.app + '/' + f.slot];
+    const amount = round2(Number(raw));
+    if (!p || !p.on) { err(field, 'This format is not available right now.'); continue; }
+    if (raw == null || raw === '' || !Number.isFinite(amount)) { err(field, 'Enter a budget.'); continue; }
+    if (amount < pricing.minBudget) { err(field, 'The minimum budget is ' + pricing.minBudget + ' ' + pricing.currency + '.'); continue; }
+    if (amount > pricing.maxBudget) { err(field, 'The maximum budget is ' + pricing.maxBudget + ' ' + pricing.currency + '. Write to us for more.'); continue; }
+    const impressions = impressionsFor(amount, p.cpm);
+    (items[f.app] = items[f.app] || {})[f.slot] = { amount, cpm: p.cpm, impressions };
+    amountTotal += amount; impTotal += impressions;
   }
 
   if (d.terms !== true) err('terms', 'You need to accept the advertising terms to continue.');
@@ -157,13 +171,13 @@ function validateInput(input, nowMs) {
       advertiser: { name, company, email, country, vat },
       ad: { title, description, clickUrl },
       files, countries, from,
-      budget: { model: 'impressions', target },
+      budget: { model: 'impressions', amount: round2(amountTotal), currency: pricing.currency, target: impTotal, items },
       apps: Object.keys(apps),
     },
   };
 }
 
 module.exports = {
-  APPS, SLOTS, MAX_BYTES, MIN_LEAD_DAYS, MIN_IMPRESSIONS, MAX_IMPRESSIONS, UPLOAD_PATH,
+  APPS, SLOTS, MAX_BYTES, MIN_LEAD_DAYS, UPLOAD_PATH,
   sniff, checkFile, validateInput,
 };

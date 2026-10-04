@@ -6,6 +6,7 @@
 const crypto = require('crypto');
 const { SLOTS, MAX_BYTES, validateInput, sniff, checkFile } = require('./spec');
 const { receivedEmail, adminEmail, updatedAdminEmail } = require('./mail');
+const { normalizePricing } = require('./pricing');
 
 const TERMS_VERSION = 'draft-0';
 const HOUR_MS = 3600000;
@@ -45,6 +46,11 @@ async function tokenOk(db, id, token) {
   const stored = (await db.ref('tokens/' + id).get()).val();
   if (typeof stored !== 'string') return false;
   return crypto.timingSafeEqual(Buffer.from(sha256(stored)), Buffer.from(sha256(token)));
+}
+
+/** The price list from the database (or the defaults while nothing is saved). */
+async function loadPricing(db) {
+  return normalizePricing((await db.ref('pricing').get()).val());
 }
 
 const statusUrl = (baseUrl, id, token) => baseUrl + '/ad-status.html?i=' + id + '&t=' + token;
@@ -108,7 +114,7 @@ async function processSubmission(data, ctx) {
   const ipHash = ipHashOf(ctx.ip);
   if (!(await countRequest(db, ipHash, now))) throw new RateLimited();
 
-  const { errors, value } = validateInput(data, now);
+  const { errors, value } = validateInput(data, now, await loadPricing(db));
   if (errors.length) throw new InvalidRequest(errors);
   const up = await checkUploads(value.files, bucket);
   if (up.errors.length) throw new InvalidRequest(up.errors);
@@ -165,7 +171,7 @@ async function processResubmission(data, ctx) {
   }
 
   // The advertiser's own details stay as they were.
-  const { errors, value } = validateInput({ ...data, advertiser: rec.advertiser }, now);
+  const { errors, value } = validateInput({ ...data, advertiser: rec.advertiser }, now, await loadPricing(db));
   if (errors.length) throw new InvalidRequest(errors);
   const up = await checkUploads(value.files, bucket);
   if (up.errors.length) throw new InvalidRequest(up.errors);
@@ -198,5 +204,5 @@ async function processResubmission(data, ctx) {
 
 module.exports = {
   processSubmission, processResubmission, InvalidRequest, RateLimited, NotAllowed,
-  countRequest, hit, tokenOk, statusUrl, safeSend, ipHashOf, sha256, TERMS_VERSION, DAY_MS,
+  countRequest, hit, tokenOk, loadPricing, statusUrl, safeSend, ipHashOf, sha256, TERMS_VERSION, DAY_MS,
 };

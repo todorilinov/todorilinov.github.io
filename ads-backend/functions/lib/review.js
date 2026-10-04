@@ -105,7 +105,7 @@ async function markPaid(d, ctx) {
     title: rec.title, clickUrl: rec.clickUrl, kind: 'paid', status: 'paused', weight: 20,
     cap: { n: 3, per: 'hour' }, from: rec.from, apps: rec.apps, slots,
     createdAt: now, updatedAt: now, source: 'submission', submissionId: d.id,
-    budget: { model: 'impressions', target: rec.budget.target }, delivered: 0,
+    budget: { ...rec.budget, model: 'impressions' }, delivered: 0,
   };
   if (rec.description) campaign.description = rec.description;
   if (rec.countries && rec.countries.length) campaign.countries = rec.countries;
@@ -153,7 +153,7 @@ function publicView(rec, campaign) {
   const status = effectiveStatus(rec, campaign);
   const v = {
     ref: rec.ref, status, title: rec.title, createdAt: rec.createdAt, updatedAt: rec.updatedAt,
-    from: rec.from, budget: { target: rec.budget && rec.budget.target },
+    from: rec.from, budget: { target: rec.budget && rec.budget.target, amount: rec.budget && rec.budget.amount, currency: (rec.budget && rec.budget.currency) || 'EUR', items: (rec.budget && rec.budget.items) || {} },
     description: rec.description || '', clickUrl: rec.clickUrl, countries: rec.countries || [],
     apps: Object.entries(rec.slots || {}).map(([app, m]) => ({
       app, name: APPS[app] ? APPS[app].name : app,
@@ -180,4 +180,4 @@ async function statusGet(d, ctx) {
   return publicView(rec, campaign);
 }
 
-module.exports = { review, markPaid, expireUnpaid, statusGet, publicView, effectiveStatus, ReviewError, PAY_WITHIN_DAYS };
+module.exports = { review, markPaid, expireUnpaid, statusGet, publicView, effectiveStatus, linkOf, ReviewError, PAY_WITHIN_DAYS };

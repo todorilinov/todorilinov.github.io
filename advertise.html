@@ -94,6 +94,18 @@
   #done .ref{font-family:var(--mono);font-size:1.3rem;letter-spacing:.12em;margin:16px 0;color:var(--text)}
   .note{border-left:3px solid var(--orange);padding:10px 14px;background:#0E1424;border-radius:0 8px 8px 0;margin:10px 0;white-space:pre-wrap;word-break:break-word}
   .btn{display:inline-block;margin-top:10px;background:transparent;border:1px solid var(--card-edge);color:var(--text);border-radius:10px;padding:10px 20px;text-decoration:none}
+  .bud{margin-top:10px;padding-top:10px;border-top:1px solid var(--card-edge)}
+  .bud label{display:block;font-family:var(--mono);font-size:.7rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .presets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+  .presets button{background:#0B101C;border:1px solid var(--card-edge);color:var(--text);border-radius:14px;padding:3px 11px;font:inherit;font-size:.82rem;cursor:pointer}
+  .presets button.on,.presets button:hover{border-color:var(--cyan);color:var(--cyan)}
+  .bud input{width:100%}
+  .imps{font-size:.88rem;margin-top:6px;color:var(--ok)}
+  .imps small{display:block;color:var(--muted);font-size:.78rem}
+  .cell.off{opacity:.55}
+  .cell.off .drop{pointer-events:none}
+  #total{margin-top:14px;padding:12px 14px;background:#0E1424;border-radius:10px;font-size:.97rem}
+  #total b{font-size:1.2rem}
   footer{margin:40px 0;color:var(--muted);font-size:.84rem;text-align:center}
 </style>
 </head>
@@ -149,20 +161,12 @@
     </div>
 
     <div class="card">
-      <h2>5 · Budget and start</h2>
+      <h2>5 · Start and total</h2>
+      <p class="hint" style="margin:-6px 0 14px">You set the budget for each format above, next to its file. One impression is one time your ad is shown. We confirm the final price after the review, and you pay only after approval.</p>
       <div class="grid">
-        <div class="field" data-f="target"><label for="target">Impressions</label>
-          <select id="target">
-            <option value="50000">50,000</option><option value="100000" selected>100,000</option>
-            <option value="250000">250,000</option><option value="500000">500,000</option>
-            <option value="1000000">1,000,000</option><option value="custom">Other number…</option>
-          </select>
-          <input type="number" id="targetCustom" min="10000" max="10000000" step="1000" placeholder="10,000 to 10,000,000" style="display:none;margin-top:8px">
-          <div class="err"></div>
-          <div class="hint">One impression is one time your ad is shown. We confirm the price after the review, and you pay only after approval.</div>
-        </div>
         <div class="field" data-f="startDate"><label for="startDate">Start date</label><input type="date" id="startDate"><div class="err"></div><div class="hint">At least 3 days from today, so we can review the ad.</div></div>
       </div>
+      <div id="total" aria-live="polite">Add a file to a format to set its budget.</div>
     </div>
 
     <div class="card">
@@ -231,6 +235,12 @@ const TYPE_TEXT = { image: "an image (PNG, WebP or JPEG)", gif: "a GIF", video: 
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+let PRICING;
+try {
+  PRICING = null;
+  const res = await fetch(firebaseConfig.databaseURL + "/pricing.json", { cache: "no-store" });
+  PRICING = res.ok ? await res.json() : null;
+} catch (_) { PRICING = null; }
 const MB = n => (n / 1048576).toFixed(n < 1048576 ? 2 : 1) + " MB";
 
 /* ── Countries ────────────────────────────────────────────────────────────── */
@@ -262,6 +272,39 @@ document.querySelectorAll("input[name=aud]").forEach(r => r.onchange = () => {
 });
 renderCc();
 
+/* ── Prices (the admin edits them; same rules as functions/lib/pricing.js) ───── */
+const DB_URL = firebaseConfig.databaseURL;
+const DEFAULT_PRICING = {
+  currency: "EUR", minBudget: 10, maxBudget: 5000, presets: [10, 25, 50, 100, 250],
+  items: {
+    worldradio: { banner: { cpm: 1.5, on: true }, mrec: { cpm: 3, on: true }, fullscreen: { cpm: 10, on: true } },
+    tvdsp: { banner: { cpm: 1.2, on: true } }, fakelocation: { banner: { cpm: 1, on: true } },
+  },
+};
+const numIn = (v, min, max, d) => { const n = Number(v); return Number.isFinite(n) && n >= min && n <= max ? n : d; };
+function normalizePricing(r) {
+  r = r && typeof r === "object" ? r : {};
+  const d = DEFAULT_PRICING;
+  const minBudget = numIn(r.minBudget, 1, 100000, d.minBudget);
+  const maxBudget = Math.max(minBudget, numIn(r.maxBudget, 1, 1000000, d.maxBudget));
+  let presets = Array.isArray(r.presets) ? r.presets.map(Number).filter(n => Number.isFinite(n) && n >= minBudget && n <= maxBudget) : [];
+  presets = [...new Set(presets)].sort((a, b) => a - b).slice(0, 8);
+  if (!presets.length) presets = d.presets.filter(n => n >= minBudget && n <= maxBudget);
+  const items = {};
+  for (const [app, spec] of Object.entries(APPS)) {
+    items[app] = {};
+    for (const slot of spec.slots) {
+      const got = r.items && r.items[app] && r.items[app][slot];
+      items[app][slot] = { cpm: numIn(got && got.cpm, 0.01, 1000, d.items[app][slot].cpm), on: got && typeof got.on === "boolean" ? got.on : true };
+    }
+  }
+  return { currency: "EUR", minBudget, maxBudget, presets, items };
+}
+const impressionsFor = (amount, cpm) => Math.floor(amount / cpm * 1000 / 100) * 100;
+const fmtN = n => Number(n).toLocaleString("en");
+const money = n => Number(n).toFixed(2);
+PRICING = normalizePricing(PRICING);
+
 /* ── Apps, formats and files ──────────────────────────────────────────────── */
 const files = {};   // "app/slot" -> { file, kind, w, h }
 
@@ -270,12 +313,20 @@ $("apps").innerHTML = Object.entries(APPS).map(([k, a]) => `
     <label class="head"><input type="checkbox" data-on="${k}"><span><b>${esc(a.name)}</b><small>${esc(a.about)}</small></span></label>
     <div class="body"><div class="cells">${a.slots.map(s => {
       const S = SLOTS[s];
-      return `<div class="cell" data-key="${k}/${s}">
+      const price = PRICING.items[k][s];
+      return `<div class="cell ${price.on ? "" : "off"}" data-key="${k}/${s}">
         <div class="t">${esc(S.label)}</div>
-        <div class="s">${S.w}×${S.h} px · ${S.types.map(t => ({ image: "image", gif: "GIF", video: "MP4 video" }[t])).join(" / ")}<br>${esc(S.note)}</div>
-        <div class="drop"><span class="ph">Click or drop a file</span><div class="pv"></div><input type="file" accept="${S.types.flatMap(t => t === "image" ? ["image/png", "image/webp", "image/jpeg"] : t === "gif" ? ["image/gif"] : ["video/mp4"]).join(",")}" aria-label="${esc(a.name)} ${esc(S.label)} file"></div>
+        <div class="s">${S.w}×${S.h} px · ${S.types.map(t => ({ image: "image", gif: "GIF", video: "MP4 video" }[t])).join(" / ")}<br>${esc(S.note)}<br><b>${price.on ? money(price.cpm) + " " + PRICING.currency + " per 1,000 impressions" : "Not available right now"}</b></div>
+        <div class="drop"><span class="ph">Click or drop a file</span><div class="pv"></div><input type="file" accept="${S.types.flatMap(t => t === "image" ? ["image/png", "image/webp", "image/jpeg"] : t === "gif" ? ["image/gif"] : ["video/mp4"]).join(",")}" aria-label="${esc(a.name)} ${esc(S.label)} file" ${price.on ? "" : "disabled"}></div>
         <div class="msg"></div><button type="button" class="rm" hidden>Remove</button>
         <div class="err" data-f="file:${k}/${s}"></div>
+        <div class="bud" hidden>
+          <label for="amt-${k}-${s}">Budget (${PRICING.currency})</label>
+          <div class="presets">${PRICING.presets.map(n => `<button type="button" data-amt="${n}">${n}</button>`).join("")}</div>
+          <input type="number" class="amt" id="amt-${k}-${s}" min="${PRICING.minBudget}" max="${PRICING.maxBudget}" step="1" inputmode="decimal">
+          <div class="imps"></div>
+          <div class="err" data-f="budget:${k}/${s}"></div>
+        </div>
       </div>`;
     }).join("")}</div><div class="err" data-f="app:${k}"></div></div>
   </div>`).join("");
@@ -321,6 +372,34 @@ function clearCell(cell) {
   drop.querySelector("input").value = "";
   cell.querySelector(".msg").textContent = ""; cell.querySelector(".msg").className = "msg";
   cell.querySelector(".rm").hidden = true;
+  cell.querySelector(".bud").hidden = true;
+  cell.querySelector(".amt").value = "";
+  refreshTotal();
+}
+
+/** What the amount in this cell buys; the same sum the server does. */
+function updateBudget(cell) {
+  const [app, slot] = cell.dataset.key.split("/");
+  const price = PRICING.items[app][slot];
+  const amt = cell.querySelector(".amt"), n = Number(amt.value);
+  const ok = amt.value !== "" && Number.isFinite(n) && n >= PRICING.minBudget && n <= PRICING.maxBudget;
+  cell.querySelector(".imps").innerHTML = ok ? "≈ " + fmtN(impressionsFor(n, price.cpm)) + " impressions" : "";
+  cell.querySelectorAll(".presets button").forEach(b => b.classList.toggle("on", Number(b.dataset.amt) === n));
+  setErr("budget:" + cell.dataset.key, "");
+  refreshTotal();
+}
+function refreshTotal() {
+  let sum = 0, imps = 0, count = 0;
+  document.querySelectorAll(".cell").forEach(c => {
+    if (c.querySelector(".bud").hidden) return;
+    const [app, slot] = c.dataset.key.split("/");
+    const n = Number(c.querySelector(".amt").value);
+    if (!(n >= PRICING.minBudget && n <= PRICING.maxBudget)) return;
+    sum += n; imps += impressionsFor(n, PRICING.items[app][slot].cpm); count++;
+  });
+  $("total").innerHTML = count
+    ? `Total: <b>${money(sum)} ${PRICING.currency}</b> · ≈ ${fmtN(imps)} impressions in ${count} format${count === 1 ? "" : "s"}. The final price is confirmed after the review.`
+    : "Add a file to a format to set its budget.";
 }
 
 function bindCell(cell) {
@@ -343,6 +422,10 @@ function bindCell(cell) {
       msg.className = "msg ok";
       msg.textContent = file.name + " · " + info.w + "×" + info.h + " · " + MB(file.size);
       cell.querySelector(".rm").hidden = false;
+      const amt = cell.querySelector(".amt");
+      if (!amt.value) amt.value = String(prefill[key] || PRICING.presets[Math.min(2, PRICING.presets.length - 1)]);
+      cell.querySelector(".bud").hidden = false;
+      updateBudget(cell);
       setErr("app:" + app, "");
     } catch (e) {
       msg.className = "msg bad"; msg.textContent = e.message;
@@ -354,11 +437,13 @@ function bindCell(cell) {
   drop.ondragleave = () => drop.classList.remove("drag");
   drop.ondrop = e => { e.preventDefault(); drop.classList.remove("drag"); take(e.dataTransfer.files[0]); };
   cell.querySelector(".rm").onclick = () => clearCell(cell);
+  cell.querySelector(".amt").oninput = () => updateBudget(cell);
+  cell.querySelectorAll(".presets button").forEach(b => b.onclick = () => { cell.querySelector(".amt").value = b.dataset.amt; updateBudget(cell); });
 }
 document.querySelectorAll(".cell").forEach(bindCell);
 
 /* ── Budget and date ──────────────────────────────────────────────────────── */
-$("target").onchange = () => { $("targetCustom").style.display = $("target").value === "custom" ? "block" : "none"; };
+const prefill = {};   // key -> amount, from the request that is being updated
 const ymd = ms => new Date(ms).toISOString().slice(0, 10);
 const minDate = ymd(Date.now() + 3 * 86400000);
 $("startDate").min = minDate; $("startDate").value = ymd(Date.now() + 7 * 86400000);
@@ -389,9 +474,7 @@ if (RESUB) {
         $("ccBox").classList.add("on");
         v.countries.forEach(c => picked.add(c)); renderCc();
       }
-      const t = String(v.budget.target);
-      if ([...$("target").options].some(o => o.value === t)) $("target").value = t;
-      else { $("target").value = "custom"; $("targetCustom").style.display = "block"; $("targetCustom").value = t; }
+      for (const [a, m] of Object.entries((v.budget && v.budget.items) || {})) for (const [sl, it] of Object.entries(m || {})) prefill[a + "/" + sl] = it.amount;
       const day = new Date(v.from).toISOString().slice(0, 10);
       if (day >= minDate) $("startDate").value = day;
       for (const a of v.apps) {
@@ -423,12 +506,13 @@ function collect() {
   const apps = {};
   document.querySelectorAll("[data-on]:checked").forEach(cb => { apps[cb.dataset.on] = {}; });
   for (const key of Object.keys(files)) { const [a, s] = key.split("/"); if (apps[a]) apps[a][s] = files[key]; }
-  const t = $("target").value === "custom" ? Number($("targetCustom").value) : Number($("target").value);
+  const budget = {};
+  document.querySelectorAll(".cell").forEach(c => { if (!c.querySelector(".bud").hidden) budget[c.dataset.key] = c.querySelector(".amt").value.trim(); });
   return {
     advertiser: { name: $("name").value.trim(), company: $("company").value.trim(), email: $("email").value.trim(), country: $("country").value, vat: $("vat").value.trim() },
     ad: { title: $("title").value.trim(), description: $("description").value.trim(), clickUrl: $("clickUrl").value.trim() },
     apps, countries: document.querySelector("input[name=aud]:checked").value === "some" ? [...picked] : [],
-    startDate: $("startDate").value, target: t, terms: $("terms").checked, website: $("website").value,
+    startDate: $("startDate").value, budget, terms: $("terms").checked, website: $("website").value,
   };
 }
 function check(d) {
@@ -445,7 +529,12 @@ function check(d) {
   for (const a of chosen) if (!Object.keys(d.apps[a]).length) e["app:" + a] = "Add at least one file for " + APPS[a].name + ", or untick it.";
   if (document.querySelector("input[name=aud]:checked").value === "some" && !d.countries.length) e.countries = "Choose at least one country, or select all countries.";
   if (!d.startDate || d.startDate < minDate) e.startDate = "The start date must be at least 3 days from today.";
-  if (!Number.isInteger(d.target) || d.target < 10000 || d.target > 10000000) e.target = "Choose between 10,000 and 10,000,000 impressions.";
+  for (const [key, raw] of Object.entries(d.budget)) {
+    const n = Number(raw);
+    if (raw === "" || !Number.isFinite(n)) e["budget:" + key] = "Enter a budget.";
+    else if (n < PRICING.minBudget) e["budget:" + key] = "The minimum budget is " + PRICING.minBudget + " " + PRICING.currency + ".";
+    else if (n > PRICING.maxBudget) e["budget:" + key] = "The maximum budget is " + PRICING.maxBudget + " " + PRICING.currency + ". Write to us for more.";
+  }
   if (!d.terms) e.terms = "You need to accept the advertising terms to continue.";
   return e;
 }
@@ -489,7 +578,7 @@ $("f").addEventListener("submit", async ev => {
       (payloadApps[a] = payloadApps[a] || {})[s] = { path };
     }
     say("info", "Sending your request…");
-    const body = { ad: d.ad, apps: payloadApps, countries: d.countries, startDate: d.startDate, budget: { target: d.target }, terms: d.terms, website: d.website };
+    const body = { ad: d.ad, apps: payloadApps, countries: d.countries, startDate: d.startDate, budget: { items: d.budget }, terms: d.terms, website: d.website };
     const res = RESUB
       ? await httpsCallable(fns, "statusResubmit")({ ...RESUB, ...body })
       : await httpsCallable(fns, "submit")({ advertiser: d.advertiser, ...body });

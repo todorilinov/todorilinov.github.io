@@ -16,7 +16,7 @@ const input = (over = {}) => ({
   apps: { tvdsp: { banner: { path: 'uploads/AbCdEfGhIjKlMnOpQr/banner.png' } } },
   countries: ['BG'],
   startDate: '2026-10-14',
-  budget: { target: 100000 },
+  budget: { items: { 'tvdsp/banner': 50 } },
   terms: true,
   ...over,
 });
@@ -47,7 +47,7 @@ test('approve sets the price, the payment link and a 14 day limit, and tells the
   assert.strictEqual(mails.length, 1);
   assert.strictEqual(mails[0].to, 'ann@acme.com');
   assert.match(mails[0].subject, /approved/);
-  assert.match(mails[0].text, /120\.46 EUR for 100,000 impressions/);
+  assert.match(mails[0].text, /120\.46 EUR for 41,600 impressions/);
   assert.match(mails[0].text, /ad-status\.html\?i=-Npush0000000000001&t=TOKEN1234567890abcdef/);
   assert.match(mails[0].text, /2026-10-24/);
 });
@@ -109,7 +109,7 @@ test('mark as paid copies the files, creates a PAUSED campaign and tells the adv
   assert.deepStrictEqual(c.countries, ['BG']);
   assert.strictEqual(c.from, Date.parse('2026-10-14T00:00:00Z'));
   assert.strictEqual(c.submissionId, SID);
-  assert.deepStrictEqual(c.budget, { model: 'impressions', target: 100000 });
+  assert.deepStrictEqual(c.budget, { model: 'impressions', amount: 50, currency: 'EUR', target: 41600, items: { tvdsp: { banner: { amount: 50, cpm: 1.2, impressions: 41600 } } } });
   assert.strictEqual(c.delivered, 0);
   const cr = c.slots.tvdsp.banner;
   assert.strictEqual(cr.type, 'image');
@@ -214,7 +214,7 @@ const newVersion = (over = {}) => ({
   id: SID, token: TOKEN,
   ad: { title: 'Acme app 2', description: '', clickUrl: 'https://acme.com/new' },
   apps: { tvdsp: { banner: { path: 'uploads/ZyXwVuTsRqPoNmLkJi/banner.gif' } } },
-  countries: [], startDate: '2026-10-20', budget: { target: 250000 }, terms: true, ...over,
+  countries: [], startDate: '2026-10-20', budget: { items: { 'tvdsp/banner': 120 } }, terms: true, ...over,
 });
 
 test('the advertiser can send a new version after changes were requested', async () => {
@@ -230,7 +230,8 @@ test('the advertiser can send a new version after changes were requested', async
   assert.strictEqual(rec.review, undefined, 'the old note is gone');
   assert.strictEqual(rec.description, undefined);
   assert.strictEqual(rec.countries, undefined);
-  assert.strictEqual(rec.budget.target, 250000);
+  assert.strictEqual(rec.budget.target, 100000);
+  assert.strictEqual(rec.budget.amount, 120);
   assert.strictEqual(rec.advertiser.email, 'ann@acme.com', 'who the advertiser is cannot be changed');
   assert.strictEqual(rec.slots.tvdsp.banner.type, 'gif');
   assert.ok(bucket.files.has('submissions/' + SID + '/tvdsp_banner.gif'));
