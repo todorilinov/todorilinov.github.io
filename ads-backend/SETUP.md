@@ -283,3 +283,42 @@ firebase deploy --only functions,database
    Database → `stats` → добави `{id на кампанията}/20261010/tvdsp/BG/imp` със стойност над целта
    (целта е във `campaigns/{id}/budget/target`). До 15 минути кампанията става `finished` и
    рекламодателят получава имейл. После изтрий пробната кампания и заявка.
+
+---
+
+# Фаза E — отчет за рекламодателя (стъпки за теб)
+
+Нови неща: `report.html` (отчетът), функцията `report` (код по имейл, сесия) и връзка „See the report“
+от страницата за статус на пусната кампания. Правилата не са променени.
+
+## 1. Свали и разгърни
+
+Свали ZIP на `main` (`https://github.com/todorilinov/todorilinov.github.io/archive/refs/heads/main.zip`),
+разархивирай в нова папка (например `C:\tiapps\v5`), влез в `ads-backend` и:
+
+```
+firebase use tiapps-ads
+cd functions
+npm install
+cd ..
+firebase deploy --only functions
+```
+
+На въпросите за настройки натисни **Enter**.
+
+## 2. Направи функцията публична
+
+В Cloud Run (https://console.cloud.google.com/run?project=tiapps-ads): услугата **report** →
+**Security** → **Allow public access** → View diff & redeploy → Deploy changes. Само тази една.
+Проверка: адресът на `report` (Functions страницата) в браузъра трябва да каже „Bad Request“, не „Forbidden“.
+
+## 3. Проба
+
+1. Вземи пусната кампания от заявка (одобри, **Mark as paid**, после **Activate** в Campaigns). Ако нямаш,
+   подай пробна заявка със свой имейл и мини през стъпките.
+2. Отвори страницата на заявката (линкът от имейла) и натисни **See the report**.
+3. Въведи имейла на заявката: трябва да получиш писмо с 6 цифри. Въведи ги: отчетът се отваря.
+4. Опитай и с чужд имейл: пак пише, че кодът е изпратен, но писмо няма.
+5. Числата идват от `stats/{id на кампанията}`. За проба можеш да сложиш там данни от Firebase конзолата,
+   например `stats/{id}/20261010/tvdsp/BG` с `imp: 120` и `clk: 3`.
+6. Изтрий пробните неща.

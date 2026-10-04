@@ -210,4 +210,20 @@ ${sign}`,
   };
 }
 
-module.exports = { finishedEmail, receivedEmail, adminEmail, approvedEmail, rejectedEmail, changesEmail, paidEmail, expiredEmail, updatedAdminEmail };
+/** The code for the report. */
+function codeEmail(rec, ref, code) {
+  return {
+    subject: 'Your TI Apps report code: ' + code,
+    text:
+`Hi ${rec.advertiser.name},
+
+Your code for the report of "${rec.title}" is:
+
+${code}
+
+It works for 10 minutes. If you did not ask for it, you can ignore this email: nobody can open the report without it.
+${sign}`,
+  };
+}
+
+module.exports = { codeEmail, finishedEmail, receivedEmail, adminEmail, approvedEmail, rejectedEmail, changesEmail, paidEmail, expiredEmail, updatedAdminEmail };

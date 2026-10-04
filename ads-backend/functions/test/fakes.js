@@ -57,11 +57,13 @@ const png = (w, h, pad = 0) => {
 const gif = (w, h) => { const b = Buffer.alloc(20); b.write('GIF89a'); b.writeUInt16LE(w, 6); b.writeUInt16LE(h, 8); return b; };
 const mp4 = (size = 100) => { const b = Buffer.alloc(size); b.writeUInt32BE(24, 0); b.write('ftypisom', 4); return b; };
 
+let sessions = 0;
 function makeCtx(db, bucket, over = {}) {
   const mails = [];
   const ctx = {
     now: Date.parse('2026-10-10T12:00:00Z'), ip: '1.2.3.4', db, bucket, bucketName: bucket.name,
     adminEmail: 'admin@x.dev', baseUrl: 'https://tiapps.dev', newToken: () => 'TOKEN1234567890abcdef',
+    newCode: () => '123456', newSession: () => 'SESSION-' + (++sessions) + '-abcdefghijklmnop',
     sendMail: async m => { mails.push(m); }, log: () => {}, ...over,
   };
   return { ctx, mails };

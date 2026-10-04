@@ -12,6 +12,8 @@
 //  - statusGet       : ad-status.html asks for the state of a request (id + secret token)
 //  - statusResubmit  : the advertiser sends a new version of a request that was sent back or rejected
 //  - expireUnpaid    : approvals nobody paid within 14 days expire
+// Phase E:
+//  - report          : the advertiser's report: action "code" (send a code by email), "verify" (check it), "data" (the report)
 // Phase D:
 //  - deliveryCheck   : every 15 minutes counts the impressions of paid campaigns and finishes the ones that are done
 
@@ -30,6 +32,7 @@ const { sendEmail } = require('./lib/email');
 const { processSubmission, processResubmission, InvalidRequest, RateLimited, NotAllowed } = require('./lib/submit');
 const { review, markPaid, expireUnpaid, statusGet, ReviewError } = require('./lib/review');
 const { deliveryCheck } = require('./lib/delivery');
+const { requestCode, verifyCode, reportData, BadCode } = require('./lib/report');
 
 // The database is in europe-west1, so the Admin SDK needs its URL spelled out.
 initializeApp({
@@ -129,6 +132,8 @@ function makeCtx(request) {
     bucketName: bucket.name,
     sendMail: m => sendEmail({ apiKey: RESEND_API_KEY.value(), from: MAIL_FROM.value(), ...m }),
     newToken: () => crypto.randomBytes(16).toString('base64url'),
+    newCode: () => String(crypto.randomInt(0, 1000000)).padStart(6, '0'),
+    newSession: () => crypto.randomBytes(24).toString('base64url'),
     adminEmail: ADMIN_EMAIL.value(),
     baseUrl: 'https://tiapps.dev',
     log: (msg, extra) => logger.warn(msg, extra),
@@ -142,6 +147,7 @@ async function guarded(name, fn) {
   } catch (e) {
     if (e instanceof InvalidRequest) throw new HttpsError('invalid-argument', e.message, { errors: e.errors });
     if (e instanceof RateLimited) throw new HttpsError('resource-exhausted', e.message);
+    if (e instanceof BadCode) throw new HttpsError('invalid-argument', e.message, { badCode: true });
     if (e instanceof NotAllowed || e instanceof ReviewError) throw new HttpsError(e.code, e.message);
     logger.error(name + ' failed', { error: e.message, stack: e.stack });
     throw new HttpsError('internal', 'Something went wrong on our side. Please try again later.');
@@ -202,4 +208,12 @@ exports.cleanupUploads = onSchedule({ schedule: 'every day 03:30', timeZone: 'UT
 exports.deliveryCheck = onSchedule({ schedule: 'every 15 minutes', timeZone: 'UTC', secrets: [RESEND_API_KEY] }, async () => {
   const r = await deliveryCheck(makeCtx(null));
   logger.info('deliveryCheck', r);
+});
+
+exports.report = onCall({ ...PUBLIC_CALL, memory: '256MiB' }, request => {
+  requireAppCheck(request);
+  const d = request.data || {};
+  const run = { code: requestCode, verify: verifyCode, data: reportData }[d.action];
+  if (!run) throw new HttpsError('invalid-argument', 'Unknown action.');
+  return guarded('report', () => run(d, makeCtx(request)));
 });

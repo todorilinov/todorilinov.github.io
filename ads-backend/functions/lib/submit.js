@@ -18,7 +18,7 @@ class InvalidRequest extends Error {
   constructor(errors) { super('Please fix the highlighted fields.'); this.errors = errors; }
 }
 class RateLimited extends Error {
-  constructor() { super('Too many requests. Please try again later.'); }
+  constructor(msg) { super(msg || 'Too many requests. Please try again later.'); }
 }
 /** The link (id + token) does not match a request, or the request is not in a state that allows this. */
 class NotAllowed extends Error {
