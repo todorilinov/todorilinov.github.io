@@ -135,6 +135,9 @@ function fail(msg) {
   $("err").style.display = "block";
 }
 
+/** The report is opened with a code that goes to the email address of the request. */
+const reportLink = () => `<a class="btn" href="${esc(link("report.html"))}">See the report</a><p class="muted" style="margin-top:8px">Impressions, clicks and countries. We send a code to your email to open it.</p>`;
+
 function bodyFor(v) {
   const s = v.status;
   if (s === "pending") return `<p>We are reviewing your ad by hand, usually within 2 working days. We will email you the result.</p>`;
@@ -157,8 +160,8 @@ function bodyFor(v) {
   if (s === "expired") return `<p>The approval expired because we did not receive the payment in time. If you still want to advertise, please send a new request.</p>
     <a class="btn" href="advertise.html">New request</a>`;
   if (s === "paid") return `<p>Thank you, we received your payment${v.paidAt ? " on " + esc(day(v.paidAt)) : ""}. Your ad will start around <b>${esc(day(v.from))}</b>, after a last check by us. We will email you when it goes live.</p>`;
-  if (s === "active") return `<p>Your ad is live in the apps.</p>`;
-  if (s === "finished") return `<p>This campaign is finished. Thank you for advertising with us!</p>`;
+  if (s === "active") return `<p>Your ad is live in the apps.</p>${reportLink()}`;
+  if (s === "finished") return `<p>This campaign is finished. Thank you for advertising with us!</p>${reportLink()}`;
   return "";
 }
 

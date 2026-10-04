@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campaign report — TI Apps</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0E16; --card:#111726; --card-edge:#1C2436;
+    --blue:#1E7BE0; --cyan:#19A0EA; --orange:#F5821A;
+    --text:#E9EDF5; --muted:#8A93A8; --faint:#5A6478; --ok:#22E39A; --bad:#F55A5A; --warn:#FFAA33;
+    --series:#3987e5;            /* the one data colour: checked against the card surface */
+    --grid:#1C2436;
+    --mono:'IBM Plex Mono',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:'Archivo',sans-serif;font-variation-settings:'wdth' 100;
+       line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh}
+  a{color:var(--cyan)}
+  .wrap{max-width:900px;margin:0 auto;padding:0 20px}
+  header{padding:22px 0;border-bottom:1px solid var(--card-edge)}
+  .logo{font-weight:900;font-variation-settings:'wdth' 125;font-size:1.3rem;letter-spacing:.02em;text-decoration:none;color:var(--text)}
+  .logo .ti{color:var(--cyan)} .logo .apps{color:var(--orange)}
+  h1{font-size:clamp(1.5rem,4vw,2rem);font-weight:800;font-variation-settings:'wdth' 110;margin:34px 0 6px;line-height:1.2;word-break:break-word}
+  .ref{font-family:var(--mono);color:var(--muted);font-size:.85rem;letter-spacing:.1em;margin-bottom:22px}
+  .card{background:var(--card);border:1px solid var(--card-edge);border-radius:14px;padding:22px;margin-bottom:16px}
+  .card h2{font-size:.76rem;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);font-family:var(--mono);font-weight:500;margin-bottom:14px}
+  .muted{color:var(--muted);font-size:.9rem}
+  label{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+  input[type=email],input[type=text]{width:100%;max-width:380px;background:#0B101C;border:1px solid var(--card-edge);border-radius:10px;color:var(--text);padding:11px 13px;font:inherit;font-size:1rem}
+  input:focus{outline:2px solid var(--cyan);outline-offset:1px;border-color:transparent}
+  #code{letter-spacing:.35em;font-family:var(--mono);font-size:1.4rem;max-width:220px;text-align:center}
+  .btn{display:inline-block;margin-top:14px;background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff;border:none;border-radius:10px;
+       padding:12px 26px;font:inherit;font-weight:700;font-size:1rem;cursor:pointer;text-decoration:none}
+  .btn:disabled{opacity:.55;cursor:default}
+  .btn.alt{background:transparent;border:1px solid var(--card-edge);color:var(--text);font-weight:600;padding:9px 16px;font-size:.9rem;margin-top:0}
+  .btn.alt:hover{border-color:var(--cyan)}
+  .err{color:var(--bad);font-size:.9rem;margin-top:10px}
+  .err:empty{display:none}
+  .badge{display:inline-block;padding:3px 12px;border-radius:14px;font-size:.82rem;font-weight:700;background:rgba(25,160,234,.15);color:var(--cyan)}
+  .badge.ok{background:rgba(34,227,154,.14);color:var(--ok)}
+
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:16px}
+  .tile{background:var(--card);border:1px solid var(--card-edge);border-radius:14px;padding:16px 18px}
+  .tile .k{font-size:.8rem;color:var(--muted)}
+  .tile .v{font-size:1.9rem;font-weight:800;line-height:1.2;margin:2px 0}
+  .tile .s{font-size:.82rem;color:var(--muted)}
+  .meter{height:8px;border-radius:4px;background:rgba(57,135,229,.2);margin:8px 0 4px;overflow:hidden}
+  .meter i{display:block;height:100%;background:var(--series);border-radius:4px}
+
+  #chartBox{position:relative}
+  svg text{fill:var(--muted);font-family:'Archivo',sans-serif;font-size:11px}
+  .gridline{stroke:var(--grid);stroke-width:1}
+  .baseline{stroke:var(--faint);stroke-width:1}
+  .bar{fill:var(--series);transition:filter .12s}
+  .bar:hover,.bar:focus{filter:brightness(1.25);outline:none}
+  .hit{fill:transparent;cursor:default}
+  #tip{position:absolute;pointer-events:none;background:#0B101C;border:1px solid var(--card-edge);border-radius:8px;padding:8px 10px;font-size:.82rem;display:none;white-space:nowrap;z-index:2}
+  #tip b{display:block;font-size:1.05rem}
+  #tip span{color:var(--muted)}
+  #tip .key{display:inline-block;width:12px;height:2px;background:var(--series);vertical-align:middle;margin-right:6px}
+  details{margin-top:12px}
+  summary{cursor:pointer;color:var(--muted);font-size:.88rem}
+  table{width:100%;border-collapse:collapse;font-size:.9rem;margin-top:8px}
+  th,td{text-align:right;padding:7px 8px;border-bottom:1px solid var(--card-edge)}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--muted);font-weight:600;font-size:.78rem}
+  td.share{width:34%;padding-left:14px}
+  td.share .meter{margin:0}
+  .tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  footer{margin:40px 0;color:var(--muted);font-size:.84rem;text-align:center}
+</style>
+</head>
+<body>
+<header><div class="wrap"><a class="logo" href="/"><span class="ti">TI</span> <span class="apps">Apps</span></a></div></header>
+
+<main class="wrap">
+  <div id="loading" class="muted" style="margin-top:40px">Loading…</div>
+
+  <!-- not a valid link -->
+  <div id="bad" class="card" style="display:none;margin-top:34px"><h2 style="margin-bottom:8px">This link does not work</h2><p id="badText"></p></div>
+
+  <!-- step 1: the address -->
+  <div id="stepMail" style="display:none">
+    <h1>Campaign report</h1>
+    <div class="card">
+      <h2>Open your report</h2>
+      <p class="muted" style="margin-bottom:14px">To keep your numbers private, we send a code to the email address you used for the request.</p>
+      <form id="mailForm" novalidate>
+        <label for="email">Your email address</label>
+        <input type="email" id="email" autocomplete="email" maxlength="120">
+        <div><button class="btn" id="mailBtn" type="submit">Send me a code</button></div>
+        <div class="err" id="mailErr" role="alert"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- step 2: the code -->
+  <div id="stepCode" style="display:none">
+    <h1>Campaign report</h1>
+    <div class="card">
+      <h2>Enter the code</h2>
+      <p class="muted" style="margin-bottom:14px">If that address belongs to the request, we have sent a 6-digit code to it. It works for 10 minutes. Check the spam folder if you do not see it.</p>
+      <form id="codeForm" novalidate>
+        <label for="code">Code</label>
+        <input type="text" id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" placeholder="000000">
+        <div><button class="btn" id="codeBtn" type="submit">Open the report</button></div>
+        <div class="err" id="codeErr" role="alert"></div>
+      </form>
+      <p style="margin-top:16px" class="muted"><button class="btn alt" id="resend" type="button">Send a new code</button> <span id="resendNote"></span></p>
+    </div>
+  </div>
+
+  <!-- step 3: the report -->
+  <div id="report" style="display:none">
+    <h1 id="title"></h1>
+    <div class="ref">REFERENCE <span id="ref"></span> · <span class="badge" id="badge"></span> · <span id="since"></span></div>
+
+    <div id="noData" class="card" style="display:none"><h2>Not running yet</h2><p class="muted" id="noDataText"></p></div>
+
+    <div id="data">
+      <div class="tiles" id="tiles"></div>
+
+      <div class="card">
+        <h2>Impressions per day</h2>
+        <div id="chartBox"><svg id="chart" role="img" aria-label="Impressions per day"></svg><div id="tip" role="status"></div></div>
+        <p class="muted" style="margin-top:6px">Days are counted in UTC. Hover or focus a bar for the numbers.</p>
+        <details><summary>Show as a table</summary><table id="dayTable"></table></details>
+      </div>
+
+      <div class="card">
+        <h2>By country</h2>
+        <table id="ccTable"></table>
+      </div>
+
+      <div class="card">
+        <h2>By app</h2>
+        <table id="appTable"></table>
+        <div class="tools" style="margin-top:16px">
+          <button class="btn alt" id="csvDay" type="button">Download daily numbers (CSV)</button>
+          <button class="btn alt" id="csvCc" type="button">Download by country (CSV)</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="muted" style="margin-bottom:24px"><button class="btn alt" id="close" type="button">Close the report</button> <span id="until"></span></p>
+  </div>
+</main>
+<footer class="wrap">TI Apps · <a href="privacy.html">Privacy</a> · <a href="contact.html">Contact</a></footer>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
+
+/* These identify the project, they don't grant access: the function checks the token, the code and the session. */
+const firebaseConfig = {
+  apiKey: "AIzaSyAV7LkuxHUt9HtERzGijsQodjm7-mfaXZU",
+  authDomain: "tiapps-ads.firebaseapp.com",
+  databaseURL: "https://tiapps-ads-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "tiapps-ads",
+  storageBucket: "tiapps-ads.firebasestorage.app",
+  messagingSenderId: "664823611213",
+  appId: "1:664823611213:web:ecea2626c1a506d1a24104"
+};
+// reCAPTCHA v3 site key for App Check. Empty = App Check is off.
+const APP_CHECK_SITE_KEY = "";
+
+const app = initializeApp(firebaseConfig);
+if (APP_CHECK_SITE_KEY) {
+  const ac = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js");
+  ac.initializeAppCheck(app, { provider: new ac.ReCaptchaV3Provider(APP_CHECK_SITE_KEY), isTokenAutoRefreshEnabled: true });
+}
+const call = httpsCallable(getFunctions(app, "europe-west1"), "report");
+
+const $ = id => document.getElementById(id);
+const fmtN = n => Number(n).toLocaleString("en");
+const day = ms => new Date(ms).toISOString().slice(0, 10);
+const dayKey = k => k.slice(0, 4) + "-" + k.slice(4, 6) + "-" + k.slice(6, 8);
+const pct = (a, b) => b ? (a / b * 100).toFixed(2) + "%" : "—";
+
+const params = new URLSearchParams(location.search);
+const id = params.get("i") || "", token = params.get("t") || "";
+const STORE = "report:" + id;
+const store = {
+  get() { try { return JSON.parse(sessionStorage.getItem(STORE)); } catch { return null; } },
+  set(v) { try { sessionStorage.setItem(STORE, JSON.stringify(v)); } catch { /* private window: no memory, still works */ } },
+  clear() { try { sessionStorage.removeItem(STORE); } catch { /* nothing to clear */ } },
+};
+
+const regionNames = (() => { try { return new Intl.DisplayNames(["en"], { type: "region" }); } catch { return null; } })();
+const countryName = cc => cc === "ZZ" ? "Unknown" : ((regionNames && (() => { try { return regionNames.of(cc); } catch { return null; } })()) || cc);
+
+function show(which) {
+  for (const k of ["loading", "bad", "stepMail", "stepCode", "report"]) $(k).style.display = k === which ? "" : "none";
+}
+function bad(text) { $("badText").textContent = text; show("bad"); }
+
+/* ── Steps ────────────────────────────────────────────────────────────────── */
+let session = null;
+const code = e => (e && e.code) || "";
+
+$("mailForm").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  $("mailErr").textContent = "";
+  const email = $("email").value.trim();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { $("mailErr").textContent = "Enter a valid email address."; return; }
+  $("mailBtn").disabled = true;
+  try {
+    await call({ action: "code", id, token, email });
+    startResendTimer();
+    show("stepCode"); $("code").focus();
+  } catch (e) {
+    if (code(e) === "functions/not-found") return bad("This link is not valid any more. Please use the link from the email we sent you.");
+    $("mailErr").textContent = code(e) === "functions/resource-exhausted" ? e.message : "Something went wrong. Please try again in a moment.";
+  }
+  $("mailBtn").disabled = false;
+});
+
+let timer = null;
+function startResendTimer() {
+  let left = 60;
+  $("resend").disabled = true;
+  clearInterval(timer);
+  const tick = () => {
+    $("resendNote").textContent = left > 0 ? "You can ask for a new code in " + left + " seconds." : "";
+    if (left-- <= 0) { clearInterval(timer); $("resend").disabled = false; }
+  };
+  tick(); timer = setInterval(tick, 1000);
+}
+$("resend").onclick = async () => {
+  $("codeErr").textContent = "";
+  $("resend").disabled = true;
+  try { await call({ action: "code", id, token, email: $("email").value.trim() }); startResendTimer(); }
+  catch (e) { $("codeErr").textContent = code(e) === "functions/resource-exhausted" ? e.message : "Something went wrong. Please try again in a moment."; $("resend").disabled = false; }
+};
+
+$("codeForm").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  $("codeErr").textContent = "";
+  const c = $("code").value.replace(/\s/g, "");
+  if (!/^\d{6}$/.test(c)) { $("codeErr").textContent = "Enter the 6 digits from the email."; return; }
+  $("codeBtn").disabled = true;
+  try {
+    const r = (await call({ action: "verify", id, token, code: c })).data;
+    session = r.session;
+    store.set({ session: r.session, expiresAt: r.expiresAt });
+    await open();
+  } catch (e) {
+    $("codeErr").textContent = code(e) === "functions/invalid-argument" ? "That code is not correct or has expired."
+      : code(e) === "functions/resource-exhausted" ? e.message : "Something went wrong. Please try again in a moment.";
+  }
+  $("codeBtn").disabled = false;
+});
+
+/* ── The report ───────────────────────────────────────────────────────────── */
+let R = null;
+
+async function open() {
+  let r;
+  try { r = (await call({ action: "data", id, token, session })).data; }
+  catch (e) {
+    store.clear(); session = null;
+    if (code(e) === "functions/unauthenticated") { show("stepMail"); $("mailErr").textContent = "Your session has ended. Please ask for a new code."; return; }
+    if (code(e) === "functions/not-found") return bad("This link is not valid any more. Please use the link from the email we sent you.");
+    $("mailErr").textContent = "Something went wrong. Please try again in a moment."; show("stepMail"); return;
+  }
+  R = r;
+  show("report");   // first shown, then drawn: the chart needs to know how wide its box is
+  render(r);
+}
+
+const STATUS = { pending: "Under review", changes_requested: "Changes needed", rejected: "Not approved", approved: "Approved", expired: "Expired", paid: "Paid", active: "Live", finished: "Finished" };
+
+function tile(k, v, s, meter) {
+  const t = document.createElement("div"); t.className = "tile";
+  const a = document.createElement("div"); a.className = "k"; a.textContent = k;
+  const b = document.createElement("div"); b.className = "v"; b.textContent = v;
+  t.append(a, b);
+  if (meter != null) { const m = document.createElement("div"); m.className = "meter"; const i = document.createElement("i"); i.style.width = Math.min(100, meter) + "%"; m.appendChild(i); t.appendChild(m); }
+  const c = document.createElement("div"); c.className = "s"; c.textContent = s || "";
+  t.appendChild(c);
+  return t;
+}
+
+function render(r) {
+  $("title").textContent = r.title;
+  $("ref").textContent = r.ref;
+  $("badge").textContent = STATUS[r.status] || r.status;
+  $("badge").className = "badge" + (r.status === "active" || r.status === "paid" ? " ok" : "");
+  $("since").textContent = "start " + day(r.from);
+  $("until").textContent = "This session ends at " + new Date(r.expiresAt).toISOString().slice(11, 16) + " UTC.";
+  $("noData").style.display = r.hasCampaign ? "none" : "";
+  $("data").style.display = r.hasCampaign ? "" : "none";
+  if (!r.hasCampaign) { $("noDataText").textContent = "Your campaign has not started yet, so there are no numbers. They will appear here when it is live."; return; }
+
+  const t = r.totals, target = r.budget.target || 0;
+  $("tiles").replaceChildren(
+    tile("Impressions shown", fmtN(r.delivered), target ? "of " + fmtN(target) + " paid for (" + Math.min(100, r.delivered / target * 100).toFixed(1) + "%)" : "", target ? r.delivered / target * 100 : null),
+    tile("Clicks", fmtN(t.clk), "people who tapped the ad"),
+    tile("Click rate", pct(t.clk, t.imp), "clicks per impression"),
+    tile("Budget", r.budget.amount != null ? Number(r.budget.amount).toFixed(2) + " " + r.budget.currency : "—", "numbers update every few minutes"),
+  );
+  chart(r.byDay);
+
+  $("dayTable").replaceChildren(...rows(["Day (UTC)", "Impressions", "Clicks", "Click rate"], [...r.byDay].reverse().map(d => [dayKey(d.day), fmtN(d.imp), fmtN(d.clk), pct(d.clk, d.imp)])));
+  const max = Math.max(1, ...r.byCountry.map(c => c.imp));
+  const ccRows = rows(["Country", "Impressions", "", "Clicks", "Click rate"], r.byCountry.map(c => [countryName(c.cc), fmtN(c.imp), c.imp / max * 100, fmtN(c.clk), pct(c.clk, c.imp)]));
+  $("ccTable").replaceChildren(...ccRows);
+  $("appTable").replaceChildren(...rows(["App", "Impressions", "Clicks", "Click rate"], r.byApp.map(a => [a.name, fmtN(a.imp), fmtN(a.clk), pct(a.clk, a.imp)])));
+}
+
+/** A header row and body rows; a number in the middle of a row is drawn as a bar (share of the largest). */
+function rows(head, body) {
+  const thead = document.createElement("thead"), tr = document.createElement("tr");
+  for (const h of head) { const th = document.createElement("th"); th.textContent = h; tr.appendChild(th); }
+  thead.appendChild(tr);
+  const tbody = document.createElement("tbody");
+  for (const cells of body) {
+    const row = document.createElement("tr");
+    for (const c of cells) {
+      const td = document.createElement("td");
+      if (typeof c === "number") {
+        td.className = "share";
+        const m = document.createElement("div"); m.className = "meter"; const i = document.createElement("i"); i.style.width = Math.max(1, c) + "%"; m.appendChild(i); td.appendChild(m);
+      } else td.textContent = c;
+      row.appendChild(td);
+    }
+    tbody.appendChild(row);
+  }
+  return [thead, tbody];
+}
+
+/** Columns of impressions per day: one series, so no legend; the tooltip and the table carry the numbers. */
+function chart(byDay) {
+  const svg = $("chart"), box = $("chartBox"), tip = $("tip");
+  const days = byDay.slice(-60);
+  const W = Math.max(320, box.clientWidth || 640), H = 240;
+  const m = { l: 46, r: 8, t: 10, b: 28 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+  const maxV = Math.max(1, ...days.map(d => d.imp));
+  // round the top of the scale to a clean number (1, 2 or 5 times a power of ten)
+  const pow = Math.pow(10, Math.floor(Math.log10(maxV)));
+  const step = Math.max(1, [1, 2, 5, 10].map(k => k * pow / 2).find(s => maxV / s <= 4) || pow * 5);
+  const top = Math.ceil(maxV / step) * step;
+  const y = v => m.t + ih - v / top * ih;
+  const slot = iw / days.length, bw = Math.min(24, Math.max(3, slot - 2));   // at most 24 px, 2 px of air between bars
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("width", "100%"); svg.setAttribute("height", H);
+  const ns = "http://www.w3.org/2000/svg";
+  const el = (n, a, txt) => { const e = document.createElementNS(ns, n); for (const k in a) e.setAttribute(k, a[k]); if (txt != null) e.textContent = txt; return e; };
+  svg.replaceChildren();
+  for (let v = 0; v <= top; v += step) {
+    svg.appendChild(el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: "gridline" }));
+    svg.appendChild(el("text", { x: m.l - 8, y: y(v) + 4, "text-anchor": "end" }, fmtN(v)));
+  }
+  const every = Math.ceil(days.length / Math.max(1, Math.floor(iw / 64)));
+  days.forEach((d, i) => {
+    const cx = m.l + slot * i + slot / 2, x = cx - bw / 2, h = Math.max(2, ih - (y(d.imp) - m.t)), yy = m.t + ih - h, r = Math.min(4, bw / 2, h);
+    // a column with a rounded top and a square foot
+    const path = `M${x},${yy + h} V${yy + r} Q${x},${yy} ${x + r},${yy} H${x + bw - r} Q${x + bw},${yy} ${x + bw},${yy + r} V${yy + h} Z`;
+    const label = `${dayKey(d.day)}: ${fmtN(d.imp)} impressions, ${fmtN(d.clk)} clicks`;
+    const bar = el("path", { d: path, class: "bar", tabindex: 0, "aria-label": label });
+    const hit = el("rect", { x: cx - slot / 2, y: m.t, width: slot, height: ih, class: "hit" });
+    const showTip = () => {
+      tip.replaceChildren();
+      const a = document.createElement("span"); a.textContent = dayKey(d.day);
+      const b = document.createElement("b"); const k = document.createElement("i"); k.className = "key"; b.append(k, fmtN(d.imp) + " impressions");
+      const c = document.createElement("span"); c.textContent = fmtN(d.clk) + " clicks · " + pct(d.clk, d.imp);
+      tip.append(a, b, c);
+      tip.style.display = "block";
+      const left = Math.min(Math.max(0, cx - tip.offsetWidth / 2), W - tip.offsetWidth);
+      tip.style.left = left + "px"; tip.style.top = Math.max(0, yy - tip.offsetHeight - 8) + "px";
+    };
+    const hideTip = () => { tip.style.display = "none"; };
+    for (const t of [bar, hit]) { t.addEventListener("pointerenter", showTip); t.addEventListener("pointerleave", hideTip); }
+    bar.addEventListener("focus", showTip); bar.addEventListener("blur", hideTip);
+    svg.append(hit, bar);
+    // a label at every [every]-th column; the last column gets none when that would crowd the one before
+    if (i % every === 0) svg.appendChild(el("text", { x: cx, y: H - 8, "text-anchor": "middle" }, dayKey(d.day).slice(5)));
+  });
+  svg.appendChild(el("line", { x1: m.l, x2: W - m.r, y1: m.t + ih, y2: m.t + ih, class: "baseline" }));
+}
+let resizeT = null;
+addEventListener("resize", () => { clearTimeout(resizeT); resizeT = setTimeout(() => { if (R && R.hasCampaign) chart(R.byDay); }, 150); });
+
+/* ── CSV (numbers and country codes only) ─────────────────────────────────── */
+function download(name, lines) {
+  const blob = new Blob([lines.join("\r\n") + "\r\n"], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+$("csvDay").onclick = () => download("report-" + R.ref + "-daily.csv", ["day_utc,impressions,clicks", ...R.byDay.map(d => [dayKey(d.day), d.imp, d.clk].join(","))]);
+$("csvCc").onclick = () => download("report-" + R.ref + "-countries.csv", ["country,impressions,clicks", ...R.byCountry.map(c => [c.cc, c.imp, c.clk].join(","))]);
+$("close").onclick = () => { store.clear(); session = null; R = null; $("code").value = ""; show("stepMail"); };
+
+/* ── Start ────────────────────────────────────────────────────────────────── */
+if (!id || !token) {
+  bad("The link is incomplete. Please open it again from the email we sent you.");
+} else {
+  const saved = store.get();
+  if (saved && saved.session && saved.expiresAt > Date.now()) { session = saved.session; await open(); }
+  else show("stepMail");
+}
+</script>
+</body>
+</html>
