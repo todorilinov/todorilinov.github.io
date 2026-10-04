@@ -16,7 +16,7 @@ const input = (over = {}) => ({
   apps: { tvdsp: { banner: { path: goodPath } } },
   countries: [],
   startDate: '2026-10-14',
-  budget: { target: 100000 },
+  budget: { items: { 'tvdsp/banner': 50 } },
   terms: true,
   ...over,
 });
@@ -62,11 +62,11 @@ test('validateInput reports each problem on its field', () => {
     apps: { tvdsp: { mrec: { path: goodPath } }, nope: {} },
     countries: ['BG', 'xx1'],
     startDate: '2026-10-11',
-    budget: { target: 5 },
+    budget: { items: { 'tvdsp/banner': 5 } },
     terms: false,
   });
   const fields = validateInput(bad, NOW).errors.map(e => e.field);
-  for (const f of ['name', 'email', 'country', 'title', 'clickUrl', 'apps', 'countries', 'startDate', 'target', 'terms']) {
+  for (const f of ['name', 'email', 'country', 'title', 'clickUrl', 'apps', 'countries', 'startDate', 'terms']) {
     assert.ok(fields.includes(f), f + ' should be reported, got ' + fields);
   }
 });
@@ -107,7 +107,9 @@ test('a good request is saved, files are moved, both sides get an email', async 
   const rec = db.read('submissions/' + SID);
   assert.strictEqual(rec.status, 'pending');
   assert.strictEqual(rec.advertiser.email, 'ann@acme.com');
-  assert.strictEqual(rec.budget.target, 100000);
+  assert.strictEqual(rec.budget.amount, 50);
+  assert.strictEqual(rec.budget.target, 41600, '50 EUR at 1.20 per 1000, rounded down to hundreds');
+  assert.deepStrictEqual(rec.budget.items.tvdsp.banner, { amount: 50, cpm: 1.2, impressions: 41600 });
   assert.deepStrictEqual(rec.slots.tvdsp.banner.file, 'submissions/' + SID + '/tvdsp_banner.png');
   assert.strictEqual(rec.slots.tvdsp.banner.w, 640);
   assert.strictEqual(JSON.stringify(rec).includes('TOKEN1234567890abcdef'), false, 'the token is not in the request itself');
@@ -137,7 +139,7 @@ test('a big video is only read at the start, and a non-image renamed .png is ref
   const big = mp4(5 * 1024 * 1024);
   const p = 'uploads/AbCdEfGhIjKlMnOpQr/v.mp4';
   const { ctx } = fakes({ [p]: big });
-  const r = await processSubmission(input({ apps: { worldradio: { fullscreen: { path: p } } } }), ctx);
+  const r = await processSubmission(input({ apps: { worldradio: { fullscreen: { path: p } } }, budget: { items: { 'worldradio/fullscreen': 50 } } }), ctx);
   assert.strictEqual(r.ok, true);
   const f2 = fakes({ [goodPath]: Buffer.from('<script>alert(1)</script>'.padEnd(40)) });
   await assert.rejects(() => processSubmission(input(), f2.ctx), InvalidRequest);

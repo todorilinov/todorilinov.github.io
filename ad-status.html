@@ -162,6 +162,20 @@ function bodyFor(v) {
   return "";
 }
 
+const SLOT_LABEL = { banner: "Banner", mrec: "Medium rectangle", fullscreen: "Full screen" };
+/** The amount and the impressions for each format, and the total. Older requests only have the impressions. */
+function budgetHtml(v) {
+  const b = v.budget || {};
+  const names = Object.fromEntries(v.apps.map(a => [a.app, a.name]));
+  const rows = [];
+  for (const [app, m] of Object.entries(b.items || {})) for (const [slot, it] of Object.entries(m || {})) {
+    rows.push(`${esc(names[app] || app)} · ${esc(SLOT_LABEL[slot] || slot)}: ${esc(Number(it.amount).toFixed(2))} ${esc(b.currency || "EUR")} → about ${esc(Number(it.impressions).toLocaleString())} impressions`);
+  }
+  const total = b.amount != null ? `<b>${esc(Number(b.amount).toFixed(2))} ${esc(b.currency || "EUR")}</b> · ` : "";
+  rows.push(`Total: ${total}about ${esc(Number(b.target).toLocaleString())} impressions`);
+  return rows.join("<br>");
+}
+
 function render(v) {
   $("title").textContent = v.title;
   $("ref").textContent = v.ref;
@@ -172,7 +186,7 @@ function render(v) {
   $("body").innerHTML = bodyFor(v);
   $("summary").innerHTML = `
     <dt>Apps and formats</dt><dd>${v.apps.map(a => esc(a.name) + ": " + a.slots.map(s => esc(s.label)).join(", ")).join("<br>")}</dd>
-    <dt>Impressions</dt><dd>${esc(Number(v.budget.target).toLocaleString())}</dd>
+    <dt>Budget</dt><dd>${budgetHtml(v)}</dd>
     <dt>Start date</dt><dd>${esc(day(v.from))}</dd>
     <dt>Countries</dt><dd>${v.countries.length ? esc(v.countries.join(", ")) : "All"}</dd>
     <dt>Link</dt><dd>${esc(v.clickUrl)}</dd>`;
