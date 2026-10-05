@@ -7,6 +7,7 @@
 <title>Ads — Campaigns</title>
 <script src="admin-nav.js?v=3" defer></script>
 <style>
+.pick{cursor:pointer}.pick:hover td,li.pick:hover{background:rgba(0,204,255,.08)}tr.sel td{background:rgba(0,204,255,.16)}li.pick.sel{font-weight:600}
   :root{
     --bg:#0d1117; --card:#14181d; --line:#2a3038;
     --txt:#e6edf3; --dim:#9aa4af; --faint:#7a828b;
@@ -576,12 +577,12 @@ const regionNames = (() => { try { return new Intl.DisplayNames(["en"], { type: 
 const countryName = cc => cc === "ZZ" ? "Unknown" : ((regionNames && (() => { try { return regionNames.of(cc); } catch { return null; } })()) || cc);
 
 /** Totals for one campaign from [fromDay] (yyyymmdd, "" = all time), split by country, app and day. */
-function aggregate(id, fromDay) {
+function aggregate(id, fromDay, onlyApp) {
   const out = { imp: 0, clk: 0, byCc: {}, byApp: {}, byDay: {} };
   const add = (m, k, v) => { const r = m[k] || (m[k] = { imp: 0, clk: 0 }); r.imp += v.imp; r.clk += v.clk; };
   for (const [day, apps] of Object.entries(stats[id] || {})) {
     if (fromDay && day < fromDay) continue;
-    for (const [app, ccs] of Object.entries(apps || {})) for (const [cc, v] of Object.entries(ccs || {})) {
+    for (const [app, ccs] of Object.entries(apps || {})) if (!onlyApp || app === onlyApp) for (const [cc, v] of Object.entries(ccs || {})) {
       const x = { imp: Number(v && v.imp) || 0, clk: Number(v && v.clk) || 0 };
       out.imp += x.imp; out.clk += x.clk;
       add(out.byCc, cc, x); add(out.byApp, app, x); add(out.byDay, day, x);
@@ -659,7 +660,7 @@ function appDonutHtml(byApp) {
       <title>${esc(name)}: ${fmt(v.imp)} shown (${(v.imp / total * 100).toFixed(1)}%), ${fmt(v.clk)} clicks</title></circle>`;
     off += len;
   });
-  const lis = list.map(([k, v], i) => `<li><i style="background:${PALETTE[i % PALETTE.length]}"></i>${esc(APPS[k] ? APPS[k].name : k)}
+  const lis = list.map(([k, v], i) => `<li class="pick${k === statsApp ? " sel" : ""}" data-app="${esc(k)}" title="Click to show the countries of this app"><i style="background:${PALETTE[i % PALETTE.length]}"></i>${esc(APPS[k] ? APPS[k].name : k)}
     <span style="color:var(--dim)"> · ${(v.imp / total * 100).toFixed(1)}% · CTR ${ctr(v.imp, v.clk)}</span></li>`).join("");
   return `<div class="donutwrap"><svg viewBox="0 0 140 140" width="150" height="150" role="img" aria-label="Shown per app">${arcs}
     <text x="70" y="68" text-anchor="middle" style="fill:var(--txt);font-size:18px;font-weight:600">${fmt(total)}</text>
@@ -704,24 +705,27 @@ async function drawMap(byCc) {
   }
 }
 
-let statsFor = null, statsRange = 30;
+let statsFor = null, statsRange = 30, statsApp = "";
 function openStats(id) {
   statsFor = id;
   renderStats();
   $("statsPanel").style.display = "block";
   $("statsPanel").scrollIntoView({ behavior: "smooth", block: "start" });
 }
-function closeStats() { statsFor = null; $("statsPanel").style.display = "none"; $("statsPanel").innerHTML = ""; }
+function closeStats() { statsFor = null; statsApp = ""; $("statsPanel").style.display = "none"; $("statsPanel").innerHTML = ""; }
 
 function renderStats() {
   const c = campaigns[statsFor];
   if (!c) return closeStats();
   const from = statsRange ? dayKey(Date.now() - (statsRange - 1) * 86400000) : "";
-  const a = aggregate(statsFor, from);
-  const rows = (map, label) => {
+  const all = aggregate(statsFor, from);
+  if (statsApp && !all.byApp[statsApp]) statsApp = "";
+  const a = statsApp ? aggregate(statsFor, from, statsApp) : all;
+  const appName = k => (APPS[k] ? APPS[k].name : k);
+  const rows = (map, label, pick) => {
     const list = Object.entries(map).sort((x, y) => y[1].imp - x[1].imp || y[1].clk - x[1].clk);
     const max = list.length ? Math.max(1, list[0][1].imp) : 1;
-    return list.map(([k, v]) => `<tr><td>${esc(label(k))}</td><td class="num">${v.imp.toLocaleString()}</td>
+    return list.map(([k, v]) => `<tr${pick ? ` class="pick${k === statsApp ? " sel" : ""}" data-app="${esc(k)}" title="Click to show the countries of this app"` : ""}><td>${esc(label(k))}</td><td class="num">${v.imp.toLocaleString()}</td>
       <td class="num">${v.clk.toLocaleString()}</td><td class="num">${ctr(v.imp, v.clk)}</td>
       <td><div class="meter"><i style="width:${Math.round(v.imp / max * 100)}%"></i></div></td></tr>`).join("");
   };
@@ -736,6 +740,7 @@ function renderStats() {
         ${[[1, "Today (UTC)"], [7, "Last 7 days"], [30, "Last 30 days"], [90, "Last 90 days"], [0, "All time"]]
           .map(([v, t]) => `<option value="${v}" ${v === statsRange ? "selected" : ""}>${t}</option>`).join("")}
       </select>
+      ${statsApp ? `<button class="ghost small" id="stApp">${esc(appName(statsApp))} ✕</button>` : ""}
       <button class="ghost small" id="stClose">Close</button></div>
     <div class="kpis">
       <div class="kpi"><div class="n">${a.imp.toLocaleString()}</div><div class="l">Shown</div></div>
@@ -744,19 +749,19 @@ function renderStats() {
       <div class="kpi"><div class="n">${Object.keys(a.byCc).length}</div><div class="l">Countries</div></div>
     </div>
     <div class="charts">
-      <div class="chartbox"><h3>World map — shown by country</h3><div id="worldMap"></div></div>
+      <div class="chartbox"><h3>World map — shown by country${statsApp ? ` — ${esc(appName(statsApp))}` : ""}</h3><div id="worldMap"></div></div>
       <div class="chartbox"><h3>By day</h3>${dayChartSvg(a.byDay)}
         <div class="legend"><span><i style="background:rgba(0,204,255,.45)"></i>Shown</span><span><i style="background:#00FF99"></i>Clicks</span><span><i style="background:#ffb020"></i>CTR (right axis)</span></div></div>
       <div class="chartrow">
-        <div class="chartbox"><h3>By country</h3>${countryBarsHtml(a.byCc)}
+        <div class="chartbox"><h3>By country${statsApp ? ` — ${esc(appName(statsApp))}` : ""}</h3>${countryBarsHtml(a.byCc)}
           <div class="legend"><span><i style="background:rgba(0,204,255,.45)"></i>Shown</span><span><i style="background:#00CCFF"></i>Clicks</span></div></div>
-        <div class="chartbox"><h3>By app</h3>${appDonutHtml(a.byApp)}</div>
+        <div class="chartbox"><h3>By app</h3>${appDonutHtml(all.byApp)}</div>
       </div>
     </div>
     <details class="tbl"><summary>Show tables</summary>
     <div class="stgrid">
-      <div><h3>By country</h3><table>${head("Country")}<tbody>${rows(a.byCc, countryName) || empty}</tbody></table></div>
-      <div><h3>By app</h3><table>${head("App")}<tbody>${rows(a.byApp, k => (APPS[k] ? APPS[k].name : k)) || empty}</tbody></table>
+      <div><h3>By country${statsApp ? ` — ${esc(appName(statsApp))}` : ""}</h3><table>${head("Country")}<tbody>${rows(a.byCc, countryName) || empty}</tbody></table></div>
+      <div><h3>By app</h3><table>${head("App")}<tbody>${rows(all.byApp, appName, true) || empty}</tbody></table>
         <h3 style="margin-top:16px">By day</h3>
         <table><thead><tr><th>Day (UTC)</th><th class="num">Shown</th><th class="num">Clicks</th><th class="num">CTR</th><th></th></tr></thead>
         <tbody>${days.slice(0, 31).map(([d, v]) => `<tr><td>${dayLabel(d)}</td><td class="num">${v.imp.toLocaleString()}</td>
@@ -768,7 +773,9 @@ function renderStats() {
       Countries come from the phone's mobile network, SIM or region setting; “Unknown” means it could not be told.
       Counts reach the server in batches every few minutes, so the newest numbers can lag.</div>`;
   drawMap(a.byCc);
+  $("statsPanel").querySelectorAll("[data-app]").forEach(el => el.onclick = () => { statsApp = statsApp === el.dataset.app ? "" : el.dataset.app; renderStats(); });
   $("stRange").onchange =ev => { statsRange = parseInt(ev.target.value, 10); renderStats(); };
+  if ($("stApp")) $("stApp").onclick = () => { statsApp = ""; renderStats(); };
   $("stClose").onclick = closeStats;
 }
 
