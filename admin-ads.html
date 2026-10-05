@@ -177,7 +177,7 @@
   .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
   svg.chart text{fill:var(--faint);font-size:11px}
   svg.chart .grid{stroke:#1d232a;stroke-width:1}
-  .hbar{display:grid;grid-template-columns:130px 1fr 70px;gap:10px;align-items:center;margin:6px 0;font-size:13px}
+  .hbar{display:grid;grid-template-columns:130px 1fr 80px;gap:10px;align-items:center;margin:6px 0;font-size:13px}
   .hbar .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .hbar .tr{height:12px;background:#1a2028;border-radius:6px;overflow:hidden}
   .hbar .tr i{display:block;height:100%;background:rgba(0,204,255,.45);border-radius:6px;position:relative}
@@ -643,7 +643,7 @@ function countryBarsHtml(byCc, top = 8) {
   return rows.map(([n, v]) => `<div class="hbar" title="${esc(n)}: ${fmt(v.imp)} shown, ${fmt(v.clk)} clicks, ${ctr(v.imp, v.clk)}">
     <span class="nm">${esc(n)}</span>
     <span class="tr"><i style="width:${v.imp / max * 100}%"><b style="width:${v.imp ? v.clk / v.imp * 100 : 0}%"></b></i></span>
-    <span class="v">${fmt(v.imp)}</span></div>`).join("");
+    <span class="v">${fmt(v.imp)}/${fmt(v.clk)}</span></div>`).join("");
 }
 
 /** Share of the shown per app as a donut. */
@@ -757,7 +757,7 @@ function renderStats() {
         <div class="legend"><span><i style="background:rgba(0,204,255,.45)"></i>Shown</span><span><i style="background:#00FF99"></i>Clicks</span><span><i style="background:#ffb020"></i>CTR (right axis)</span></div></div>
       <div class="chartrow">
         <div class="chartbox"><h3>By country${statsApp ? ` — ${esc(appName(statsApp))}` : ""}</h3>${countryBarsHtml(a.byCc)}
-          <div class="legend"><span><i style="background:rgba(0,204,255,.45)"></i>Shown</span><span><i style="background:#00CCFF"></i>Clicks</span></div></div>
+          <div class="legend"><span><i style="background:rgba(0,204,255,.45)"></i>Shown</span><span><i style="background:#00CCFF"></i>Clicks</span><span>S/C = shown / clicks</span></div></div>
         <div class="chartbox"><h3>By app</h3>${appDonutHtml(all.byApp)}</div>
       </div>
     </div>
