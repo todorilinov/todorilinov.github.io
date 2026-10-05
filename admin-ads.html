@@ -429,14 +429,19 @@ async function load() {
 }
 
 /* ── Feed: what the apps download ─────────────────────────────────────────── */
-function buildFeed(appKey) {
+// Version 1 (feed/{app}) is what the apps released before the verified counters read: only your own ads, because a
+// paid ad would be counted by the old counters. Version 2 (feed2/{app}) has everything; the newer apps read it.
+// A format whose paid impressions are all shown (done) is left out. Same rules as functions/lib/feed.js.
+function buildFeed(appKey, version = 1) {
   const out = {};
   for (const [id, c] of Object.entries(campaigns)) {
     if (c.status !== "active" || !c.apps || !c.apps[appKey]) continue;
+    if (version === 1 && c.source === "submission") continue;
     const src = (c.slots && c.slots[appKey]) || {};
+    const done = (c.done && c.done[appKey]) || {};
     const slots = {};
     for (const [s, cr] of Object.entries(src))
-      if (cr && cr.url) slots[s] = { type: cr.type, url: cr.url, w: cr.w, h: cr.h };
+      if (cr && cr.url && !done[s]) slots[s] = { type: cr.type, url: cr.url, w: cr.w, h: cr.h };
     if (!Object.keys(slots).length) continue;
     out[id] = {
       kind: c.kind || "house", weight: c.weight || 10,
@@ -446,7 +451,7 @@ function buildFeed(appKey) {
       clickUrl: c.clickUrl, title: c.title || "", slots,
     };
   }
-  return { v: 1, updatedAt: Date.now(), campaigns: out };
+  return { v: version, updatedAt: Date.now(), campaigns: out };
 }
 const clean = o => JSON.parse(JSON.stringify(o));
 
@@ -458,14 +463,17 @@ async function publishFeed() {
   } catch (e) {
     // Safety net: if the server cannot rebuild the feed, write it from here so the apps are not left stale.
     console.warn("republishFeed failed, publishing from the browser:", e);
-    await Promise.all(Object.keys(APPS).map(a => set(ref(db, "feed/" + a), clean(buildFeed(a)))));
+    await Promise.all(Object.keys(APPS).flatMap(a => [
+      set(ref(db, "feed/" + a), clean(buildFeed(a, 1))),
+      set(ref(db, "feed2/" + a), clean(buildFeed(a, 2))),
+    ]));
     showErr("The server could not rebuild the feed (" + esc(e.message || e.code) + "). Published from this page instead.");
   }
   renderFeedInfo();
 }
 function renderFeedInfo() {
   $("feedInfo").textContent = Object.entries(APPS).map(([k, a]) =>
-    `${a.name}: ${Object.keys(buildFeed(k).campaigns).length}`).join(" · ") + " live";
+    `${a.name}: ${Object.keys(buildFeed(k, 2).campaigns).length}`).join(" · ") + " live";
 }
 
 /* ── List ─────────────────────────────────────────────────────────────────── */
@@ -545,7 +553,21 @@ async function deleteFolder(path) {
 
 /* ── Statistics ───────────────────────────────────────────────────────────── */
 async function loadStats() {
-  try { stats = (await get(ref(db, "stats"))).val() || {}; }
+  try {
+    stats = (await get(ref(db, "stats"))).val() || {};
+    // vstats/{campaign}/{day}/{app}/{format}/{country}: what the newer apps send through `track` (verified).
+    // The formats are folded into the app, so the rest of the page works as before.
+    const v = (await get(ref(db, "vstats"))).val() || {};
+    for (const [cid, days] of Object.entries(v)) for (const [day, apps] of Object.entries(days || {})) for (const [app, slots] of Object.entries(apps || {}))
+      for (const ccs of Object.values(slots || {})) for (const [cc, n] of Object.entries(ccs || {})) {
+        const byDay = (stats[cid] = stats[cid] || {});
+        const byApp = (byDay[day] = byDay[day] || {});
+        const byCc = (byApp[app] = byApp[app] || {});
+        const t = (byCc[cc] = byCc[cc] || { imp: 0, clk: 0 });
+        t.imp = (Number(t.imp) || 0) + (Number(n && n.imp) || 0);
+        t.clk = (Number(t.clk) || 0) + (Number(n && n.clk) || 0);
+      }
+  }
   catch (e) { stats = {}; showErr("Could not load the statistics: " + esc(e.code || e.message)); }
 }
 const dayKey = ms => new Date(ms).toISOString().slice(0, 10).replace(/-/g, "");
@@ -1339,14 +1361,25 @@ function normalizePricing(r) {
 }
 const impressionsFor = (amount, cpm) => Math.floor(amount / cpm * 1000 / 100) * 100;
 
-let pricing = null;
+let pricing = null, inventory = {};
 async function loadPrices() {
   $("priceErr").innerHTML = "";
   let saved = null;
   try { saved = (await get(ref(db, "pricing"))).val(); }
   catch (e) { $("priceErr").innerHTML = `<div class="err" style="margin-bottom:12px">Could not load the prices: ${esc(e.code || e.message)}</div>`; }
+  // inventory/{day}/{app}/{format}/{country}: how many times the apps asked for an ad (sent by `track`)
+  try { inventory = (await get(ref(db, "inventory"))).val() || {}; } catch { inventory = {}; }
   pricing = normalizePricing(saved);
   renderPrices(!saved);
+}
+
+/** Average ad requests per day of a format over the last 7 days that have data; null when nothing was counted yet. */
+function adRequestsPerDay(app, slot) {
+  const days = Object.keys(inventory).sort().slice(-7);
+  if (!days.length) return null;
+  let sum = 0;
+  for (const d of days) for (const n of Object.values((inventory[d] && inventory[d][app] && inventory[d][app][slot]) || {})) sum += Number(n) || 0;
+  return Math.round(sum / days.length);
 }
 
 function renderPrices(notSavedYet) {
@@ -1356,13 +1389,14 @@ function renderPrices(notSavedYet) {
     return `<tr data-k="${app}/${slot}"><td>${esc(a.name)} · ${esc(SLOTS[slot].label)}</td>
       <td><input type="number" class="pcpm" min="0.01" max="1000" step="0.01" value="${it.cpm}"> EUR</td>
       <td><label style="display:flex;gap:6px;align-items:center"><input type="checkbox" class="pon" ${it.on ? "checked" : ""}> on sale</label></td>
-      <td class="pex" style="color:var(--dim)"></td></tr>`;
+      <td class="pex" style="color:var(--dim)"></td>
+      <td style="color:var(--dim)" class="preq">${adRequestsPerDay(app, slot) == null ? "—" : adRequestsPerDay(app, slot).toLocaleString()}</td></tr>`;
   })).join("");
   $("priceBox").innerHTML = `
     <h2 style="margin-bottom:4px">Prices for advertisers</h2>
     <p style="color:var(--dim);margin:0 0 6px">The price of 1,000 impressions for every format. The form on advertise.html shows advertisers how many impressions their budget buys. New prices apply to new requests at once; requests already sent keep their price. <b>Your own ads are not affected.</b></p>
     ${notSavedYet ? `<div class="err" style="margin:8px 0;border-color:rgba(255,176,32,.5);color:var(--warn)">No prices have been saved yet. The suggested ones are shown; press Save to publish them.</div>` : ""}
-    <table class="ptable"><thead><tr><th>Format</th><th>Price per 1,000 impressions</th><th>Sale</th><th>Example</th></tr></thead><tbody>${rows}</tbody></table>
+    <table class="ptable"><thead><tr><th>Format</th><th>Price per 1,000 impressions</th><th>Sale</th><th>Example</th><th title="How many times the apps asked for an ad in this format, per day (last 7 days)">Ad requests / day</th></tr></thead><tbody>${rows}</tbody></table>
     <div class="pgrid">
       <div><label for="pMin">Minimum budget per format (EUR)</label><input id="pMin" type="number" min="1" step="1" value="${p.minBudget}"></div>
       <div><label for="pMax">Maximum budget per format (EUR)</label><input id="pMax" type="number" min="1" step="1" value="${p.maxBudget}"></div>

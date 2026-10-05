@@ -29,8 +29,9 @@ const sha256 = s => crypto.createHash('sha256').update(s).digest('hex');
 const ipHashOf = ip => sha256((ip || 'unknown') + '|tiapps-ads').slice(0, 32);
 
 /** Counts one hit under [key] in the current window. True while it is still within [max]. */
-async function hit(db, key, max, windowMs, now) {
-  const r = await db.ref('ratelimit/' + key + '/' + Math.floor(now / windowMs)).transaction(cur => (cur || 0) + 1);
+async function hit(db, key, max, windowMs, now, n = 1) {
+  // One root per day (ratelimit/{day}/...): the daily clean-up deletes whole old days at once.
+  const r = await db.ref('ratelimit/' + Math.floor(now / DAY_MS) + '/' + key + '/' + Math.floor(now / windowMs)).transaction(cur => (cur || 0) + n);
   return r.snapshot.val() <= max;
 }
 

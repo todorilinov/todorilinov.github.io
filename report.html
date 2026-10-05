@@ -159,8 +159,9 @@
       </div>
 
       <div class="card">
-        <h2>By app</h2>
+        <h2>By format</h2>
         <table id="appTable"></table>
+        <p class="muted" style="margin-top:8px">Every format is paid for on its own and stops when its impressions are all shown.</p>
         <div class="tools" style="margin-top:16px">
           <button class="btn alt" id="csvDay" type="button">Download daily numbers (CSV)</button>
           <button class="btn alt" id="csvCc" type="button">Download by country (CSV)</button>
@@ -335,7 +336,8 @@ function render(r) {
   const max = Math.max(1, ...r.byCountry.map(c => c.imp));
   const ccRows = rows(["Country", "Impressions", "", "Clicks", "Click rate"], r.byCountry.map(c => [countryName(c.cc), fmtN(c.imp), c.imp / max * 100, fmtN(c.clk), pct(c.clk, c.imp)]));
   $("ccTable").replaceChildren(...ccRows);
-  $("appTable").replaceChildren(...rows(["App", "Impressions", "Clicks", "Click rate"], r.byApp.map(a => [a.name, fmtN(a.imp), fmtN(a.clk), pct(a.clk, a.imp)])));
+  $("appTable").replaceChildren(...rows(["Format", "Shown", "Paid for", "", "Clicks", "Click rate"],
+    (r.byFormat || []).map(f => [f.name + " · " + f.label, fmtN(f.imp), f.target ? fmtN(f.target) : "—", f.target ? Math.min(100, f.imp / f.target * 100) : 0, fmtN(f.clk), pct(f.clk, f.imp)])));
 }
 
 /** A header row and body rows; a number in the middle of a row is drawn as a bar (share of the largest). */

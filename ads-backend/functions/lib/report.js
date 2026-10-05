@@ -11,7 +11,7 @@
 //  session: random, only its hash is kept; at most 5 at a time
 
 const crypto = require('crypto');
-const { APPS } = require('./spec');
+const { APPS, SLOTS } = require('./spec');
 const { tokenOk, hit, ipHashOf, safeSend, sha256, RateLimited, NotAllowed } = require('./submit');
 const { effectiveStatus } = require('./review');
 const { codeEmail } = require('./mail');
@@ -102,26 +102,38 @@ async function verifyCode(d, ctx) {
 
 const num = v => Number(v) || 0;
 
-/** stats/{campaign}/{day}/{app}/{country} -> totals by day, country and app. */
-function summarize(stats) {
-  const byDay = {}, byCc = {}, byApp = {};
+/**
+ * vstats/{campaign}/{day}/{app}/{slot}/{country}/{imp|clk} -> totals by day, country, app and format.
+ * [items] is budget.items: every format that was paid for is listed, with what was paid for, even when nothing was shown yet.
+ */
+function summarize(vstats, items) {
+  const byDay = {}, byCc = {}, byApp = {}, byFmt = {};
   let imp = 0, clk = 0;
   const add = (m, k, i, c) => { const r = m[k] || (m[k] = { imp: 0, clk: 0 }); r.imp += i; r.clk += c; };
-  for (const [day, apps] of Object.entries(stats || {})) {
-    for (const [app, ccs] of Object.entries(apps || {})) {
-      for (const [cc, v] of Object.entries(ccs || {})) {
-        const i = num(v && v.imp), c = num(v && v.clk);
-        imp += i; clk += c;
-        add(byDay, day, i, c); add(byCc, cc, i, c); add(byApp, app, i, c);
+  for (const [day, apps] of Object.entries(vstats || {})) {
+    for (const [app, slots] of Object.entries(apps || {})) {
+      for (const [slot, ccs] of Object.entries(slots || {})) {
+        for (const [cc, v] of Object.entries(ccs || {})) {
+          const i = num(v && v.imp), c = num(v && v.clk);
+          imp += i; clk += c;
+          add(byDay, day, i, c); add(byCc, cc, i, c); add(byApp, app, i, c); add(byFmt, app + '/' + slot, i, c);
+        }
       }
     }
   }
+  for (const [app, slots] of Object.entries(items || {})) for (const slot of Object.keys(slots || {})) byFmt[app + '/' + slot] = byFmt[app + '/' + slot] || { imp: 0, clk: 0 };
   const list = (m, key) => Object.entries(m).map(([k, v]) => ({ [key]: k, ...v }));
+  const order = Object.keys(APPS);
   return {
     totals: { imp, clk },
     byDay: list(byDay, 'day').sort((a, b) => a.day.localeCompare(b.day)),
     byCountry: list(byCc, 'cc').sort((a, b) => b.imp - a.imp || a.cc.localeCompare(b.cc)),
     byApp: list(byApp, 'app').sort((a, b) => b.imp - a.imp).map(r => ({ ...r, name: APPS[r.app] ? APPS[r.app].name : r.app })),
+    byFormat: Object.entries(byFmt).map(([k, v]) => {
+      const [app, slot] = k.split('/');
+      const it = items && items[app] && items[app][slot];
+      return { app, slot, name: APPS[app] ? APPS[app].name : app, label: SLOTS[slot] ? SLOTS[slot].label : slot, ...v, ...(it ? { target: it.impressions } : {}) };
+    }).sort((a, b) => order.indexOf(a.app) - order.indexOf(b.app) || a.slot.localeCompare(b.slot)),
   };
 }
 
@@ -144,8 +156,9 @@ async function reportData(d, ctx) {
     hasCampaign: !!campaign, expiresAt: exp,
   };
   if (!campaign) return out;
-  const stats = (await db.ref('stats/' + rec.campaignId).get()).val();
-  const s = summarize(stats);
+  // Only what `track` counted (vstats): the old stats/ could be written by anyone.
+  const vstats = (await db.ref('vstats/' + rec.campaignId).get()).val();
+  const s = summarize(vstats, rec.budget && rec.budget.items);
   return { ...out, delivered: s.totals.imp, ...s, updatedAt: now };
 }
 
