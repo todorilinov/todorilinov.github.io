@@ -740,7 +740,10 @@ function renderStats() {
         ${[[1, "Today (UTC)"], [7, "Last 7 days"], [30, "Last 30 days"], [90, "Last 90 days"], [0, "All time"]]
           .map(([v, t]) => `<option value="${v}" ${v === statsRange ? "selected" : ""}>${t}</option>`).join("")}
       </select>
-      ${statsApp ? `<button class="ghost small" id="stApp">${esc(appName(statsApp))} ✕</button>` : ""}
+      <select id="stAppSel" aria-label="App">
+        <option value="">All apps</option>
+        ${Object.keys(all.byApp).sort((x, y) => all.byApp[y].imp - all.byApp[x].imp).map(k => `<option value="${esc(k)}" ${k === statsApp ? "selected" : ""}>${esc(appName(k))}</option>`).join("")}
+      </select>
       <button class="ghost small" id="stClose">Close</button></div>
     <div class="kpis">
       <div class="kpi"><div class="n">${a.imp.toLocaleString()}</div><div class="l">Shown</div></div>
@@ -775,7 +778,7 @@ function renderStats() {
   drawMap(a.byCc);
   $("statsPanel").querySelectorAll("[data-app]").forEach(el => el.onclick = () => { statsApp = statsApp === el.dataset.app ? "" : el.dataset.app; renderStats(); });
   $("stRange").onchange =ev => { statsRange = parseInt(ev.target.value, 10); renderStats(); };
-  if ($("stApp")) $("stApp").onclick = () => { statsApp = ""; renderStats(); };
+  $("stAppSel").onchange = ev => { statsApp = ev.target.value; renderStats(); };
   $("stClose").onclick = closeStats;
 }
 
