@@ -359,3 +359,10 @@ Cloud Run: услугата **track** → **Security** → **Allow public access
 **Play Integrity** → Save. В Project settings → приложението добави SHA-256 отпечатъците (на ключа за подпис в
 Play и на локалния). Само след като новите версии са в Play и хората са ги обновили, смени
 параметъра на `true` (`firebase deploy --only functions` и отговори `true`).
+
+## 5. Приложенията (WorldRadio, TV DSP Center, FakeLocation)
+
+Новата версия на всяко приложение праща броячите към `track` (с App Check) и чете `feed2`. Кодът е в
+`OwnAds.kt` и `TrackLogic.kt` на трите приложения. Докато не излязат в Play, старите версии продължават да
+ползват `feed` и платени реклами в тях не се показват. Debug билдът записва в Logcat „Enter this debug secret
+into the allow list in the Firebase Console“: този токен се добавя във Firebase → App Check → Manage debug tokens.
