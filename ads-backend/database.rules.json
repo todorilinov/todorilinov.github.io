@@ -15,6 +15,21 @@
       }
     },
 
+    "feed2": {
+      "$app": {
+        ".read": true,
+        ".write": "auth != null && auth.uid === '5bCbdUU29cPtffTXwNJw5DzigSd2' && ($app === 'worldradio' || $app === 'tvdsp' || $app === 'fakelocation')"
+      }
+    },
+
+    "vstats": {
+      ".read": "auth != null && auth.uid === '5bCbdUU29cPtffTXwNJw5DzigSd2'"
+    },
+
+    "inventory": {
+      ".read": "auth != null && auth.uid === '5bCbdUU29cPtffTXwNJw5DzigSd2'"
+    },
+
     "pricing": {
       ".read": true,
       ".write": "auth != null && auth.uid === '5bCbdUU29cPtffTXwNJw5DzigSd2'"

@@ -5,7 +5,7 @@ const { DEFAULT_PRICING, normalizePricing, impressionsFor } = require('../lib/pr
 const { validateInput } = require('../lib/spec');
 const { FakeDb, FakeBucket, png, makeCtx } = require('./fakes');
 const { processSubmission } = require('../lib/submit');
-const { deliveryCheck, sumImpressions } = require('../lib/delivery');
+const { deliveryCheck, sumByFormat } = require('../lib/delivery');
 const { review, markPaid } = require('../lib/review');
 
 const NOW = Date.parse('2026-10-10T12:00:00Z');
@@ -90,49 +90,94 @@ test('the server uses the saved price list, and the price is locked in the reque
 });
 
 // ── delivery ────────────────────────────────────────────────────────────────
-test('sumImpressions adds every day, app and country', () => {
-  assert.strictEqual(sumImpressions({ 20261010: { tvdsp: { BG: { imp: 10, clk: 1 }, RO: { imp: 5 } } }, 20261011: { worldradio: { US: { imp: 7 } } } }), 22);
-  assert.strictEqual(sumImpressions(null), 0);
+test('sumByFormat adds every day and country, per format and in total', () => {
+  const s = sumByFormat({
+    20261010: { tvdsp: { banner: { BG: { imp: 10, clk: 1 }, RO: { imp: 5 } } } },
+    20261011: { worldradio: { banner: { US: { imp: 7, clk: 2 } }, fullscreen: { US: { imp: 3 } } }, tvdsp: { banner: { BG: { imp: 1 } } } },
+  });
+  assert.deepStrictEqual(s.by.tvdsp.banner, { imp: 16, clk: 1 });
+  assert.deepStrictEqual(s.by.worldradio, { banner: { imp: 7, clk: 2 }, fullscreen: { imp: 3, clk: 0 } });
+  assert.deepStrictEqual([s.imp, s.clk], [26, 3]);
+  assert.deepStrictEqual(sumByFormat(null), { by: {}, imp: 0, clk: 0 });
 });
 
-async function paidCampaign(items) {
-  const db = new FakeDb(), bucket = new FakeBucket({ [P]: png(640, 100, 100) });
+async function paidCampaign(items, apps) {
+  const db = new FakeDb(), bucket = new FakeBucket({ [P]: png(640, 100, 100), 'uploads/AbCdEfGhIjKlMnOpQr/mrec.png': png(600, 500, 100) });
   const { ctx, mails } = makeCtx(db, bucket);
-  await processSubmission(base(items || { 'tvdsp/banner': 50 }), ctx);
+  await processSubmission(base(items || { 'tvdsp/banner': 50 }, apps), ctx);
   await review({ id: '-Npush0000000000001', action: 'approve', amount: 50, paymentLink: 'https://pay.example/x' }, ctx);
   const { campaignId } = await markPaid({ id: '-Npush0000000000001' }, ctx);
   mails.length = 0;
   return { db, ctx, mails, cid: campaignId };
 }
 
-test('a paid campaign finishes by itself when everything paid for was shown', async () => {
+test('a paid campaign finishes by itself when everything paid for was shown (counted by track)', async () => {
   const { db, ctx, mails, cid } = await paidCampaign();
-  assert.deepStrictEqual(await deliveryCheck(ctx), { checked: 0, finished: 0 }, 'a paused campaign is not counted');
+  assert.deepStrictEqual(await deliveryCheck(ctx), { checked: 0, finished: 0, slotsDone: 0 }, 'a paused campaign is not counted');
   db.write('campaigns/' + cid + '/status', 'active');
-  db.write('stats/' + cid + '/20261010/tvdsp/BG', { imp: 10000, clk: 30 });
-  assert.deepStrictEqual(await deliveryCheck(ctx), { checked: 1, finished: 0 });
+  db.write('vstats/' + cid + '/20261010/tvdsp/banner/BG', { imp: 10000, clk: 30 });
+  assert.deepStrictEqual(await deliveryCheck(ctx), { checked: 1, finished: 0, slotsDone: 0 });
   assert.strictEqual(db.read('campaigns/' + cid).delivered, 10000);
+  assert.deepStrictEqual(db.read('campaigns/' + cid).deliveredBy, { tvdsp: { banner: 10000 } });
   assert.strictEqual(db.read('campaigns/' + cid).status, 'active');
-  db.write('stats/' + cid + '/20261011/tvdsp/RO', { imp: 31500 });
-  assert.deepStrictEqual(await deliveryCheck(ctx), { checked: 1, finished: 0 }, '41,500 of 41,600: not yet');
-  db.write('stats/' + cid + '/20261011/tvdsp/RO', { imp: 31600 });
-  assert.deepStrictEqual(await deliveryCheck(ctx), { checked: 1, finished: 1 });
+  db.write('vstats/' + cid + '/20261011/tvdsp/banner/RO', { imp: 31500 });
+  assert.deepStrictEqual(await deliveryCheck(ctx), { checked: 1, finished: 0, slotsDone: 0 }, '41,500 of 41,600: not yet');
+  db.write('vstats/' + cid + '/20261011/tvdsp/banner/RO', { imp: 31600 });
+  assert.deepStrictEqual(await deliveryCheck(ctx), { checked: 1, finished: 1, slotsDone: 1 });
   const c = db.read('campaigns/' + cid);
   assert.strictEqual(c.status, 'finished');
   assert.strictEqual(c.delivered, 41600);
+  assert.deepStrictEqual(c.done, { tvdsp: { banner: true } });
   assert.ok(c.finishedAt);
   assert.strictEqual(mails.length, 1);
   assert.match(mails[0].subject, /finished/);
   assert.match(mails[0].text, /41,600/);
   assert.match(mails[0].text, /ad-status\.html\?i=/);
   assert.strictEqual(Object.values(db.read('submissions/-Npush0000000000001/log')).at(-1).to, 'finished');
-  assert.deepStrictEqual(await deliveryCheck(ctx), { checked: 0, finished: 0 }, 'and it is not counted again');
+  assert.deepStrictEqual(await deliveryCheck(ctx), { checked: 0, finished: 0, slotsDone: 0 }, 'and it is not counted again');
+});
+
+test('each format stops on its own; the campaign finishes when the last one is done', async () => {
+  const { db, ctx, mails, cid } = await paidCampaign({ 'tvdsp/banner': 50, 'worldradio/mrec': 30 },
+    { tvdsp: { banner: { path: P } }, worldradio: { mrec: { path: 'uploads/AbCdEfGhIjKlMnOpQr/mrec.png' } } });
+  db.write('campaigns/' + cid + '/status', 'active');
+  const bannerTarget = db.read('campaigns/' + cid + '/budget/items/tvdsp/banner/impressions');
+  const mrecTarget = db.read('campaigns/' + cid + '/budget/items/worldradio/mrec/impressions');
+  assert.strictEqual(bannerTarget, 41600);
+  assert.strictEqual(mrecTarget, 10000);
+  // the medium rectangle of WorldRadio is done, the banner of TV DSP Center is not
+  db.write('vstats/' + cid + '/20261010/worldradio/mrec/BG', { imp: 10000 });
+  db.write('vstats/' + cid + '/20261010/tvdsp/banner/BG', { imp: 100 });
+  assert.deepStrictEqual(await deliveryCheck(ctx), { checked: 1, finished: 0, slotsDone: 1 });
+  let c = db.read('campaigns/' + cid);
+  assert.strictEqual(c.status, 'active');
+  assert.deepStrictEqual(c.done, { worldradio: { mrec: true } });
+  assert.deepStrictEqual(c.deliveredBy, { worldradio: { mrec: 10000 }, tvdsp: { banner: 100 } });
+  assert.strictEqual(mails.length, 0, 'no email yet');
+  // later impressions of a format that is done do not matter, the banner is still running
+  db.write('vstats/' + cid + '/20261011/worldradio/mrec/BG', { imp: 500 });
+  assert.deepStrictEqual(await deliveryCheck(ctx), { checked: 1, finished: 0, slotsDone: 0 });
+  db.write('vstats/' + cid + '/20261011/tvdsp/banner/BG', { imp: 41500 });
+  assert.deepStrictEqual(await deliveryCheck(ctx), { checked: 1, finished: 1, slotsDone: 1 });
+  c = db.read('campaigns/' + cid);
+  assert.strictEqual(c.status, 'finished');
+  assert.deepStrictEqual(c.done, { worldradio: { mrec: true }, tvdsp: { banner: true } });
+  assert.strictEqual(mails.length, 1);
+});
+
+test('impressions that only the old, unverified counters wrote (stats/) are not billed', async () => {
+  const { db, ctx, cid } = await paidCampaign();
+  db.write('campaigns/' + cid + '/status', 'active');
+  db.write('stats/' + cid + '/20261010/tvdsp/BG', { imp: 99999999, clk: 5 });
+  assert.deepStrictEqual(await deliveryCheck(ctx), { checked: 1, finished: 0, slotsDone: 0 });
+  assert.strictEqual(db.read('campaigns/' + cid).status, 'active');
+  assert.strictEqual(db.read('campaigns/' + cid).delivered, 0, 'nothing was counted by track');
 });
 
 test('the owner\'s own campaigns are never touched', async () => {
-  const db = new FakeDb({ campaigns: { '-Nmine': { status: 'active', kind: 'house', title: 'Mine' } }, stats: { '-Nmine': { 20261010: { tvdsp: { BG: { imp: 999999 } } } } } });
+  const db = new FakeDb({ campaigns: { '-Nmine': { status: 'active', kind: 'house', title: 'Mine' } }, vstats: { '-Nmine': { 20261010: { tvdsp: { banner: { BG: { imp: 999999 } } } } } } });
   const { ctx } = makeCtx(db, new FakeBucket());
-  assert.deepStrictEqual(await deliveryCheck(ctx), { checked: 0, finished: 0 });
+  assert.deepStrictEqual(await deliveryCheck(ctx), { checked: 0, finished: 0, slotsDone: 0 });
   assert.strictEqual(db.read('campaigns/-Nmine').status, 'active');
   assert.strictEqual(db.read('campaigns/-Nmine').delivered, undefined);
 });

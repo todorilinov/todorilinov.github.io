@@ -17,6 +17,8 @@ class FakeDb {
   read(path) { const [o, k] = this._walk(path, false); return o ? clone(o[k]) : undefined; }
   write(path, v) {
     const [o, k] = this._walk(path, true);
+    // ServerValue.increment(n) is { ".sv": { "increment": n } }
+    if (v && typeof v === 'object' && v['.sv'] && typeof v['.sv'].increment === 'number') { o[k] = (Number(o[k]) || 0) + v['.sv'].increment; return; }
     if (v === null || v === undefined) delete o[k]; else o[k] = clone(v);
   }
   ref(path) {
@@ -25,7 +27,7 @@ class FakeDb {
       push() { db.pushes++; return { key: '-Npush' + String(db.pushes).padStart(13, '0') }; },
       async get() { const v = db.read(path); return { val: () => (v === undefined ? null : v) }; },
       async set(v) { db.write(path, v); },
-      async update(obj) { for (const [k, v] of Object.entries(obj)) db.write(path + '/' + k, v); },
+      async update(obj) { for (const [k, v] of Object.entries(obj)) db.write((path === '/' ? '' : path) + '/' + k, v); },
       async remove() { db.write(path, null); },
       async transaction(fn) { const v = fn(db.read(path)); db.write(path, v); return { snapshot: { val: () => v } }; },
     };

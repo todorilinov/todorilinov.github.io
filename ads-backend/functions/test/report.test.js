@@ -25,10 +25,11 @@ async function setup(paid) {
     await review({ id: SID, action: 'approve', amount: 50, paymentLink: 'https://pay.example/x' }, ctx);
     cid = (await markPaid({ id: SID }, ctx)).campaignId;
     db.write('campaigns/' + cid + '/status', 'active');
-    db.write('stats/' + cid, {
-      20261011: { tvdsp: { BG: { imp: 100, clk: 4 }, RO: { imp: 40, clk: 1 } } },
-      20261010: { tvdsp: { BG: { imp: 60, clk: 2 } }, worldradio: { US: { imp: 7, clk: 0 } } },
+    db.write('vstats/' + cid, {
+      20261011: { tvdsp: { banner: { BG: { imp: 100, clk: 4 }, RO: { imp: 40, clk: 1 } } } },
+      20261010: { tvdsp: { banner: { BG: { imp: 60, clk: 2 } } }, worldradio: { mrec: { US: { imp: 7, clk: 0 } } } },
     });
+    db.write('stats/' + cid, { 20261010: { tvdsp: { BG: { imp: 5000000, clk: 999 } } } });   // old counters: never shown
   }
   mails.length = 0;
   const at = ms => ({ ...ctx, now: ctx.now + ms });   // the same world, a little later
@@ -158,6 +159,8 @@ test('the report: totals, days, countries and apps; nothing private', async () =
   assert.deepStrictEqual(r.byCountry.map(x => x.cc + ':' + x.imp), ['BG:160', 'RO:40', 'US:7']);
   assert.deepStrictEqual(r.byApp.map(x => x.name + ':' + x.imp), ['TV DSP Center:200', 'worldradio:7'].map(x => x.replace('worldradio', 'WorldRadio')));
   assert.deepStrictEqual(r.budget, { target: 41600, amount: 50, currency: 'EUR' });
+  assert.deepStrictEqual(r.byFormat, [{ app: 'worldradio', slot: 'mrec', name: 'WorldRadio', label: 'Medium rectangle', imp: 7, clk: 0 },
+    { app: 'tvdsp', slot: 'banner', name: 'TV DSP Center', label: 'Banner', imp: 200, clk: 7, target: 41600 }].sort((a, b) => ['worldradio', 'tvdsp', 'fakelocation'].indexOf(a.app) - ['worldradio', 'tvdsp', 'fakelocation'].indexOf(b.app)));
   const json = JSON.stringify(r);
   for (const secret of ['ann@acme.com', 'Ann@Acme.com', 'ipHash', TOKEN, 'tokenHash', 'salt', session]) assert.ok(!json.includes(secret), secret + ' leaked');
 });
@@ -174,6 +177,9 @@ test('before the campaign exists there is a report without numbers', async () =>
 
 test('summarize copes with missing and odd data', () => {
   assert.deepStrictEqual(summarize(null).totals, { imp: 0, clk: 0 });
-  const s = summarize({ 20261010: { tvdsp: { BG: { imp: '5', clk: 'x' }, RO: null } }, 20261011: null });
+  const s = summarize({ 20261010: { tvdsp: { banner: { BG: { imp: '5', clk: 'x' }, RO: null } } }, 20261011: null });
   assert.deepStrictEqual(s.totals, { imp: 5, clk: 0 });
+  // a format that was paid for and has shown nothing yet is still listed, with its target
+  const t = summarize(null, { tvdsp: { banner: { amount: 50, cpm: 1.2, impressions: 41600 } } });
+  assert.deepStrictEqual(t.byFormat, [{ app: 'tvdsp', slot: 'banner', name: 'TV DSP Center', label: 'Banner', imp: 0, clk: 0, target: 41600 }]);
 });

@@ -12,18 +12,20 @@
 //  - statusGet       : ad-status.html asks for the state of a request (id + secret token)
 //  - statusResubmit  : the advertiser sends a new version of a request that was sent back or rejected
 //  - expireUnpaid    : approvals nobody paid within 14 days expire
+// Phase F:
+//  - track           : the apps send impressions, clicks and ad requests here (App Check); only these count for billing
 // Phase E:
 //  - report          : the advertiser's report: action "code" (send a code by email), "verify" (check it), "data" (the report)
 // Phase D:
 //  - deliveryCheck   : every 15 minutes counts the impressions of paid campaigns and finishes the ones that are done
 
 const { onValueWritten } = require('firebase-functions/v2/database');
-const { onCall, HttpsError } = require('firebase-functions/v2/https');
+const { onCall, onRequest, HttpsError } = require('firebase-functions/v2/https');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { defineSecret, defineString } = require('firebase-functions/params');
 const { setGlobalOptions, logger } = require('firebase-functions/v2');
 const { initializeApp } = require('firebase-admin/app');
-const { getDatabase } = require('firebase-admin/database');
+const { getDatabase, ServerValue } = require('firebase-admin/database');
 const { getStorage } = require('firebase-admin/storage');
 const crypto = require('crypto');
 
@@ -33,6 +35,8 @@ const { processSubmission, processResubmission, InvalidRequest, RateLimited, Not
 const { review, markPaid, expireUnpaid, statusGet, ReviewError } = require('./lib/review');
 const { deliveryCheck } = require('./lib/delivery');
 const { requestCode, verifyCode, reportData, BadCode } = require('./lib/report');
+const { ingest, TrackError } = require('./lib/track');
+const { verifyAppCheck } = require('./lib/appcheck');
 
 // The database is in europe-west1, so the Admin SDK needs its URL spelled out.
 initializeApp({
@@ -50,6 +54,8 @@ const MAIL_FROM = defineString('MAIL_FROM', { default: 'TI Apps <noreply@tiapps.
 const ADMIN_EMAIL = defineString('ADMIN_EMAIL', { default: 'todorilinov@googlemail.com' });
 // 'true' once App Check (reCAPTCHA) is set up on advertise.html: requests without a valid token are then refused.
 const APPCHECK_REQUIRED = defineString('APPCHECK_REQUIRED', { default: 'false' });
+// 'true' once the apps that send the verified counters are released: `track` then refuses anything without a valid App Check token.
+const TRACK_REQUIRE_APPCHECK = defineString('TRACK_REQUIRE_APPCHECK', { default: 'false' });
 
 function requireAdmin(request) {
   if (!request.auth || request.auth.uid !== ADMIN_UID) {
@@ -57,20 +63,21 @@ function requireAdmin(request) {
   }
 }
 
-/** Rebuilds feed/{app} from campaigns/. Writes only what changed. Returns the apps that were written. */
+/** Rebuilds feed/{app} (version 1) and feed2/{app} (version 2) from campaigns/. Writes only what changed. Returns what was written. */
 async function rebuildFeeds() {
   const db = getDatabase();
   const campaigns = (await db.ref('campaigns').get()).val() || {};
   const now = Date.now();
   const written = [];
-  await Promise.all(APP_KEYS.map(async app => {
-    const next = buildFeed(campaigns, app, now);
-    const cur = (await db.ref('feed/' + app).get()).val();
+  await Promise.all(APP_KEYS.flatMap(app => [1, 2].map(async version => {
+    const path = (version === 1 ? 'feed/' : 'feed2/') + app;
+    const next = buildFeed(campaigns, app, now, version);
+    const cur = (await db.ref(path).get()).val();
     if (cur && sameFeed(cur, next)) return;
-    // An empty feed is stored as { v: 1, updatedAt } — the apps read that as "no ads".
-    await db.ref('feed/' + app).set(next.v ? next : { v: 1, updatedAt: now });
-    written.push(app);
-  }));
+    // An empty feed is stored as { v, updatedAt }: the apps read that as "no ads".
+    await db.ref(path).set(next.v ? next : { v: version, updatedAt: now });
+    written.push(path);
+  })));
   return written;
 }
 
@@ -203,6 +210,13 @@ exports.cleanupUploads = onSchedule({ schedule: 'every day 03:30', timeZone: 'UT
     }
   }
   logger.info('cleanupUploads', { found: files.length, deleted });
+  // Rate-limit counters and the ids of batches already counted live under one root per day: old days go at once.
+  const today = Math.floor(Date.now() / 86400000);
+  const old = {};
+  for (let d = today - 2; d >= today - 30; d--) { old['ratelimit/' + d] = null; old['trackseen/' + d] = null; }
+  // Ad requests per day (inventory/) are only for the price list: two months are enough.
+  for (let d = 61; d <= 90; d++) old['inventory/' + new Date(Date.now() - d * 86400000).toISOString().slice(0, 10).replace(/-/g, '')] = null;
+  await getDatabase().ref('/').update(old);
 });
 
 exports.deliveryCheck = onSchedule({ schedule: 'every 15 minutes', timeZone: 'UTC', secrets: [RESEND_API_KEY] }, async () => {
@@ -216,4 +230,48 @@ exports.report = onCall({ ...PUBLIC_CALL, memory: '256MiB' }, request => {
   const run = { code: requestCode, verify: verifyCode, data: reportData }[d.action];
   if (!run) throw new HttpsError('invalid-argument', 'Unknown action.');
   return guarded('report', () => run(d, makeCtx(request)));
+});
+
+// ── track: the verified counters ─────────────────────────────────────────────
+let campaignCache = { at: 0, map: {} };
+/** Which campaign has a file for which app and format. Kept for two minutes: the apps send often. */
+async function knownCampaigns(now) {
+  if (now - campaignCache.at < 120000) return campaignCache.map;
+  const all = (await getDatabase().ref('campaigns').get()).val() || {};
+  const map = {};
+  for (const [id, c] of Object.entries(all)) {
+    if (!c || !c.slots || !c.apps) continue;
+    const slots = {};
+    for (const [app, m] of Object.entries(c.slots)) {
+      if (!c.apps[app]) continue;
+      for (const [slot, cr] of Object.entries(m || {})) if (cr && cr.url) (slots[app] = slots[app] || {})[slot] = true;
+    }
+    map[id] = { slots };
+  }
+  campaignCache = { at: now, map };
+  return map;
+}
+
+// Plain HTTP, called by the phone apps (not a browser, so no CORS). Anyone may knock; what gets in is decided inside.
+exports.track = onRequest({ invoker: 'public', cors: false, timeoutSeconds: 30, memory: '256MiB', maxInstances: 10 }, async (req, res) => {
+  if (req.method !== 'POST') { res.status(405).json({ error: 'POST only' }); return; }
+  if ((req.rawBody ? req.rawBody.length : 0) > 20000) { res.status(413).json({ error: 'Too large' }); return; }
+  const fwd = req.headers['x-forwarded-for'];
+  const now = Date.now();
+  try {
+    const r = await ingest(req.body, req.get('x-firebase-appcheck'), {
+      now,
+      ip: (typeof fwd === 'string' ? fwd.split(',')[0].trim() : '') || req.ip || '',
+      db: getDatabase(),
+      increment: n => ServerValue.increment(n),
+      campaigns: () => knownCampaigns(now),
+      verifyAppCheck,
+      requireAppCheck: TRACK_REQUIRE_APPCHECK.value() === 'true',
+    });
+    res.status(200).json(r);
+  } catch (e) {
+    if (e instanceof TrackError) { res.status(e.status).json({ error: e.message }); return; }
+    logger.error('track failed', { error: e.message, stack: e.stack });
+    res.status(500).json({ error: 'Server error' });
+  }
 });

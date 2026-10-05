@@ -22,14 +22,22 @@ function normalize(v) {
   return v === null ? undefined : v;
 }
 
-function buildFeed(campaigns, appKey, now) {
+/**
+ * [version] 1 is the feed the apps released before the verified counters read (feed/{app}): the owner's own
+ * ads only. A paid ad would be counted by the old, unverified counters, so it is never shown there.
+ * Version 2 (feed2/{app}) has everything; the newer apps read it and count with `track`.
+ * A format whose paid impressions are all shown (campaign.done.{app}.{slot}) leaves the feed.
+ */
+function buildFeed(campaigns, appKey, now, version = 1) {
   const out = {};
   for (const [id, c] of Object.entries(campaigns || {})) {
     if (!c || c.status !== 'active' || !c.apps || !c.apps[appKey]) continue;
+    if (version === 1 && c.source === 'submission') continue;
     const src = (c.slots && c.slots[appKey]) || {};
+    const done = (c.done && c.done[appKey]) || {};
     const slots = {};
     for (const [s, cr] of Object.entries(src)) {
-      if (cr && cr.url) slots[s] = { type: cr.type, url: cr.url, w: cr.w, h: cr.h };
+      if (cr && cr.url && !done[s]) slots[s] = { type: cr.type, url: cr.url, w: cr.w, h: cr.h };
     }
     if (!Object.keys(slots).length) continue;
     out[id] = {
@@ -44,7 +52,7 @@ function buildFeed(campaigns, appKey, now) {
       slots,
     };
   }
-  return normalize({ v: 1, updatedAt: now, campaigns: out }) || {};
+  return normalize({ v: version, updatedAt: now, campaigns: out }) || {};
 }
 
 function stable(v) {

@@ -319,6 +319,43 @@ firebase deploy --only functions
 2. Отвори страницата на заявката (линкът от имейла) и натисни **See the report**.
 3. Въведи имейла на заявката: трябва да получиш писмо с 6 цифри. Въведи ги: отчетът се отваря.
 4. Опитай и с чужд имейл: пак пише, че кодът е изпратен, но писмо няма.
-5. Числата идват от `stats/{id на кампанията}`. За проба можеш да сложиш там данни от Firebase конзолата,
-   например `stats/{id}/20261010/tvdsp/BG` с `imp: 120` и `clk: 3`.
+5. Числата идват от `vstats/{id на кампанията}`. За проба можеш да сложиш там данни от Firebase конзолата,
+   например `vstats/{id}/20261010/tvdsp/BG` с `imp: 120` и `clk: 3`.
 6. Изтрий пробните неща.
+
+# Фаза F — проверени броячи (стъпки за теб)
+
+Нови неща: функцията `track` (приема броячи от приложенията), `vstats` и `feed2` в базата, доставка по формат,
+„Ad requests / day“ в цените. Нищо не се публикува: линкът към `advertise.html` си остава скрит.
+
+## 1. Свали и разгърни
+
+Свали ZIP на `main` (`https://github.com/todorilinov/todorilinov.github.io/archive/refs/heads/main.zip`),
+разархивирай в нова папка (например `C:\tiapps\v6`), влез в `ads-backend` и:
+
+```
+firebase use tiapps-ads
+cd functions
+npm install
+cd ..
+firebase deploy --only functions,database
+```
+
+На въпросите за настройки натисни **Enter**. Параметърът `TRACK_REQUIRE_APPCHECK` остава `false`
+(Enter), докато не излязат новите версии на приложенията.
+
+## 2. Направи `track` публична
+
+Cloud Run: услугата **track** → **Security** → **Allow public access** → View diff & redeploy → Deploy changes.
+Проверка: адресът на `track` в браузъра трябва да каже „Method Not Allowed“, не „Forbidden“.
+
+## 3. После, в админа
+
+Натисни **Republish feed**, за да се създаде `feed2`. Старите приложения продължават да ползват `feed`.
+
+## 4. App Check за приложенията (преди новите версии)
+
+За всяко от трите приложения във Firebase конзолата на ТЕХНИЯ проект: **App Check** → приложението →
+**Play Integrity** → Save. В Project settings → приложението добави SHA-256 отпечатъците (на ключа за подпис в
+Play и на локалния). Само след като новите версии са в Play и хората са ги обновили, смени
+параметъра на `true` (`firebase deploy --only functions` и отговори `true`).

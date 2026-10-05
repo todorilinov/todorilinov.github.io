@@ -43,3 +43,21 @@ test('sameFeed ignores updatedAt and database-dropped values', () => {
 test('normalize removes nulls and empties', () => {
   assert.deepStrictEqual(normalize({ a: null, b: [], c: { d: null }, e: 0, f: '' }), { e: 0, f: '' });
 });
+
+test('version 1 (old apps) has no paid ads, version 2 has everything', () => {
+  const paid = { ...base, source: 'submission', kind: 'paid' };
+  const all = { a: base, p: paid };
+  assert.deepStrictEqual(Object.keys(buildFeed(all, 'worldradio', 1, 1).campaigns), ['a']);
+  assert.strictEqual(buildFeed(all, 'worldradio', 1, 1).v, 1);
+  assert.deepStrictEqual(Object.keys(buildFeed(all, 'worldradio', 1, 2).campaigns).sort(), ['a', 'p']);
+  assert.strictEqual(buildFeed(all, 'worldradio', 1, 2).v, 2);
+  assert.deepStrictEqual(buildFeed(all, 'worldradio', 1), buildFeed(all, 'worldradio', 1, 1), 'version 1 is the default');
+});
+
+test('a format whose impressions are all shown leaves the feed; the campaign leaves when none is left', () => {
+  const c = { ...base, source: 'submission', slots: { worldradio: { banner: creative, mrec: { ...creative, w: 600, h: 500 } } },
+    done: { worldradio: { banner: true } } };
+  assert.deepStrictEqual(Object.keys(buildFeed({ p: c }, 'worldradio', 1, 2).campaigns.p.slots), ['mrec']);
+  c.done.worldradio.mrec = true;
+  assert.strictEqual(buildFeed({ p: c }, 'worldradio', 1, 2).campaigns, undefined);
+});
