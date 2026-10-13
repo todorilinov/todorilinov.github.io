@@ -259,6 +259,13 @@
         <select id="fApp" aria-label="App">
           <option value="">All apps</option>
         </select>
+        <select id="fRange" aria-label="Period of the numbers">
+          <option value="all">All time</option>
+          <option value="today">Today (UTC)</option>
+          <option value="yesterday">Yesterday</option>
+          <option value="7">Last 7 days</option>
+          <option value="30">Last 30 days</option>
+        </select>
         <span class="spacer"></span>
         <span id="feedInfo"></span>
         <button class="ghost" id="repubBtn" title="Rebuild what the apps download from all active ads">Republish feed</button>
@@ -389,7 +396,7 @@ function init() {
   if (inited) return; inited = true;
   $("fApp").insertAdjacentHTML("beforeend",
     Object.entries(APPS).map(([k, a]) => `<option value="${k}">${esc(a.name)}</option>`).join(""));
-  $("fStatus").onchange = $("fApp").onchange = renderList;
+  $("fStatus").onchange = $("fApp").onchange = $("fRange").onchange = renderList;
   $("newBtn").onclick = () => openEditor(null);
   $("repubBtn").onclick = async () => {
     $("repubBtn").disabled = true;
@@ -485,7 +492,10 @@ function period(c) {
   return `${f || "…"} → ${t || "…"}`;
 }
 function renderList() {
-  const st = $("fStatus").value, ap = $("fApp").value;
+  const st = $("fStatus").value, ap = $("fApp").value, rg = $("fRange").value;
+  const dAgo = n => dayKey(Date.now() - n * 86400000);
+  const [rFrom, rTo] = rg === "today" ? [dAgo(0), dAgo(0)] : rg === "yesterday" ? [dAgo(1), dAgo(1)]
+    : rg === "7" ? [dAgo(6), ""] : rg === "30" ? [dAgo(29), ""] : ["", ""];
   const rows = Object.entries(campaigns)
     .filter(([, c]) => (!st || c.status === st) && (!ap || (c.apps && c.apps[ap])))
     .sort((a, b) => (b[1].updatedAt || 0) - (a[1].updatedAt || 0));
@@ -504,7 +514,7 @@ function renderList() {
       const cap = c.cap ? `${c.cap.n} / ${c.cap.per}` : "—";
       const cc = !(c.countries && c.countries.length) ? "all"
         : c.countries.length <= 4 ? c.countries.join(", ") : `${c.countries.length} countries`;
-      const t = aggregate(id, "");
+      const t = aggregate(id, rFrom, "", rTo);
       return `<tr data-id="${esc(id)}">
         <td class="ttl">${esc(c.title)}<small>${esc(c.clickUrl || "")}</small></td>
         <td>${chips || "—"}</td><td>${esc(cap)}</td><td>${esc(cc)}</td><td>${esc(period(c))}</td>
@@ -577,11 +587,12 @@ const regionNames = (() => { try { return new Intl.DisplayNames(["en"], { type: 
 const countryName = cc => cc === "ZZ" ? "Unknown" : ((regionNames && (() => { try { return regionNames.of(cc); } catch { return null; } })()) || cc);
 
 /** Totals for one campaign from [fromDay] (yyyymmdd, "" = all time), split by country, app and day. */
-function aggregate(id, fromDay, onlyApp) {
+function aggregate(id, fromDay, onlyApp, toDay) {
   const out = { imp: 0, clk: 0, byCc: {}, byApp: {}, byDay: {} };
   const add = (m, k, v) => { const r = m[k] || (m[k] = { imp: 0, clk: 0 }); r.imp += v.imp; r.clk += v.clk; };
   for (const [day, apps] of Object.entries(stats[id] || {})) {
     if (fromDay && day < fromDay) continue;
+    if (toDay && day > toDay) continue;
     for (const [app, ccs] of Object.entries(apps || {})) if (!onlyApp || app === onlyApp) for (const [cc, v] of Object.entries(ccs || {})) {
       const x = { imp: Number(v && v.imp) || 0, clk: Number(v && v.clk) || 0 };
       out.imp += x.imp; out.clk += x.clk;
