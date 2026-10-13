@@ -266,6 +266,7 @@
           <option value="7">Last 7 days</option>
           <option value="30">Last 30 days</option>
         </select>
+        <button class="ghost" id="refBtn" title="Reload the ads and the numbers (keeps the filters)" aria-label="Refresh">⟳</button>
         <span class="spacer"></span>
         <span id="feedInfo"></span>
         <button class="ghost" id="repubBtn" title="Rebuild what the apps download from all active ads">Republish feed</button>
@@ -396,7 +397,18 @@ function init() {
   if (inited) return; inited = true;
   $("fApp").insertAdjacentHTML("beforeend",
     Object.entries(APPS).map(([k, a]) => `<option value="${k}">${esc(a.name)}</option>`).join(""));
-  $("fStatus").onchange = $("fApp").onchange = $("fRange").onchange = renderList;
+  // The filters survive a reload of the page.
+  const FK = { fStatus: "ads.fStatus", fApp: "ads.fApp", fRange: "ads.fRange" };
+  for (const [id, key] of Object.entries(FK)) {
+    try { const v = localStorage.getItem(key); if (v !== null && [...$(id).options].some(o => o.value === v)) $(id).value = v; } catch {}
+    $(id).onchange = () => { try { localStorage.setItem(key, $(id).value); } catch {} renderList(); };
+  }
+  $("refBtn").onclick = async () => {
+    $("refBtn").disabled = true;
+    await load();
+    if (statsFor) renderStats();
+    $("refBtn").disabled = false;
+  };
   $("newBtn").onclick = () => openEditor(null);
   $("repubBtn").onclick = async () => {
     $("repubBtn").disabled = true;
