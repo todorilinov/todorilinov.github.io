@@ -118,7 +118,7 @@
      row from that country carries the badge, not just the first one, so it
      stays visible while you're scanning the table rather than only on a row
      that may have scrolled past. */
-  td.cc .new{font-size:10.5px;font-weight:700;color:var(--accent);
+  td.cc .new, a.linkbox .ls .new{font-size:10.5px;font-weight:700;color:var(--accent);
              border:1px solid var(--accent);border-radius:4px;
              padding:0 4px;margin-left:6px}
 
@@ -374,10 +374,11 @@ window.load = async () => {
     // branch is missing or unreadable, the dashboard must still work and the
     // line simply says nothing about devices.
     try {
-      const [dev, obs] = await Promise.all([
-        get(ref(db, "devices")), get(ref(db, "gate_observations"))
+      const [dev, obs, blk] = await Promise.all([
+        get(ref(db, "devices")), get(ref(db, "gate_observations")),
+        get(ref(db, "device_blocklist")).catch(() => null)
       ]);
-      insightsLine(dev.val() || {}, obs.val() || {});
+      insightsLine(dev.val() || {}, obs.val() || {}, (blk && blk.val()) || {});
     } catch (e) {
       console.warn("Device gate data unavailable", e);
       insightsLine(null, null);
@@ -410,7 +411,7 @@ window.load = async () => {
  * Called with nulls when the device branches could not be read — the country
  * half of the line is still worth showing on its own.
  */
-function insightsLine(devices, observations){
+function insightsLine(devices, observations, blocks){
   const emailOf = new Map(data.map(d => [d.uid, d.email || d.uid]));
   const mine = uid => OWN_ACCOUNTS.includes(emailOf.get(uid));
 
@@ -418,8 +419,19 @@ function insightsLine(devices, observations){
     const everyone = new Set(Object.keys(uids || {}));
     const owner = (devices || {})[hash] && devices[hash].uid;
     if (owner) everyone.add(owner);
-    return { n: everyone.size, ours: [...everyone].every(mine) };
+    // A device turns "shared" when a second account meets it, i.e. at the
+    // second-earliest timestamp among the first claim and the observations.
+    const stamps = Object.values(uids || {}).map(Number).filter(Boolean);
+    if (owner && devices[hash].trialStart) stamps.push(Number(devices[hash].trialStart));
+    stamps.sort((a, b) => a - b);
+    const since = stamps.length > 1 ? stamps[1] : 0;
+    return { n: everyone.size, ours: [...everyone].every(mine),
+             blocked: !!(blocks && blocks[hash]),
+             fresh: since > 0 && Date.now() - since <= DAY_MS };
   }).filter(r => r.n > 1 && !r.ours);
+  const nBlocked = shared.filter(r => r.blocked).length;
+  const nActive  = shared.length - nBlocked;
+  const nFresh   = shared.filter(r => r.fresh && !r.blocked).length;
 
   const countries = new Set(data.filter(d => d.cc).map(d => d.cc)).size;
   const noCc      = data.filter(d => !d.cc).length;
@@ -431,12 +443,14 @@ function insightsLine(devices, observations){
     : "no country recorded yet");
   if (noCc) parts.push(`${noCc} trial${noCc === 1 ? "" : "s"} without one`);
   if (observations) parts.push(shared.length
-    ? `${shared.length} device${shared.length === 1 ? "" : "s"} seen by more than one account`
+    ? `${shared.length} device${shared.length === 1 ? "" : "s"} seen by more than one account` +
+      ` (${nActive} active, ${nBlocked} blocked)`
     : "no shared devices");
 
   // Four accounts on one device is where a household stops being the easy
   // explanation, so that is the only part of the line that raises its voice.
   document.getElementById("insSum").innerHTML = esc(parts.join(" · ")) +
+    (nFresh ? ` <span class="new">New${nFresh > 1 ? " " + nFresh : ""}</span>` : "") +
     (busiest >= 4 ? ` <span class="warn">· up to ${busiest} on one device</span>` : "");
 }
 
