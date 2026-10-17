@@ -201,6 +201,7 @@
         </select>
         <select id="dvBlocked" onchange="render()">
           <option value="all">All devices</option>
+          <option value="new">New (last 24h)</option>
           <option value="blocked">Blocked only</option>
           <option value="unblocked">Not blocked</option>
         </select>
@@ -458,7 +459,11 @@ function buildDevices(devs, observations, blocks){
              last: stamps.length ? Math.max(...stamps) : 0,
              ownerWhen: dev && dev.trialStart,
              ours: [...everyone].every(mine),
-             blocked: !!(blocks && blocks[hash]) };
+             blocked: !!(blocks && blocks[hash]),
+             // Same rule as the "New" label on an account: someone other than
+             // the first claimant met the device in the last 24 hours.
+             fresh: !(blocks && blocks[hash]) && seen.some(([u, w]) =>
+               u !== owner && Number(w) && Date.now() - Number(w) <= DAY_MS) };
   }).filter(r => r.total > 1);
 }
 
@@ -498,7 +503,8 @@ function drawDevices(){
   document.getElementById("dvSum").innerHTML = line.join("<br>");
 
   const rows = visible.filter(r => r.total >= min)
-    .filter(r => blockFor === "blocked" ? r.blocked : blockFor === "unblocked" ? !r.blocked : true)
+    .filter(r => blockFor === "blocked" ? r.blocked : blockFor === "unblocked" ? !r.blocked
+      : blockFor === "new" ? r.fresh : true)
     .sort((a, b) =>
       sort === "recent" ? b.last - a.last
     : sort === "tight"  ? (a.spread - b.spread) || (b.total - a.total)
