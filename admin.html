@@ -450,7 +450,7 @@ function insightsLine(devices, observations, blocks){
   // Four accounts on one device is where a household stops being the easy
   // explanation, so that is the only part of the line that raises its voice.
   document.getElementById("insSum").innerHTML = esc(parts.join(" · ")) +
-    (nFresh ? ` <span class="new">New${nFresh > 1 ? " " + nFresh : ""}</span>` : "") +
+    (nFresh ? ` <span class="new">New ${nFresh}</span>` : "") +
     (busiest >= 4 ? ` <span class="warn">· up to ${busiest} on one device</span>` : "");
 }
 
