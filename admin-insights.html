@@ -113,6 +113,9 @@
                padding-top:7px;border-top:1px solid var(--line);line-height:1.5;
                max-width:760px}
   .dvrow.is-blocked{opacity:.6}
+  .acc .new{font-size:10.5px;font-weight:700;color:var(--accent);
+            border:1px solid var(--accent);border-radius:4px;
+            padding:0 4px;margin-left:6px}
   .dvhead .blk{font-size:10.5px;color:var(--bad);border:1px solid var(--bad);
                border-radius:4px;padding:0 5px;margin-left:8px}
   .dvhead .blockBtn{background:transparent;border:1px solid var(--line);color:var(--dim);
@@ -515,8 +518,11 @@ function drawDevices(){
     return `<span class="geo"><span class="k">IP</span>${cc(d.ccIp)}` +
       ` &nbsp;·&nbsp; <span class="k">Locale</span>${cc(d.ccDev, off ? "off" : "")}</span>`;
   };
-  const acc = (uid, who, ms, tag) =>
-    `<span class="acc"><span>${who}${tag || ""}</span>${geo(uid)}` +
+  // An account that joined an already-claimed device in the last 24 hours is
+  // the one to look at, so it is marked unless the device is blocked anyway.
+  const acc = (uid, who, ms, tag, blocked) =>
+    `<span class="acc"><span>${who}${tag || ""}${!tag && !blocked && ms &&
+      Date.now() - Number(ms) <= DAY_MS ? `<span class="new">New</span>` : ""}</span>${geo(uid)}` +
     `<span class="when">${esc(day(ms))}</span></span>`;
 
   document.getElementById("dvList").innerHTML = rows.map(r => {
@@ -540,7 +546,7 @@ function drawDevices(){
           : `<span style="color:var(--faint)">device record missing</span>`}
         ${r.seen.filter(([u]) => u !== r.owner)
             .sort((a, b) => Number(a[1]) - Number(b[1]))
-            .map(([u, w]) => acc(u, name(u), w)).join("")}
+            .map(([u, w]) => acc(u, name(u), w, "", r.blocked)).join("")}
         ${tight ? `<span class="span">All ${r.total} within ${hours <= 1
             ? "the hour" : hours + " hours"} — unrelated people rarely meet the
             same box inside a day, so this looks more like several boxes
