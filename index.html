@@ -226,8 +226,9 @@
     text-decoration:none;font-weight:700;font-size:.95rem;
     padding:13px 22px;border-radius:12px;transition:opacity .2s;
   }
-  .soon-btn:hover{opacity:.88}
-  .soon-btn:focus-visible{outline:2px solid #A78BFA;outline-offset:3px}
+  .soon-btn[aria-disabled="true"]{
+    opacity:.45;cursor:not-allowed;pointer-events:none;filter:saturate(.6);
+  }
   .soon-btn svg{width:18px;height:18px}
   .more-btn.vocal{color:#A78BFA;border-color:#A78BFA}
   .more-btn.vocal:hover{background:#A78BFA;color:#0B0F18}
@@ -435,10 +436,10 @@
           <li>Runs entirely on your Windows PC — nothing is uploaded</li>
         </ul>
         <div class="btn-row">
-          <a class="soon-btn" href="vocalsplit-beta.html">
+          <span class="soon-btn" role="link" aria-disabled="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
             Coming soon · Join the beta
-          </a>
+          </span>
           <a class="more-btn vocal" href="VocalSplit.html">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
             Learn More
