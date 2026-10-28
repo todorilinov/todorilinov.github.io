@@ -1060,7 +1060,7 @@ function renderSlotBoxes() {
         cell.insertBefore(on, cell.firstChild);
         if (editing.off.has(key)) cell.classList.add("off");
       }
-      const wrap = cell.querySelector(".zonewrap"), fileIn = cell.querySelector("input"), msg = cell.querySelector(".msg");
+      const wrap = cell.querySelector(".zonewrap"), fileIn = cell.querySelector("input[type=file]"), msg = cell.querySelector(".msg");
       const zone = previewEl(shown, slotKey);
       zone.classList.add("zone");
       // A transparent layer on top: an iframe or video would otherwise swallow the click and the drop.
