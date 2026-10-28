@@ -1184,7 +1184,8 @@ async function save() {
   try { f = fieldsOrThrow(); } catch (e) { $("formErr").innerHTML = `<div class="err" style="margin-top:12px">${esc(e.message)}</div>`; return; }
 
   const slots = {};
-  for (const a of f.apps) {
+  // An unticked app keeps its files (it just stops showing), so ticking it again needs no re-upload.
+  for (const a of Object.keys(APPS)) {
     slots[a] = {};
     for (const s of APPS[a].slots) {
       const cr = editing.slots[a] && editing.slots[a][s];
@@ -1204,7 +1205,7 @@ async function save() {
   const id = editing.id || push(ref(db, "campaigns")).key;
   const replaced = [];
   try {
-    for (const a of f.apps) for (const s of APPS[a].slots) {
+    for (const a of Object.keys(APPS)) for (const s of APPS[a].slots) {
       const p = editing.pending[a + "/" + s];
       if (!p) continue;
       say(`Uploading ${APPS[a].name} · ${SLOTS[s].label}…`);
@@ -1229,8 +1230,11 @@ async function save() {
       title: f.title, description: f.description, clickUrl: f.clickUrl,
       kind: f.kind, status: f.status, weight: f.weight, cap: f.cap,
       countries: f.countries, from: f.from, to: f.to,
-      apps: Object.fromEntries(f.apps.map(a => [a, true])),
-      slots, createdAt: old ? old.createdAt || now : now, updatedAt: now,
+      apps: Object.fromEntries(Object.keys(APPS)
+        .filter(a => f.apps.includes(a) || Object.keys(slots[a]).length)
+        .map(a => [a, f.apps.includes(a)])),
+      slots: Object.fromEntries(Object.entries(slots).filter(([, m]) => Object.keys(m).length)),
+      createdAt: old ? old.createdAt || now : now, updatedAt: now,
     });
     // Fields the editor has no inputs for (a campaign made from a paid request) must survive an edit.
     if (old) for (const k of ["source", "submissionId", "budget", "delivered"]) if (old[k] !== undefined) rec[k] = old[k];
