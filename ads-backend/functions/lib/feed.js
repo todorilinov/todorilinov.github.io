@@ -37,7 +37,7 @@ function buildFeed(campaigns, appKey, now, version = 1) {
     const done = (c.done && c.done[appKey]) || {};
     const slots = {};
     for (const [s, cr] of Object.entries(src)) {
-      if (cr && cr.url && !done[s]) slots[s] = { type: cr.type, url: cr.url, w: cr.w, h: cr.h };
+      if (cr && cr.url && !cr.off && !done[s]) slots[s] = { type: cr.type, url: cr.url, w: cr.w, h: cr.h };
     }
     if (!Object.keys(slots).length) continue;
     out[id] = {

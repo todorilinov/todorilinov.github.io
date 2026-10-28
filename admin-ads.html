@@ -120,6 +120,7 @@
   .appcard{border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:12px 0;background:#0f1319}
   .appcard.off{opacity:.62}
   .appcard.off:hover{opacity:1}
+  .cell.off .zonewrap{opacity:.45}
   .apphead{display:flex;align-items:center;gap:9px;cursor:pointer;margin-bottom:12px;font-size:14px}
   .cells{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
   .cell{width:max-content;max-width:100%}
@@ -463,7 +464,7 @@ function buildFeed(appKey, version = 1) {
     const done = (c.done && c.done[appKey]) || {};
     const slots = {};
     for (const [s, cr] of Object.entries(src))
-      if (cr && cr.url && !done[s]) slots[s] = { type: cr.type, url: cr.url, w: cr.w, h: cr.h };
+      if (cr && cr.url && !cr.off && !done[s]) slots[s] = { type: cr.type, url: cr.url, w: cr.w, h: cr.h };
     if (!Object.keys(slots).length) continue;
     out[id] = {
       kind: c.kind || "house", weight: c.weight || 10,
@@ -912,8 +913,10 @@ function initCountryPicker() {
 /* ── Editor ────────────────────────────────────────────────────────────────── */
 function openEditor(id) {
   const c = id ? campaigns[id] : null;
-  editing = { id, slots: c ? clean(c.slots || {}) : {}, pending: {},
+  editing = { id, slots: c ? clean(c.slots || {}) : {}, pending: {}, off: new Set(),
               apps: new Set(c && c.apps ? Object.keys(c.apps).filter(a => c.apps[a] && APPS[a]) : []) };
+  for (const [a, m] of Object.entries(editing.slots)) for (const [s, cr] of Object.entries(m || {}))
+    if (cr && cr.off) editing.off.add(a + "/" + s);
   editing.cc = new Set((c && c.countries) || []);
   editing.ccAll = !editing.cc.size;      // no countries chosen = every country
   const today = fmtDay(Date.now());
@@ -1046,6 +1049,17 @@ function renderSlotBoxes() {
         <div class="req">${slot.types.map(t => esc(KINDS[t].label) + " ≤ " + kb(KINDS[t].max)).join("<br>")}</div>
         <div class="msg"></div>
         <input type="file" hidden accept="${esc(slot.types.map(t => KINDS[t].accept).join(","))}">`;
+      if (shown) {
+        const on = document.createElement("label");
+        on.className = "slotck"; on.style.cssText = "display:flex;gap:6px;align-items:center;margin-bottom:6px;cursor:pointer";
+        on.innerHTML = `<input type="checkbox" ${editing.off.has(key) ? "" : "checked"}> Active`;
+        on.querySelector("input").onchange = ev => {
+          if (ev.target.checked) editing.off.delete(key); else editing.off.add(key);
+          cell.classList.toggle("off", !ev.target.checked);
+        };
+        cell.insertBefore(on, cell.firstChild);
+        if (editing.off.has(key)) cell.classList.add("off");
+      }
       const wrap = cell.querySelector(".zonewrap"), fileIn = cell.querySelector("input"), msg = cell.querySelector(".msg");
       const zone = previewEl(shown, slotKey);
       zone.classList.add("zone");
@@ -1080,6 +1094,7 @@ function renderSlotBoxes() {
           const info = await inspect(file, slotKey);
           if (editing.pending[key]) URL.revokeObjectURL(editing.pending[key].blobUrl);
           editing.pending[key] = info;
+          editing.off.delete(key);
           editing.apps.add(appKey);
         } catch (e) {
           fileIn.value = "";
@@ -1194,7 +1209,7 @@ async function save() {
   }
   const hasPending = k => editing.pending[k];
   const total = f.apps.reduce((n, a) => n + APPS[a].slots.filter(s =>
-    slots[a][s] || hasPending(a + "/" + s)).length, 0);
+    (slots[a][s] || hasPending(a + "/" + s)) && !editing.off.has(a + "/" + s)).length, 0);
   if (f.status === "active" && !total) {
     $("formErr").innerHTML = `<div class="err" style="margin-top:12px">An active ad needs at least one file. Add a file or save it as a draft.</div>`;
     return;
@@ -1218,6 +1233,10 @@ async function save() {
       const url = await getDownloadURL(r);
       if (slots[a][s] && slots[a][s].path) replaced.push(slots[a][s].path);
       slots[a][s] = { type: p.kind, url, path, w: p.w, h: p.h, bytes: p.file.size };
+    }
+    // A paused format keeps its file; the feed leaves it out.
+    for (const a of Object.keys(slots)) for (const s of Object.keys(slots[a])) {
+      if (editing.off.has(a + "/" + s)) slots[a][s].off = true; else delete slots[a][s].off;
     }
     const old = editing.id ? campaigns[editing.id] : null;
     // Files of formats or apps that were removed in this edit.
