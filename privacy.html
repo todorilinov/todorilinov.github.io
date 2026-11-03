@@ -73,7 +73,7 @@
   <p>There is one exception, and it is optional: starting the free trial in TV DSP Center requires signing in with a Google account, which does record your email address. That is described in full under <a href="#trial">Free trial</a> below. If you never start a trial, none of it applies to you.</p>
 
   <h2>Information collected automatically</h2>
-  <p>TV DSP Center, World Radio and Fake Location use the following third-party services, which may collect limited technical data. TI Voice shows no ads and does not use AdMob; its anonymous usage statistics (Firebase Analytics and Crashlytics) are described in the <a href="#ti-voice">TI Voice</a> section below.</p>
+  <p>TV DSP Center, World Radio and Fake Location use the following third-party services, which may collect limited technical data. TI Voice does not use AdMob and shows only our own ads (see <a href="#own-ads">Our own advertising</a>); its anonymous usage statistics (Firebase Analytics and Crashlytics) are described in the <a href="#ti-voice">TI Voice</a> section below.</p>
   <ul>
     <li><strong>Google Firebase Analytics</strong> — anonymous usage statistics (screens viewed, session length, device model, country, app version). Used to understand how the apps are used and to improve them.</li>
     <li><strong>Firebase Crashlytics</strong> — crash reports (device model, OS version, stack traces). Used to find and fix bugs.</li>
@@ -106,7 +106,7 @@
 
   <h2 id="ti-voice">TI Voice (voice keyboard)</h2>
   <p>TI Voice is a keyboard for Android that lets you dictate text by voice. A keyboard sits between you and every app you type in, so this section is deliberately specific.</p>
-  <p><strong>What you type stays with you.</strong> TI Voice does not record, log, store or send what you type or dictate to us, and it has no account and shows no advertising. The language you pick and the emoji you used recently are saved on your device only. Dictation is switched off in password fields.</p>
+  <p><strong>What you type stays with you.</strong> TI Voice does not record, log, store or send what you type or dictate to us, and it has no account. It shows no third-party advertising and no ads in the keyboard itself; our own ads (see <a href="#own-ads">Our own advertising</a>) appear only at the bottom of the app's setup screen, once the setup is finished. The language you pick and the emoji you used recently are saved on your device only. Dictation is switched off in password fields.</p>
 
   <p><strong>Voice dictation.</strong> When you tap the microphone, the keyboard uses Android's built-in speech recognition. That is a service provided by your phone &mdash; on most phones, Google &mdash; and not by us. It may send the audio to its servers to turn it into text, and handles it under its own privacy policy (for Google, the <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a>). The audio is never sent to us and we never store it. The keyboard only listens while you have turned dictation on. Most languages need an internet connection for dictation. Before the first dictation the app asks you to read and accept a short notice saying this.</p>
 
@@ -157,6 +157,7 @@
   <p><strong>Permissions:</strong> location (precise and approximate) to show where you are on the map; mock location to report the simulated position, which Android allows only after you select the app under Developer options; foreground service and notifications to keep the simulated location running and show an ongoing notification while it is active.</p>
 
   <h2 id="own-ads">Our own advertising</h2>
+  <p>TI Voice shows only our own ads and does not use AdMob: one banner at the bottom of its setup screen, and never inside the keyboard. The totals it sends are protected with a token from Firebase App Check (Google Play Integrity), which only proves that the request comes from the genuine app and carries no information about you.</p>
   <p>Besides Google AdMob, the free versions of our apps may show advertisements that we run ourselves &mdash; at the moment for our own apps, and possibly for other advertisers later. They appear in the same place as the other banners. TV DSP Center shows no ads on Android TV and none to Pro users, and the &ldquo;remove ads for an hour&rdquo; option in World Radio hides these ads too.</p>
   <p>How they work:</p>
   <ul>
