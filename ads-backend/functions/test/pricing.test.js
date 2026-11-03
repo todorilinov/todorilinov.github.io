@@ -31,7 +31,7 @@ test('a broken price list becomes a complete, valid one', () => {
     assert.strictEqual(p.currency, 'EUR');
     assert.ok(p.minBudget >= 1 && p.maxBudget >= p.minBudget);
     assert.ok(p.presets.length > 0);
-    for (const [a, slots] of Object.entries({ worldradio: 3, tvdsp: 1, fakelocation: 1 })) assert.strictEqual(Object.keys(p.items[a]).length, slots);
+    for (const [a, slots] of Object.entries({ worldradio: 3, tvdsp: 1, fakelocation: 1, tivoice: 1 })) assert.strictEqual(Object.keys(p.items[a]).length, slots);
     for (const m of Object.values(p.items)) for (const it of Object.values(m)) assert.ok(it.cpm >= 0.01 && typeof it.on === 'boolean');
   }
   assert.deepStrictEqual(normalizePricing(null), normalizePricing(DEFAULT_PRICING));

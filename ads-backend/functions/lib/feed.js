@@ -3,7 +3,7 @@
 // Pure functions, no Firebase: tested in test/feed.test.js.
 // This is the same logic admin-ads.html used to run in the browser.
 
-const APP_KEYS = ['worldradio', 'tvdsp', 'fakelocation'];
+const APP_KEYS = ['worldradio', 'tvdsp', 'fakelocation', 'tivoice'];
 
 /** Drops null/undefined and empty arrays/objects: the Realtime Database does not store them. */
 function normalize(v) {

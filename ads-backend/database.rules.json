@@ -11,14 +11,14 @@
     "feed": {
       "$app": {
         ".read": true,
-        ".write": "auth != null && auth.uid === '5bCbdUU29cPtffTXwNJw5DzigSd2' && ($app === 'worldradio' || $app === 'tvdsp' || $app === 'fakelocation')"
+        ".write": "auth != null && auth.uid === '5bCbdUU29cPtffTXwNJw5DzigSd2' && ($app === 'worldradio' || $app === 'tvdsp' || $app === 'fakelocation' || $app === 'tivoice')"
       }
     },
 
     "feed2": {
       "$app": {
         ".read": true,
-        ".write": "auth != null && auth.uid === '5bCbdUU29cPtffTXwNJw5DzigSd2' && ($app === 'worldradio' || $app === 'tvdsp' || $app === 'fakelocation')"
+        ".write": "auth != null && auth.uid === '5bCbdUU29cPtffTXwNJw5DzigSd2' && ($app === 'worldradio' || $app === 'tvdsp' || $app === 'fakelocation' || $app === 'tivoice')"
       }
     },
 
@@ -48,7 +48,7 @@
         "$day": {
           ".validate": "$day.matches(/^[0-9]{8}$/)",
           "$app": {
-            ".validate": "$app === 'worldradio' || $app === 'tvdsp' || $app === 'fakelocation'",
+            ".validate": "$app === 'worldradio' || $app === 'tvdsp' || $app === 'fakelocation' || $app === 'tivoice'",
             "$cc": {
               ".validate": "$cc.matches(/^[A-Z]{2}$/) && newData.hasChildren()",
               "imp": {

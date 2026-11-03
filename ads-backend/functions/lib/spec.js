@@ -8,6 +8,7 @@ const APPS = {
   worldradio:   { name: 'WorldRadio',    slots: ['banner', 'mrec', 'fullscreen'] },
   tvdsp:        { name: 'TV DSP Center', slots: ['banner'] },
   fakelocation: { name: 'FakeLocation',  slots: ['banner'] },
+  tivoice:      { name: 'TI Voice',      slots: ['banner'] },
 };
 
 // Same sizes as admin-ads.html. HTML5 is not accepted from the public (plan, section 12).

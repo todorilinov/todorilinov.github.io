@@ -15,6 +15,7 @@ const DEFAULT_PRICING = {
     worldradio:   { banner: { cpm: 1.5, on: true }, mrec: { cpm: 3, on: true }, fullscreen: { cpm: 10, on: true } },
     tvdsp:        { banner: { cpm: 1.2, on: true } },
     fakelocation: { banner: { cpm: 1,   on: true } },
+    tivoice:      { banner: { cpm: 1,   on: true } },
   },
 };
 
