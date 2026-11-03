@@ -323,7 +323,7 @@ const ADMIN_UID = "5bCbdUU29cPtffTXwNJw5DzigSd2";
 const APPS = {
   worldradio:   { name: "WorldRadio",    slots: ["banner", "mrec", "fullscreen"] },
   tvdsp:        { name: "TV DSP Center", slots: ["banner"] },   // phone/tablet only
-  fakelocation: { name: "FakeLocation",  slots: ["banner"] },
+  fakelocation: { name: "FakeLocation",  slots: ["banner"] }, tivoice: { name: "TI Voice", slots: ["banner"] },
 };
 const SLOTS = {
   banner:     { label: "Banner",           w: 640,  h: 100,  scale: .5,
@@ -1395,7 +1395,7 @@ const DEFAULT_PRICING = {
   currency: "EUR", minBudget: 10, maxBudget: 5000, presets: [10, 25, 50, 100, 250],
   items: {
     worldradio: { banner: { cpm: 1.5, on: true }, mrec: { cpm: 3, on: true }, fullscreen: { cpm: 10, on: true } },
-    tvdsp: { banner: { cpm: 1.2, on: true } }, fakelocation: { banner: { cpm: 1, on: true } },
+    tvdsp: { banner: { cpm: 1.2, on: true } }, fakelocation: { banner: { cpm: 1, on: true } }, tivoice: { banner: { cpm: 1, on: true } },
   },
 };
 const numIn = (v, min, max, d) => { const n = Number(v); return Number.isFinite(n) && n >= min && n <= max ? n : d; };
