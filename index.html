@@ -201,6 +201,8 @@
     display:flex;align-items:center;justify-content:center;
   }
   .app-icon svg{width:100%;height:100%;border-radius:15px}
+  .app-tv{margin-left:auto;flex-shrink:0;width:112px;height:auto;border-radius:10px;border:1px solid var(--card-edge);display:block}
+  @media(max-width:420px){.app-tv{width:84px}}
   .app-card h2{font-size:1.3rem;font-weight:800;font-variation-settings:'wdth' 110}
   .app-card .cat{font-family:var(--mono);font-size:.74rem;color:var(--muted);letter-spacing:.08em;margin-top:3px}
   .app-card p{color:var(--muted);font-size:.98rem;flex:1}
@@ -389,10 +391,12 @@
             <h2>World Radio</h2>
             <div class="cat">LIVE INTERNET RADIO</div>
           </div>
+          <img class="app-tv" src="img/worldradio_tv.jpg" alt="World Radio for Android TV" width="112" height="63" loading="lazy">
         </div>
         <ul>
           <li>Thousands of live stations from around the world</li>
           <li>Alarm clock, sleep timer &amp; car mode</li>
+          <li>Now on Android TV too — built for the remote &amp; D-pad</li>
           <li>11 visualizer styles · 15 languages · completely free</li>
         </ul>
         <div class="btn-row">
