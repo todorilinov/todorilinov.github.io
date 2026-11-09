@@ -118,6 +118,12 @@
      row from that country carries the badge, not just the first one, so it
      stays visible while you're scanning the table rather than only on a row
      that may have scrolled past. */
+  /* Account that shares a device with another account (same hash in /devices and
+     /gate_observations). Muted once the device is on the blocklist. */
+  td.acct .multi, td.uid .multi{font-size:10.5px;font-weight:700;color:var(--warn);
+             border:1px solid var(--warn);border-radius:4px;padding:0 4px;margin-left:6px;
+             white-space:nowrap}
+  td.acct .multi.blk, td.uid .multi.blk{color:var(--faint);border-color:var(--line)}
   td.cc .new, a.linkbox .ls .new{font-size:10.5px;font-weight:700;color:var(--accent);
              border:1px solid var(--accent);border-radius:4px;
              padding:0 4px;margin-left:6px}
@@ -302,6 +308,7 @@ const db   = getDatabase(app);
 let data = [];                                  // normalised rows
 let sort = { key: "start", dir: -1 };           // newest first
 let firstSeenByCc = new Map();                  // cc -> earliest trialStart seen
+let sharedByUid = new Map();                    // uid -> { n, blocked } for accounts on a shared device
 
 /* ── AUTH ── */
 window.signIn = async () => {
@@ -394,6 +401,12 @@ window.load = async () => {
   }
 };
 
+/** Marker for an account that shares its device with other accounts. */
+function multiBadge(uid){
+  const m = sharedByUid.get(uid);
+  return m ? `<span class="multi${m.blocked ? " blk" : ""}">${m.n}&times; device</span>` : "";
+}
+
 /**
  * The one line under the link to admin-insights.html.
  *
@@ -425,10 +438,20 @@ function insightsLine(devices, observations, blocks){
     if (owner && devices[hash].trialStart) stamps.push(Number(devices[hash].trialStart));
     stamps.sort((a, b) => a - b);
     const since = stamps.length > 1 ? stamps[1] : 0;
-    return { n: everyone.size, ours: [...everyone].every(mine),
+    return { n: everyone.size, uids: [...everyone], ours: [...everyone].every(mine),
              blocked: !!(blocks && blocks[hash]),
              fresh: since > 0 && Date.now() - since <= DAY_MS };
   }).filter(r => r.n > 1 && !r.ours);
+  // Mark every account that has met another one on the same device, so the
+  // table can flag it. The largest group wins; blocked only when every shared
+  // device of the account is blocked.
+  sharedByUid = new Map();
+  shared.forEach(r => r.uids.forEach(uid => {
+    const prev = sharedByUid.get(uid);
+    sharedByUid.set(uid, prev
+      ? { n: Math.max(prev.n, r.n), blocked: prev.blocked && r.blocked }
+      : { n: r.n, blocked: r.blocked });
+  }));
   const nBlocked = shared.filter(r => r.blocked).length;
   const nActive  = shared.length - nBlocked;
   const nFresh   = shared.filter(r => r.fresh && !r.blocked).length;
@@ -560,8 +583,8 @@ window.render = () => {
     // the record again on hover.
     return `<tr data-uid="${esc(d.uid)}">
       ${d.email
-        ? `<td class="acct">${esc(d.email)}<span class="sub-uid">${esc(d.uid.slice(0,16))}…</span></td>`
-        : `<td class="uid">${esc(d.uid.slice(0,20))}…</td>`}
+        ? `<td class="acct">${esc(d.email)}${multiBadge(d.uid)}<span class="sub-uid">${esc(d.uid.slice(0,16))}…</span></td>`
+        : `<td class="uid">${esc(d.uid.slice(0,20))}…${multiBadge(d.uid)}</td>`}
       <td>${d.start ? esc(fmt(d.start)) : "—"}</td>
       <td class="hide-s">${d.start ? esc(fmt(d.end)) : "—"}</td>
       <td class="cc col-cc${d.cc && !d.ccIp ? " guess" : ""}">${d.cc
