@@ -231,6 +231,7 @@
         <option value="active">Active only</option>
         <option value="soon">Ending soon (≤2d)</option>
         <option value="expired">Expired only</option>
+        <option value="blocked">Blocked</option>
       </select>
       <select id="fCountry" class="col-cc" onchange="render()">
         <option value="all">All countries</option>
@@ -401,6 +402,19 @@ window.load = async () => {
   }
 };
 
+/** Pill text and class for an account; a blocked device outranks trial status. */
+function isBlocked(d){
+  const m = sharedByUid.get(d.uid);
+  return !!(m && m.blocked);
+}
+
+function statusPill(d){
+  if (isBlocked(d)) return ["Blocked", "p-exp"];
+  const key = d.status === "active" && d.soon ? "soon" : d.status;
+  return { active:["Active","p-act"], soon:["Ending soon","p-end"],
+           expired:["Expired","p-exp"] }[key];
+}
+
 /** Marker for an account that shares its device with other accounts. */
 function multiBadge(uid){
   const m = sharedByUid.get(uid);
@@ -556,7 +570,12 @@ window.render = () => {
           && !d.country.toLowerCase().includes(q) && d.cc.toLowerCase() !== q) return false;
     if (fC === "none") { if (d.cc) return false; }
     else if (fC !== "all" && d.cc !== fC) return false;
-    if (fS === "soon") { if (!d.soon) return false; }
+    // A blocked account shows "Blocked" in the table, so the other status
+    // filters leave it out and only "Blocked" (or "All") lists it.
+    const blk = isBlocked(d);
+    if (fS === "blocked") { if (!blk) return false; }
+    else if (fS !== "all" && blk) return false;
+    else if (fS === "soon") { if (!d.soon) return false; }
     else if (fS !== "all" && d.status !== fS) return false;
     if (fR === 1) {
       const t0 = new Date(); t0.setHours(0,0,0,0);
@@ -574,10 +593,8 @@ window.render = () => {
     document.getElementById("a-"+k).textContent =
       sort.key === k ? (sort.dir === 1 ? "▲" : "▼") : "");
 
-  const label = { active:["Active","p-act"], soon:["Ending soon","p-end"], expired:["Expired","p-exp"] };
   document.getElementById("rows").innerHTML = rows.map(d => {
-    const key = d.status === "active" && d.soon ? "soon" : d.status;
-    const [txt, cls] = label[key];
+    const [txt, cls] = statusPill(d);
     // No title attribute: the native tooltip would sit on top of the hover
     // card and repeat what it already says. data-uid is how the card finds
     // the record again on hover.
@@ -639,9 +656,7 @@ const ccLine = c => c
   : "—";
 
 function cardHtml(d){
-  const key = d.status === "active" && d.soon ? "soon" : d.status;
-  const [txt, cls] = { active:["Active","p-act"], soon:["Ending soon","p-end"],
-                       expired:["Expired","p-exp"] }[key];
+  const [txt, cls] = statusPill(d);
 
   // The two country fields disagree when someone travels, uses a VPN, or runs
   // a box whose factory locale was never changed. Worth saying out loud rather
